@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, Fragment } from "react";
 import { MessageItem } from "./MessageItem";
+import { DateDivider } from "./DateDivider";
 
 const GROUP_WINDOW_MS = 7 * 60 * 1000;
 
@@ -17,7 +18,7 @@ export function MessageFeed({ messages, loading }: Props) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const groupHeads = useMemo(() => computeGroupHeads(messages), [messages]);
+  const meta = useMemo(() => computeMeta(messages), [messages]);
 
   if (loading) {
     return (
@@ -35,25 +36,41 @@ export function MessageFeed({ messages, loading }: Props) {
         </div>
       )}
       {messages.map((msg, idx) => (
-        <MessageItem key={msg.id} message={msg} isGroupHead={groupHeads[idx]} />
+        <Fragment key={msg.id}>
+          {meta[idx].showDivider && <DateDivider date={msg.createdDateTime} />}
+          <MessageItem message={msg} isGroupHead={meta[idx].isGroupHead} />
+        </Fragment>
       ))}
       <div ref={bottomRef} />
     </div>
   );
 }
 
-function computeGroupHeads(messages: MSMessage[]): boolean[] {
+interface MessageMeta {
+  isGroupHead: boolean;
+  showDivider: boolean;
+}
+
+function computeMeta(messages: MSMessage[]): MessageMeta[] {
   return messages.map((msg, idx) => {
-    if (idx === 0) return true;
+    if (idx === 0) {
+      return { isGroupHead: true, showDivider: true };
+    }
     const prev = messages[idx - 1];
+    const dayChanged =
+      new Date(msg.createdDateTime).toDateString() !== new Date(prev.createdDateTime).toDateString();
+    if (dayChanged) {
+      return { isGroupHead: true, showDivider: true };
+    }
     const prevId = prev.from?.user?.id;
     const currId = msg.from?.user?.id;
-    if (!prevId || !currId || prevId !== currId) return true;
-    const dt = new Date(msg.createdDateTime).getTime() - new Date(prev.createdDateTime).getTime();
-    if (dt > GROUP_WINDOW_MS) return true;
-    if (new Date(msg.createdDateTime).toDateString() !== new Date(prev.createdDateTime).toDateString()) {
-      return true;
+    if (!prevId || !currId || prevId !== currId) {
+      return { isGroupHead: true, showDivider: false };
     }
-    return false;
+    const dt = new Date(msg.createdDateTime).getTime() - new Date(prev.createdDateTime).getTime();
+    if (dt > GROUP_WINDOW_MS) {
+      return { isGroupHead: true, showDivider: false };
+    }
+    return { isGroupHead: false, showDivider: false };
   });
 }
