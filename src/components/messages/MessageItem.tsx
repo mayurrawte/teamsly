@@ -2,6 +2,7 @@
 
 import { format } from "date-fns";
 import { Avatar } from "@/components/ui/Avatar";
+import { MessageHoverToolbar } from "./MessageHoverToolbar";
 import { formatMessageTime, formatFullTimestamp } from "@/lib/utils/dates";
 
 interface Props {
@@ -25,6 +26,7 @@ export function MessageItem({ message, isGroupHead = true }: Props) {
     const shortTime = format(new Date(message.createdDateTime), "h:mm");
     return (
       <div className="group relative px-4 py-[2px] pl-[72px] hover:bg-[#27292d]">
+        <MessageHoverToolbar messageId={message.id} />
         <span
           className="pointer-events-none absolute left-4 top-[3px] w-9 select-none text-right text-[11px] leading-[18px] text-[#6c6f75] opacity-0 transition-opacity duration-100 group-hover:opacity-100"
           title={formatFullTimestamp(message.createdDateTime)}
@@ -41,6 +43,7 @@ export function MessageItem({ message, isGroupHead = true }: Props) {
 
   return (
     <div className="group relative flex gap-2 px-4 pb-[2px] pt-2 hover:bg-[#27292d]">
+      <MessageHoverToolbar messageId={message.id} />
       <Avatar userId={userId} displayName={author} size={36} />
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
