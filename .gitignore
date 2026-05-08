@@ -7,4 +7,5 @@ out/
 dist/
 .DS_Store
 *.pem
+tsconfig.tsbuildinfo
 AGENTS.md
