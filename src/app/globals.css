@@ -1,23 +1,50 @@
 @import "tailwindcss";
 
 @theme {
-  --color-sidebar: #1a1d21;
-  --color-sidebar-hover: #27292d;
-  --color-sidebar-active: #1164a3;
-  --color-surface: #1a1d21;
-  --color-surface-2: #222529;
-  --color-surface-3: #2c2d30;
-  --color-border: #3f4144;
-  --color-text-primary: #d1d2d3;
-  --color-text-secondary: #ababad;
-  --color-text-muted: #6c6f75;
-  --color-accent: #1164a3;
-  --color-accent-hover: #0b4f8a;
-  --color-mention: #cd2553;
-  --color-online: #2bac76;
-  --color-away: #e8a838;
-  --color-busy: #e01e5a;
-  --font-family-sans: "Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-family-sans: var(--font-lato), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+:root {
+  /* Backgrounds */
+  --sidebar-bg: #19171d;
+  --sidebar-hover: #27242c;
+  --sidebar-active-bg: #1164a3;
+  --content-bg: #1a1d21;
+  --message-bg: #222529;
+  --message-hover-bg: #27292d;
+  --input-bg: #222529;
+  --input-border: #565856;
+  --modal-bg: #1a1d21;
+  --modal-overlay: rgba(0, 0, 0, 0.7);
+
+  /* Text */
+  --text-primary: #d1d2d3;
+  --text-secondary: #ababad;
+  --text-muted: #6c6f75;
+  --text-link: #1d9bd1;
+  --text-mention: #cd2553;
+  --text-white: #ffffff;
+
+  /* Borders */
+  --border: #3f4144;
+  --border-input: #565856;
+
+  /* Accent */
+  --accent: #1164a3;
+  --accent-hover: #0b4f8a;
+  --accent-light: rgba(17, 100, 163, 0.15);
+
+  /* Status */
+  --status-online: #2bac76;
+  --status-away: #e8a838;
+  --status-busy: #e01e5a;
+  --status-offline: #6c6f75;
+
+  /* Reactions */
+  --reaction-bg: #2c2d30;
+  --reaction-border: #3f4144;
+  --reaction-active-bg: rgba(17, 100, 163, 0.2);
+  --reaction-active-border: #1164a3;
 }
 
 * {
@@ -29,11 +56,13 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-  font-family: var(--font-family-sans);
+  background: var(--content-bg);
+  color: var(--text-primary);
+  font-family: var(--font-lato), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 15px;
   line-height: 1.46668;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 ::-webkit-scrollbar {
@@ -51,5 +80,5 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #5a5c62;
+  background: #5e6166;
 }
