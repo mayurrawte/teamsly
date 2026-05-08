@@ -1,31 +1,42 @@
 "use client";
 
 import { useWorkspaceStore } from "@/store/workspace";
-import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Settings } from "lucide-react";
+import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Settings, Search } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { SettingsModal } from "@/components/modals/SettingsModal";
+import { SearchModal } from "@/components/modals/SearchModal";
 
 export function DemoSidebar() {
-  const { teams, activeTeamId, channels, chats, setActiveChannel, setActiveChat, activeChannelId, activeChatId } =
+  const { teams, activeTeamId, channels, chats, messages, setActiveChannel, setActiveChat, activeChannelId, activeChatId } =
     useWorkspaceStore();
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const activeTeam = teams.find((t) => t.id === activeTeamId);
   const teamChannels = activeTeamId ? (channels[activeTeamId] ?? []) : [];
 
   return (
     <div className="flex w-[260px] flex-shrink-0 flex-col overflow-hidden bg-[#19171d]">
-      <div className="flex h-[49px] items-center justify-between px-4 shadow-sm">
-        <span className="truncate text-[15px] font-bold text-white">
+      <div className="flex h-[49px] items-center justify-between border-b border-[#3f4144] px-4 hover:bg-[#27242c]">
+        <span className="truncate text-[15px] font-black text-white">
           {activeTeam?.displayName ?? "Teamsly"}
         </span>
         <ChevronDown className="h-4 w-4 text-[#ababad]" />
       </div>
 
-      <div className="flex-1 overflow-y-auto py-2">
+      <button
+        type="button"
+        onClick={() => setSearchOpen(true)}
+        className="mx-3 my-2 flex h-7 items-center gap-2 rounded-md border border-[#565856] bg-[#2c2d30] px-2 text-left text-[13px] text-[#ababad] [transition:border-color_150ms_ease,background_150ms_ease] hover:border-white hover:bg-[#1a1d21] focus:border-white focus:bg-[#1a1d21] focus:outline-none"
+      >
+        <Search className="h-3.5 w-3.5 flex-shrink-0" />
+        <span className="truncate">Search...</span>
+      </button>
+
+      <div className="flex-1 overflow-y-auto pb-2">
         <div className="mb-1">
           <button
             onClick={() => setChannelsOpen((v) => !v)}
@@ -105,6 +116,14 @@ export function DemoSidebar() {
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
         account={{ name: "You (Demo)", initials: "YO", badge: "Demo session" }}
+      />
+      <SearchModal
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        teamName={activeTeam?.displayName ?? "Teamsly"}
+        channels={teamChannels}
+        chats={chats}
+        messages={messages}
       />
     </div>
   );
