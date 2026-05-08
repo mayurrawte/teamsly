@@ -82,3 +82,19 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #5e6166;
 }
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #2c2d30 0%, #383a3e 50%, #2c2d30 100%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s linear infinite;
+  border-radius: 4px;
+}

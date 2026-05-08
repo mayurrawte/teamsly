@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, Fragment } from "react";
 import { MessageItem } from "./MessageItem";
 import { DateDivider } from "./DateDivider";
+import { LoadingSkeleton } from "./LoadingSkeleton";
 
 const GROUP_WINDOW_MS = 7 * 60 * 1000;
 
@@ -20,13 +21,7 @@ export function MessageFeed({ messages, loading }: Props) {
 
   const meta = useMemo(() => computeMeta(messages), [messages]);
 
-  if (loading) {
-    return (
-      <div className="flex flex-1 items-center justify-center">
-        <div className="text-sm text-[#6c6f75]">Loading messages…</div>
-      </div>
-    );
-  }
+  if (loading) return <LoadingSkeleton />;
 
   return (
     <div className="flex flex-1 flex-col overflow-y-auto py-2">
