@@ -7,6 +7,7 @@ import { SettingsModal } from "@/components/modals/SettingsModal";
 import { avatarInitials } from "@/lib/utils/avatar";
 import { Avatar } from "@/components/ui/Avatar";
 import { PresenceDot } from "@/components/ui/PresenceDot";
+import { UserProfilePopover } from "@/components/profile/UserProfilePopover";
 
 export function UserFooter() {
   const { data: session } = useSession();
@@ -20,10 +21,12 @@ export function UserFooter() {
     <>
       <div className="flex items-center justify-between border-t border-[#3f4144] px-3 py-2">
         <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-          <span className="relative flex h-9 w-9 flex-shrink-0">
-            <Avatar userId={email ?? name} displayName={name} size={36} />
-            <PresenceDot availability="Available" />
-          </span>
+          <UserProfilePopover userId={email ?? name} displayName={name} email={email}>
+            <button type="button" className="relative flex h-9 w-9 flex-shrink-0">
+              <Avatar userId={email ?? name} displayName={name} size={36} />
+              <PresenceDot availability="Available" />
+            </button>
+          </UserProfilePopover>
           <div className="min-w-0 overflow-hidden">
             <p className="truncate text-[13px] font-semibold text-white">{name}</p>
             <p className="text-[11px] text-[#2bac76]">● Active</p>

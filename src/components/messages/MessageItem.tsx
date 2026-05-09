@@ -2,6 +2,7 @@
 
 import { format } from "date-fns";
 import { Avatar } from "@/components/ui/Avatar";
+import { UserProfilePopover } from "@/components/profile/UserProfilePopover";
 import { AttachmentCard } from "./AttachmentCard";
 import { MessageHoverToolbar } from "./MessageHoverToolbar";
 import { AddReactionPill, ReactionPill } from "./ReactionPill";
@@ -60,7 +61,11 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
         onReact={onToggleReaction}
         onReplyInThread={() => onReplyInThread?.(message)}
       />
-      <Avatar userId={userId} displayName={author} size={36} />
+      <UserProfilePopover userId={userId} displayName={author}>
+        <button type="button" className="h-9 w-9 flex-shrink-0 text-left">
+          <Avatar userId={userId} displayName={author} size={36} />
+        </button>
+      </UserProfilePopover>
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
           <span className="cursor-pointer text-[15px] font-black text-[#d1d2d3] hover:underline">
