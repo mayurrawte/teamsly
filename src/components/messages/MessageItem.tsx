@@ -2,6 +2,7 @@
 
 import { format } from "date-fns";
 import { Avatar } from "@/components/ui/Avatar";
+import { AttachmentCard } from "./AttachmentCard";
 import { MessageHoverToolbar } from "./MessageHoverToolbar";
 import { AddReactionPill, ReactionPill } from "./ReactionPill";
 import { formatMessageTime, formatFullTimestamp } from "@/lib/utils/dates";
@@ -42,6 +43,7 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
         <div className="whitespace-pre-wrap break-words text-[15px] leading-[1.46668] text-[#d1d2d3]">
           {renderMessageBody(message.body.content, message.body.contentType)}
         </div>
+        <Attachments attachments={message.attachments} />
         <ReactionsRow
           messageId={message.id}
           reactions={message.reactions ?? []}
@@ -74,12 +76,25 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
         <div className="whitespace-pre-wrap break-words text-[15px] leading-[1.46668] text-[#d1d2d3]">
           {renderMessageBody(message.body.content, message.body.contentType)}
         </div>
+        <Attachments attachments={message.attachments} />
         <ReactionsRow
           messageId={message.id}
           reactions={message.reactions ?? []}
           onToggleReaction={onToggleReaction}
         />
       </div>
+    </div>
+  );
+}
+
+function Attachments({ attachments }: { attachments?: MSMessage["attachments"] }) {
+  if (!attachments || attachments.length === 0) return null;
+
+  return (
+    <div className="flex flex-col">
+      {attachments.map((attachment) => (
+        <AttachmentCard key={attachment.id} attachment={attachment} />
+      ))}
     </div>
   );
 }

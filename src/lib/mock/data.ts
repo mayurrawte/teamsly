@@ -59,7 +59,20 @@ export const mockMessages: Record<string, MSMessage[]> = {
     ),
     msg("msg-9", "Sarah Chen", "2026-05-08T10:18:00Z", "Nice catch Ravi. Alex can you grab that one too or should I assign it to someone else?"),
     msg("msg-10", "Alex Kumar", "2026-05-08T10:20:00Z", "I'll grab it, shouldn't take long."),
-    msg("msg-11", "Priya Nair", "2026-05-08T11:45:00Z", "PR #412 reviewed ✅ Left a few minor comments but nothing blocking. LGTM overall."),
+    attachmentMsg(
+      "msg-11",
+      "Priya Nair",
+      "2026-05-08T11:45:00Z",
+      "PR #412 reviewed ✅ Left a few minor comments but nothing blocking. LGTM overall.",
+      [
+        {
+          id: "att-review-notes",
+          contentType: "application/pdf",
+          name: "auth-review-notes.pdf",
+          contentUrl: "https://example.com/auth-review-notes.pdf",
+        },
+      ]
+    ),
     htmlMsg(
       "msg-12",
       "Alex Kumar",
@@ -198,5 +211,18 @@ function reactedMsg(
       reactionType,
       user: { id: userId, displayName: userName },
     })),
+  };
+}
+
+function attachmentMsg(
+  id: string,
+  displayName: string,
+  createdDateTime: string,
+  content: string,
+  attachments: NonNullable<MSMessage["attachments"]>
+): MSMessage {
+  return {
+    ...msg(id, displayName, createdDateTime, content),
+    attachments,
   };
 }
