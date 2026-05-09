@@ -10,6 +10,7 @@ interface WorkspaceState {
   messages: MSMessage[];
   isLoadingMessages: boolean;
   presenceMap: Record<string, MSPresence["availability"]>;
+  unreadCounts: Record<string, number>;
 
   setTeams: (teams: MSTeam[]) => void;
   setActiveTeam: (id: string) => void;
@@ -22,7 +23,12 @@ interface WorkspaceState {
   toggleReaction: (messageId: string, reactionType: string) => void;
   setLoadingMessages: (v: boolean) => void;
   setPresenceMap: (presenceMap: Record<string, MSPresence["availability"]>) => void;
+  initUnreadCounts: (counts: Record<string, number>) => void;
+  setUnreadCount: (id: string, count: number) => void;
+  markRead: (id: string) => void;
 }
+
+const UNREAD_STORAGE_KEY = "teamsly:unread-counts";
 
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   teams: [],
@@ -34,6 +40,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   messages: [],
   isLoadingMessages: false,
   presenceMap: {},
+  unreadCounts: {},
 
   setTeams: (teams) => set({ teams }),
   setActiveTeam: (id) => set({ activeTeamId: id, activeChannelId: null, messages: [] }),
@@ -67,4 +74,41 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
     })),
   setLoadingMessages: (v) => set({ isLoadingMessages: v }),
   setPresenceMap: (presenceMap) => set({ presenceMap }),
+  initUnreadCounts: (counts) => {
+    const stored = readUnreadCounts();
+    set({ unreadCounts: stored ?? counts });
+    if (!stored) writeUnreadCounts(counts);
+  },
+  setUnreadCount: (id, count) =>
+    set((s) => {
+      const next = { ...s.unreadCounts, [id]: count };
+      if (count <= 0) delete next[id];
+      writeUnreadCounts(next);
+      return { unreadCounts: next };
+    }),
+  markRead: (id) =>
+    set((s) => {
+      if (!s.unreadCounts[id]) return s;
+      const next = { ...s.unreadCounts };
+      delete next[id];
+      writeUnreadCounts(next);
+      return { unreadCounts: next };
+    }),
 }));
+
+function readUnreadCounts(): Record<string, number> | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.localStorage.getItem(UNREAD_STORAGE_KEY);
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw) as Record<string, number>;
+  } catch {
+    return null;
+  }
+}
+
+function writeUnreadCounts(counts: Record<string, number>) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(UNREAD_STORAGE_KEY, JSON.stringify(counts));
+}

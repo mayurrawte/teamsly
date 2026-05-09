@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useWorkspaceStore } from "@/store/workspace";
-import { mockTeams, mockChannels, mockChats, mockPresence } from "@/lib/mock/data";
+import { mockTeams, mockChannels, mockChats, mockPresence, mockUnreadCounts } from "@/lib/mock/data";
 import { DemoSidebar } from "@/components/sidebar/DemoSidebar";
 import { DemoWorkspaceBar } from "@/components/sidebar/DemoWorkspaceBar";
 import { DemoChannelView } from "@/components/messages/DemoChannelView";
@@ -11,7 +11,7 @@ import { JumpToSwitcher, type JumpToItem } from "@/components/modals/JumpToSwitc
 import Link from "next/link";
 
 export function DemoShell() {
-  const { teams, channels, chats, setTeams, setChannels, setChats, setActiveTeam, activeTeamId, activeChannelId, activeChatId, setActiveChannel, setActiveChat, setPresenceMap } =
+  const { teams, channels, chats, setTeams, setChannels, setChats, setActiveTeam, activeTeamId, activeChannelId, activeChatId, setActiveChannel, setActiveChat, setPresenceMap, initUnreadCounts, markRead } =
     useWorkspaceStore();
   const [jumpToOpen, setJumpToOpen] = useState(false);
 
@@ -20,6 +20,7 @@ export function DemoShell() {
     mockTeams.forEach((t) => setChannels(t.id, mockChannels[t.id] ?? []));
     setChats(mockChats);
     setPresenceMap(mockPresence);
+    initUnreadCounts(mockUnreadCounts);
     setActiveTeam(mockTeams[0].id);
   }, []);
 
@@ -45,17 +46,23 @@ export function DemoShell() {
         label: channel.displayName,
         subtitle: teamName,
         private: channel.membershipType === "private",
-        onSelect: () => setActiveChannel(channel.id),
+        onSelect: () => {
+          markRead(channel.id);
+          setActiveChannel(channel.id);
+        },
       })),
       ...chats.map((chat) => ({
         id: chat.id,
         type: "dm" as const,
         label: chat.topic ?? chat.members?.map((member) => member.displayName).join(", ") ?? "DM",
         subtitle: chat.chatType === "group" ? "Group DM" : "Direct message",
-        onSelect: () => setActiveChat(chat.id),
+        onSelect: () => {
+          markRead(chat.id);
+          setActiveChat(chat.id);
+        },
       })),
     ];
-  }, [activeTeamId, channels, chats, setActiveChannel, setActiveChat, teams]);
+  }, [activeTeamId, channels, chats, markRead, setActiveChannel, setActiveChat, teams]);
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">

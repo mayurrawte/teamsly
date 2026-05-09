@@ -11,7 +11,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { PresenceDot } from "@/components/ui/PresenceDot";
 
 export function Sidebar() {
-  const { teams, activeTeamId, channels, chats, messages, presenceMap, setChats, setActiveChannel, setActiveChat } =
+  const { teams, activeTeamId, channels, chats, messages, presenceMap, unreadCounts, setChats, setActiveChannel, setActiveChat, markRead } =
     useWorkspaceStore();
   const router = useRouter();
   const params = useParams();
@@ -30,11 +30,13 @@ export function Sidebar() {
 
   function goToChannel(channelId: string) {
     if (!activeTeamId) return;
+    markRead(channelId);
     setActiveChannel(channelId);
     router.push(`/app/t/${activeTeamId}/${channelId}`);
   }
 
   function goToChat(chatId: string) {
+    markRead(chatId);
     setActiveChat(chatId);
     router.push(`/app/dm/${chatId}`);
   }
@@ -90,6 +92,7 @@ export function Sidebar() {
                   )
                 }
                 active={params?.channelId === ch.id}
+                unreadCount={unreadCounts[ch.id] ?? 0}
                 onClick={() => goToChannel(ch.id)}
               />
             ))}
@@ -120,6 +123,7 @@ export function Sidebar() {
                 label={getChatLabel(chat)}
                 icon={<ChatAvatar chat={chat} presenceMap={presenceMap} />}
                 active={params?.chatId === chat.id}
+                unreadCount={unreadCounts[chat.id] ?? 0}
                 onClick={() => goToChat(chat.id)}
               />
             ))}
@@ -143,13 +147,17 @@ function SidebarItem({
   label,
   icon,
   active,
+  unreadCount = 0,
   onClick,
 }: {
   label: string;
   icon: React.ReactNode;
   active: boolean;
+  unreadCount?: number;
   onClick: () => void;
 }) {
+  const unread = unreadCount > 0 && !active;
+
   return (
     <button
       onClick={onClick}
@@ -161,7 +169,12 @@ function SidebarItem({
       )}
     >
       <span className="flex-shrink-0 opacity-70">{icon}</span>
-      <span className="truncate">{label}</span>
+      <span className={cn("truncate", unread && "font-black text-white")}>{label}</span>
+      {unread && (
+        <span className="ml-auto flex h-[18px] min-w-[18px] flex-shrink-0 scale-100 items-center justify-center rounded-full bg-[#cd2553] px-[5px] text-[11px] font-bold text-white transition-transform duration-150">
+          {unreadCount > 99 ? "99+" : unreadCount}
+        </span>
+      )}
     </button>
   );
 }

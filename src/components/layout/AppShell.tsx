@@ -9,7 +9,7 @@ import { useWorkspaceStore } from "@/store/workspace";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { teams, activeTeamId, channels, chats, setActiveChannel, setActiveChat } = useWorkspaceStore();
+  const { teams, activeTeamId, channels, chats, setActiveChannel, setActiveChat, markRead } = useWorkspaceStore();
   const [jumpToOpen, setJumpToOpen] = useState(false);
 
   useEffect(() => {
@@ -35,6 +35,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       private: channel.membershipType === "private",
       onSelect: () => {
         if (!activeTeamId) return;
+        markRead(channel.id);
         setActiveChannel(channel.id);
         router.push(`/app/t/${activeTeamId}/${channel.id}`);
       },
@@ -45,12 +46,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       label: chat.topic ?? chat.members?.map((member) => member.displayName).join(", ") ?? "Direct Message",
       subtitle: chat.chatType === "group" ? "Group DM" : "Direct message",
       onSelect: () => {
+        markRead(chat.id);
         setActiveChat(chat.id);
         router.push(`/app/dm/${chat.id}`);
       },
     }));
     return [...channelItems, ...chatItems];
-  }, [activeTeamId, channels, chats, router, setActiveChannel, setActiveChat, teams]);
+  }, [activeTeamId, channels, chats, markRead, router, setActiveChannel, setActiveChat, teams]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#1a1d21]">

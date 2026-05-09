@@ -10,7 +10,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { PresenceDot } from "@/components/ui/PresenceDot";
 
 export function DemoSidebar() {
-  const { teams, activeTeamId, channels, chats, messages, presenceMap, setActiveChannel, setActiveChat, activeChannelId, activeChatId } =
+  const { teams, activeTeamId, channels, chats, messages, presenceMap, unreadCounts, setActiveChannel, setActiveChat, activeChannelId, activeChatId, markRead } =
     useWorkspaceStore();
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
@@ -69,7 +69,11 @@ export function DemoSidebar() {
                   )
                 }
                 active={activeChannelId === ch.id}
-                onClick={() => setActiveChannel(ch.id)}
+                unreadCount={unreadCounts[ch.id] ?? 0}
+                onClick={() => {
+                  markRead(ch.id);
+                  setActiveChannel(ch.id);
+                }}
               />
             ))}
         </div>
@@ -101,7 +105,11 @@ export function DemoSidebar() {
                   label={label}
                   icon={<ChatAvatar chat={chat} presenceMap={presenceMap} />}
                   active={activeChatId === chat.id}
-                  onClick={() => setActiveChat(chat.id)}
+                  unreadCount={unreadCounts[chat.id] ?? 0}
+                  onClick={() => {
+                    markRead(chat.id);
+                    setActiveChat(chat.id);
+                  }}
                 />
               );
             })}
@@ -170,10 +178,12 @@ function ChatAvatar({
 }
 
 function SidebarItem({
-  label, icon, active, onClick,
+  label, icon, active, unreadCount = 0, onClick,
 }: {
-  label: string; icon: React.ReactNode; active: boolean; onClick: () => void;
+  label: string; icon: React.ReactNode; active: boolean; unreadCount?: number; onClick: () => void;
 }) {
+  const unread = unreadCount > 0 && !active;
+
   return (
     <button
       onClick={onClick}
@@ -183,7 +193,12 @@ function SidebarItem({
       )}
     >
       <span className="flex-shrink-0 opacity-70">{icon}</span>
-      <span className="truncate">{label}</span>
+      <span className={cn("truncate", unread && "font-black text-white")}>{label}</span>
+      {unread && (
+        <span className="ml-auto flex h-[18px] min-w-[18px] flex-shrink-0 scale-100 items-center justify-center rounded-full bg-[#cd2553] px-[5px] text-[11px] font-bold text-white transition-transform duration-150">
+          {unreadCount > 99 ? "99+" : unreadCount}
+        </span>
+      )}
     </button>
   );
 }
