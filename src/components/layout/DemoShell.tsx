@@ -1,17 +1,19 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useWorkspaceStore } from "@/store/workspace";
 import { mockTeams, mockChannels, mockChats } from "@/lib/mock/data";
 import { DemoSidebar } from "@/components/sidebar/DemoSidebar";
 import { DemoWorkspaceBar } from "@/components/sidebar/DemoWorkspaceBar";
 import { DemoChannelView } from "@/components/messages/DemoChannelView";
 import { DemoChatView } from "@/components/messages/DemoChatView";
+import { JumpToSwitcher, type JumpToItem } from "@/components/modals/JumpToSwitcher";
 import Link from "next/link";
 
 export function DemoShell() {
-  const { setTeams, setChannels, setChats, setActiveTeam, activeTeamId, activeChannelId, activeChatId } =
+  const { teams, channels, chats, setTeams, setChannels, setChats, setActiveTeam, activeTeamId, activeChannelId, activeChatId, setActiveChannel, setActiveChat } =
     useWorkspaceStore();
+  const [jumpToOpen, setJumpToOpen] = useState(false);
 
   useEffect(() => {
     setTeams(mockTeams);
@@ -19,6 +21,40 @@ export function DemoShell() {
     setChats(mockChats);
     setActiveTeam(mockTeams[0].id);
   }, []);
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setJumpToOpen(true);
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  const jumpItems = useMemo<JumpToItem[]>(() => {
+    const teamName = teams.find((team) => team.id === activeTeamId)?.displayName ?? "Teamsly";
+    const teamChannels = activeTeamId ? (channels[activeTeamId] ?? []) : [];
+    return [
+      ...teamChannels.map((channel) => ({
+        id: channel.id,
+        type: "channel" as const,
+        label: channel.displayName,
+        subtitle: teamName,
+        private: channel.membershipType === "private",
+        onSelect: () => setActiveChannel(channel.id),
+      })),
+      ...chats.map((chat) => ({
+        id: chat.id,
+        type: "dm" as const,
+        label: chat.topic ?? chat.members?.map((member) => member.displayName).join(", ") ?? "DM",
+        subtitle: chat.chatType === "group" ? "Group DM" : "Direct message",
+        onSelect: () => setActiveChat(chat.id),
+      })),
+    ];
+  }, [activeTeamId, channels, chats, setActiveChannel, setActiveChat, teams]);
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
@@ -48,6 +84,7 @@ export function DemoShell() {
           )}
         </main>
       </div>
+      <JumpToSwitcher open={jumpToOpen} onOpenChange={setJumpToOpen} items={jumpItems} />
     </div>
   );
 }
