@@ -6,18 +6,21 @@ import { DateDivider } from "./DateDivider";
 import { LoadingSkeleton } from "./LoadingSkeleton";
 import { AiSummaryBanner } from "./AiSummaryBanner";
 import type { ReactionType } from "@/lib/utils/reactions";
+import { useSmartNotifications } from "@/hooks/useSmartNotifications";
 
 const GROUP_WINDOW_MS = 7 * 60 * 1000;
 
 interface Props {
   messages: MSMessage[];
   loading: boolean;
+  contextName?: string;
   onReplyInThread?: (message: MSMessage) => void;
   onToggleReaction?: (messageId: string, reactionType: ReactionType) => void;
 }
 
-export function MessageFeed({ messages, loading, onReplyInThread, onToggleReaction }: Props) {
+export function MessageFeed({ messages, loading, contextName, onReplyInThread, onToggleReaction }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  useSmartNotifications({ messages, contextName });
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

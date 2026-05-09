@@ -44,6 +44,7 @@ export function DemoChannelView({ channelId }: { channelId: string }) {
       <MessageFeed
         messages={messages}
         loading={false}
+        contextName={channel?.displayName ? `#${channel.displayName}` : "Channel"}
         onReplyInThread={setThreadMessage}
         onToggleReaction={toggleReaction}
       />

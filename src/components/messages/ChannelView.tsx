@@ -50,6 +50,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
       <MessageFeed
         messages={messages}
         loading={isLoadingMessages}
+        contextName={channel?.displayName ? `#${channel.displayName}` : "Channel"}
         onReplyInThread={setThreadMessage}
         onToggleReaction={toggleReaction}
       />

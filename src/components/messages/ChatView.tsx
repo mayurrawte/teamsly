@@ -52,6 +52,7 @@ export function ChatView({ chatId }: { chatId: string }) {
       <MessageFeed
         messages={messages}
         loading={isLoadingMessages}
+        contextName={label}
         onReplyInThread={setThreadMessage}
         onToggleReaction={toggleReaction}
       />

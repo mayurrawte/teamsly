@@ -38,6 +38,7 @@ export function DemoChatView({ chatId }: { chatId: string }) {
       <MessageFeed
         messages={messages}
         loading={false}
+        contextName={label}
         onReplyInThread={setThreadMessage}
         onToggleReaction={toggleReaction}
       />

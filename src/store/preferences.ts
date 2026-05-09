@@ -10,6 +10,7 @@ export interface Preferences {
   desktopNotifications: boolean;
   notificationSound: boolean;
   mentionsOnly: boolean;
+  notificationKeywords: string;
 }
 
 interface PreferencesState extends Preferences {
@@ -17,6 +18,7 @@ interface PreferencesState extends Preferences {
   setDesktopNotifications: (v: boolean) => void;
   setNotificationSound: (v: boolean) => void;
   setMentionsOnly: (v: boolean) => void;
+  setNotificationKeywords: (v: string) => void;
   reset: () => void;
 }
 
@@ -25,6 +27,7 @@ const DEFAULTS: Preferences = {
   desktopNotifications: true,
   notificationSound: true,
   mentionsOnly: false,
+  notificationKeywords: "",
 };
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -35,6 +38,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       setDesktopNotifications: (desktopNotifications) => set({ desktopNotifications }),
       setNotificationSound: (notificationSound) => set({ notificationSound }),
       setMentionsOnly: (mentionsOnly) => set({ mentionsOnly }),
+      setNotificationKeywords: (notificationKeywords) => set({ notificationKeywords }),
       reset: () => set(DEFAULTS),
     }),
     {

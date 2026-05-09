@@ -140,9 +140,11 @@ function NotificationsPanel() {
   const desktop = usePreferencesStore((s) => s.desktopNotifications);
   const sound = usePreferencesStore((s) => s.notificationSound);
   const mentionsOnly = usePreferencesStore((s) => s.mentionsOnly);
+  const keywords = usePreferencesStore((s) => s.notificationKeywords);
   const setDesktop = usePreferencesStore((s) => s.setDesktopNotifications);
   const setSound = usePreferencesStore((s) => s.setNotificationSound);
   const setMentionsOnly = usePreferencesStore((s) => s.setMentionsOnly);
+  const setKeywords = usePreferencesStore((s) => s.setNotificationKeywords);
 
   return (
     <div className="flex flex-col gap-4">
@@ -164,8 +166,16 @@ function NotificationsPanel() {
         value={mentionsOnly}
         onChange={setMentionsOnly}
       />
+      <FieldGroup label="Keyword alerts" hint="Comma-separated words that can trigger smart notifications.">
+        <input
+          value={keywords}
+          onChange={(event) => setKeywords(event.target.value)}
+          placeholder="launch, incident, blocker"
+          className="h-8 rounded-md border border-[#3f4144] bg-[#222529] px-3 text-[13px] text-[#d1d2d3] outline-none transition-colors duration-150 placeholder:text-[#6c6f75] focus:border-white"
+        />
+      </FieldGroup>
       <p className="mt-2 text-[12px] text-[#6c6f75]">
-        These preferences are saved locally. Wiring them to the Browser Notification API arrives with Priority 4.
+        Smart notifications use the Browser Notification API when Pro is enabled.
       </p>
     </div>
   );
