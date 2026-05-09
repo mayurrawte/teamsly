@@ -3,15 +3,18 @@
 import { format } from "date-fns";
 import { Avatar } from "@/components/ui/Avatar";
 import { MessageHoverToolbar } from "./MessageHoverToolbar";
+import { AddReactionPill, ReactionPill } from "./ReactionPill";
 import { formatMessageTime, formatFullTimestamp } from "@/lib/utils/dates";
+import type { ReactionType } from "@/lib/utils/reactions";
 
 interface Props {
   message: MSMessage;
   isGroupHead?: boolean;
   onReplyInThread?: (message: MSMessage) => void;
+  onToggleReaction?: (messageId: string, reactionType: ReactionType) => void;
 }
 
-export function MessageItem({ message, isGroupHead = true, onReplyInThread }: Props) {
+export function MessageItem({ message, isGroupHead = true, onReplyInThread, onToggleReaction }: Props) {
   if (message.deletedDateTime) return null;
 
   const author = message.from?.user?.displayName ?? "Unknown";
@@ -27,7 +30,11 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread }: Pr
     const shortTime = format(new Date(message.createdDateTime), "h:mm");
     return (
       <div className="group relative px-4 py-[2px] pl-[72px] transition-colors duration-[80ms] ease-out hover:bg-[#27292d]">
-        <MessageHoverToolbar messageId={message.id} onReplyInThread={() => onReplyInThread?.(message)} />
+        <MessageHoverToolbar
+          messageId={message.id}
+          onReact={onToggleReaction}
+          onReplyInThread={() => onReplyInThread?.(message)}
+        />
         <span
           className="pointer-events-none absolute left-4 top-[3px] w-9 select-none text-right text-[11px] leading-[18px] text-[#6c6f75] opacity-0 transition-opacity duration-100 group-hover:opacity-100"
           title={formatFullTimestamp(message.createdDateTime)}
@@ -37,14 +44,22 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread }: Pr
         <p className="whitespace-pre-wrap break-words text-[15px] leading-[1.46668] text-[#d1d2d3]">
           {content}
         </p>
-        {hasReactions(message) && <ReactionsRow reactions={message.reactions!} />}
+        <ReactionsRow
+          messageId={message.id}
+          reactions={message.reactions ?? []}
+          onToggleReaction={onToggleReaction}
+        />
       </div>
     );
   }
 
   return (
     <div className="group relative flex gap-2 px-4 pb-[2px] pt-2 transition-colors duration-[80ms] ease-out hover:bg-[#27292d]">
-      <MessageHoverToolbar messageId={message.id} onReplyInThread={() => onReplyInThread?.(message)} />
+      <MessageHoverToolbar
+        messageId={message.id}
+        onReact={onToggleReaction}
+        onReplyInThread={() => onReplyInThread?.(message)}
+      />
       <Avatar userId={userId} displayName={author} size={36} />
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
@@ -61,31 +76,50 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread }: Pr
         <p className="whitespace-pre-wrap break-words text-[15px] leading-[1.46668] text-[#d1d2d3]">
           {content}
         </p>
-        {hasReactions(message) && <ReactionsRow reactions={message.reactions!} />}
+        <ReactionsRow
+          messageId={message.id}
+          reactions={message.reactions ?? []}
+          onToggleReaction={onToggleReaction}
+        />
       </div>
     </div>
   );
 }
 
-function hasReactions(message: MSMessage): boolean {
-  return Boolean(message.reactions && message.reactions.length > 0);
-}
+function ReactionsRow({
+  messageId,
+  reactions,
+  onToggleReaction,
+}: {
+  messageId: string;
+  reactions: NonNullable<MSMessage["reactions"]>;
+  onToggleReaction?: (messageId: string, reactionType: ReactionType) => void;
+}) {
+  if (reactions.length === 0 && !onToggleReaction) return null;
 
-function ReactionsRow({ reactions }: { reactions: NonNullable<MSMessage["reactions"]> }) {
-  const grouped = reactions.reduce<Record<string, number>>((acc, r) => {
-    acc[r.reactionType] = (acc[r.reactionType] ?? 0) + 1;
+  const grouped = reactions.reduce<Record<string, { count: number; active: boolean }>>((acc, reaction) => {
+    const current = acc[reaction.reactionType] ?? { count: 0, active: false };
+    acc[reaction.reactionType] = {
+      count: current.count + 1,
+      active: current.active || reaction.user.id === "you",
+    };
     return acc;
   }, {});
+
   return (
     <div className="mt-1 flex flex-wrap gap-1">
-      {Object.entries(grouped).map(([emoji, count]) => (
-        <span
-          key={emoji}
-          className="inline-flex items-center gap-1 rounded-full border border-[#3f4144] bg-[#2c2d30] px-2 py-0.5 text-[13px] text-[#ababad] transition-colors duration-150 hover:border-[#1164a3] hover:bg-[rgba(17,100,163,0.1)]"
-        >
-          {emoji} {count}
-        </span>
+      {Object.entries(grouped).map(([reactionType, reaction]) => (
+        <ReactionPill
+          key={reactionType}
+          reactionType={reactionType}
+          count={reaction.count}
+          active={reaction.active}
+          onClick={() => onToggleReaction?.(messageId, reactionType as ReactionType)}
+        />
       ))}
+      {onToggleReaction && (
+        <AddReactionPill onSelect={(reactionType) => onToggleReaction(messageId, reactionType)} />
+      )}
     </div>
   );
 }

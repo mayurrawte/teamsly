@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, Fragment } from "react";
 import { MessageItem } from "./MessageItem";
 import { DateDivider } from "./DateDivider";
 import { LoadingSkeleton } from "./LoadingSkeleton";
+import type { ReactionType } from "@/lib/utils/reactions";
 
 const GROUP_WINDOW_MS = 7 * 60 * 1000;
 
@@ -11,9 +12,10 @@ interface Props {
   messages: MSMessage[];
   loading: boolean;
   onReplyInThread?: (message: MSMessage) => void;
+  onToggleReaction?: (messageId: string, reactionType: ReactionType) => void;
 }
 
-export function MessageFeed({ messages, loading, onReplyInThread }: Props) {
+export function MessageFeed({ messages, loading, onReplyInThread, onToggleReaction }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,6 +40,7 @@ export function MessageFeed({ messages, loading, onReplyInThread }: Props) {
             message={msg}
             isGroupHead={meta[idx].isGroupHead}
             onReplyInThread={onReplyInThread}
+            onToggleReaction={onToggleReaction}
           />
         </Fragment>
       ))}

@@ -18,6 +18,7 @@ interface WorkspaceState {
   setActiveChat: (id: string | null) => void;
   setMessages: (messages: MSMessage[]) => void;
   appendMessage: (message: MSMessage) => void;
+  toggleReaction: (messageId: string, reactionType: string) => void;
   setLoadingMessages: (v: boolean) => void;
 }
 
@@ -40,5 +41,26 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setActiveChat: (id) => set({ activeChatId: id, activeChannelId: null, messages: [] }),
   setMessages: (messages) => set({ messages }),
   appendMessage: (message) => set((s) => ({ messages: [...s.messages, message] })),
+  toggleReaction: (messageId, reactionType) =>
+    set((s) => ({
+      messages: s.messages.map((message) => {
+        if (message.id !== messageId) return message;
+
+        const reactions = message.reactions ?? [];
+        const existing = reactions.find(
+          (reaction) => reaction.reactionType === reactionType && reaction.user.id === "you"
+        );
+
+        return {
+          ...message,
+          reactions: existing
+            ? reactions.filter((reaction) => reaction !== existing)
+            : [
+                ...reactions,
+                { reactionType, user: { id: "you", displayName: "You" } },
+              ],
+        };
+      }),
+    })),
   setLoadingMessages: (v) => set({ isLoadingMessages: v }),
 }));

@@ -8,7 +8,7 @@ import { ThreadPanel } from "./ThreadPanel";
 import { MessageSquare } from "lucide-react";
 
 export function ChatView({ chatId }: { chatId: string }) {
-  const { chats, messages, isLoadingMessages, setMessages, appendMessage, setLoadingMessages } =
+  const { chats, messages, isLoadingMessages, setMessages, appendMessage, setLoadingMessages, toggleReaction } =
     useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
 
@@ -49,7 +49,12 @@ export function ChatView({ chatId }: { chatId: string }) {
         <MessageSquare className="h-4 w-4 text-[#ababad]" />
         <span className="font-bold text-white">{label}</span>
       </div>
-      <MessageFeed messages={messages} loading={isLoadingMessages} onReplyInThread={setThreadMessage} />
+      <MessageFeed
+        messages={messages}
+        loading={isLoadingMessages}
+        onReplyInThread={setThreadMessage}
+        onToggleReaction={toggleReaction}
+      />
       <MessageInput placeholder={`Message ${label}`} onSend={handleSend} />
       <ThreadPanel
         open={Boolean(threadMessage)}

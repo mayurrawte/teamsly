@@ -8,7 +8,7 @@ import { ThreadPanel } from "./ThreadPanel";
 import { Hash } from "lucide-react";
 
 export function ChannelView({ teamId, channelId }: { teamId: string; channelId: string }) {
-  const { teams, channels, messages, isLoadingMessages, setMessages, appendMessage, setLoadingMessages } =
+  const { teams, channels, messages, isLoadingMessages, setMessages, appendMessage, setLoadingMessages, toggleReaction } =
     useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
 
@@ -47,7 +47,12 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
   return (
     <div className="relative flex h-full flex-col overflow-hidden">
       <ChannelHeader name={channel?.displayName} teamName={team?.displayName} />
-      <MessageFeed messages={messages} loading={isLoadingMessages} onReplyInThread={setThreadMessage} />
+      <MessageFeed
+        messages={messages}
+        loading={isLoadingMessages}
+        onReplyInThread={setThreadMessage}
+        onToggleReaction={toggleReaction}
+      />
       <MessageInput
         placeholder={`Message #${channel?.displayName ?? "channel"}`}
         onSend={handleSend}

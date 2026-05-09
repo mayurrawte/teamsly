@@ -30,7 +30,16 @@ export const mockMessages: Record<string, MSMessage[]> = {
     msg("msg-2", "Alex Kumar", "2026-05-08T08:05:00Z", "Morning! I'll be 2 mins late, just finishing a PR review."),
     msg("msg-3", "Jordan Lee", "2026-05-08T08:06:00Z", "No worries, I'll start the call. Link is in the calendar."),
     msg("msg-4", "Sarah Chen", "2026-05-08T09:15:00Z", "Standup notes are up in Notion. Key blockers: auth flow needs backend review before we can ship the onboarding."),
-    msg("msg-5", "Priya Nair", "2026-05-08T09:22:00Z", "I can take a look at auth this afternoon. @Alex can you share the PR link?"),
+    reactedMsg(
+      "msg-5",
+      "Priya Nair",
+      "2026-05-08T09:22:00Z",
+      "I can take a look at auth this afternoon. @Alex can you share the PR link?",
+      [
+        ["like", "u-sarah", "Sarah Chen"],
+        ["heart", "you", "You"],
+      ]
+    ),
     msg("msg-6", "Alex Kumar", "2026-05-08T09:24:00Z", "Sure, PR #412 — https://github.com/example/app/pull/412. Main thing to check is the token refresh logic."),
     msg("msg-7", "Jordan Lee", "2026-05-08T10:00:00Z", "Deploy to staging is done. QA team please take a look when you get a chance."),
     threadedMsg(
@@ -138,5 +147,21 @@ function threadedMsg(
     replies: replies.map(([replyId, replyAuthor, replyTime, replyContent]) =>
       msg(replyId, replyAuthor, replyTime, replyContent)
     ),
+  };
+}
+
+function reactedMsg(
+  id: string,
+  displayName: string,
+  createdDateTime: string,
+  content: string,
+  reactions: Array<[string, string, string]>
+): MSMessage {
+  return {
+    ...msg(id, displayName, createdDateTime, content),
+    reactions: reactions.map(([reactionType, userId, userName]) => ({
+      reactionType,
+      user: { id: userId, displayName: userName },
+    })),
   };
 }

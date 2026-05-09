@@ -9,7 +9,7 @@ import { ThreadPanel } from "./ThreadPanel";
 import { Hash, Lock } from "lucide-react";
 
 export function DemoChannelView({ channelId }: { channelId: string }) {
-  const { activeTeamId, channels, messages, setMessages, appendMessage } = useWorkspaceStore();
+  const { activeTeamId, channels, messages, setMessages, appendMessage, toggleReaction } = useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const teamChannels = activeTeamId ? (channels[activeTeamId] ?? []) : [];
   const channel = teamChannels.find((c) => c.id === channelId);
@@ -41,7 +41,12 @@ export function DemoChannelView({ channelId }: { channelId: string }) {
         <span className="font-bold text-white">{channel?.displayName ?? channelId}</span>
         <span className="text-sm text-[#6c6f75]">— demo mode</span>
       </div>
-      <MessageFeed messages={messages} loading={false} onReplyInThread={setThreadMessage} />
+      <MessageFeed
+        messages={messages}
+        loading={false}
+        onReplyInThread={setThreadMessage}
+        onToggleReaction={toggleReaction}
+      />
       <MessageInput
         placeholder={`Message #${channel?.displayName ?? "channel"}`}
         onSend={handleSend}

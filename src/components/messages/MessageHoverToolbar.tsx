@@ -1,10 +1,12 @@
 "use client";
 
 import { Smile, MessageSquare, Forward, Pin, MoreHorizontal, type LucideIcon } from "lucide-react";
+import { EmojiPicker } from "./EmojiPicker";
+import type { ReactionType } from "@/lib/utils/reactions";
 
 interface Props {
   messageId: string;
-  onReact?: (messageId: string) => void;
+  onReact?: (messageId: string, reactionType: ReactionType) => void;
   onReplyInThread?: (messageId: string) => void;
   onForward?: (messageId: string) => void;
   onPin?: (messageId: string) => void;
@@ -25,7 +27,9 @@ export function MessageHoverToolbar({
       role="toolbar"
       aria-label="Message actions"
     >
-      <ToolbarButton icon={Smile} label="Add reaction" onClick={() => onReact?.(messageId)} />
+      <EmojiPicker onSelect={(reactionType) => onReact?.(messageId, reactionType)}>
+        <ToolbarButton icon={Smile} label="Add reaction" />
+      </EmojiPicker>
       <ToolbarButton icon={MessageSquare} label="Reply in thread" onClick={() => onReplyInThread?.(messageId)} />
       <ToolbarButton icon={Forward} label="Forward message" onClick={() => onForward?.(messageId)} />
       <ToolbarButton icon={Pin} label="Pin message" onClick={() => onPin?.(messageId)} />
@@ -37,7 +41,7 @@ export function MessageHoverToolbar({
 interface ToolbarButtonProps {
   icon: LucideIcon;
   label: string;
-  onClick: () => void;
+  onClick?: () => void;
 }
 
 function ToolbarButton({ icon: Icon, label, onClick }: ToolbarButtonProps) {
