@@ -9,6 +9,8 @@ import { AddReactionPill, ReactionPill } from "./ReactionPill";
 import { formatMessageTime, formatFullTimestamp } from "@/lib/utils/dates";
 import { messagePlainText, renderMessageBody } from "@/lib/utils/render-message";
 import type { ReactionType } from "@/lib/utils/reactions";
+import { usePreferencesStore } from "@/store/preferences";
+import { cn } from "@/lib/utils";
 
 interface Props {
   message: MSMessage;
@@ -18,6 +20,8 @@ interface Props {
 }
 
 export function MessageItem({ message, isGroupHead = true, onReplyInThread, onToggleReaction }: Props) {
+  const density = usePreferencesStore((state) => state.density);
+
   if (message.deletedDateTime) return null;
 
   const author = message.from?.user?.displayName ?? "Unknown";
@@ -29,7 +33,12 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
   if (!isGroupHead) {
     const shortTime = format(new Date(message.createdDateTime), "h:mm");
     return (
-      <div className="group relative px-4 py-[2px] pl-[72px] transition-colors duration-[80ms] ease-out hover:bg-[#27292d]">
+      <div
+        className={cn(
+          "group relative px-4 pl-[72px] transition-colors duration-[80ms] ease-out hover:bg-[#27292d]",
+          density === "compact" ? "py-0" : "py-[2px]"
+        )}
+      >
         <MessageHoverToolbar
           messageId={message.id}
           onReact={onToggleReaction}
@@ -55,7 +64,12 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
   }
 
   return (
-    <div className="group relative flex gap-2 px-4 pb-[2px] pt-2 transition-colors duration-[80ms] ease-out hover:bg-[#27292d]">
+    <div
+      className={cn(
+        "group relative flex gap-2 px-4 transition-colors duration-[80ms] ease-out hover:bg-[#27292d]",
+        density === "compact" ? "pb-0 pt-1" : "pb-[2px] pt-2"
+      )}
+    >
       <MessageHoverToolbar
         messageId={message.id}
         onReact={onToggleReaction}
