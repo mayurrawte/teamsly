@@ -1,21 +1,19 @@
 "use client";
 
 import { useWorkspaceStore } from "@/store/workspace";
-import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Settings, Search } from "lucide-react";
+import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { SettingsModal } from "@/components/modals/SettingsModal";
 import { SearchModal } from "@/components/modals/SearchModal";
 import { Avatar } from "@/components/ui/Avatar";
 import { PresenceDot } from "@/components/ui/PresenceDot";
-import { UserProfilePopover } from "@/components/profile/UserProfilePopover";
+import { DemoUserFooter } from "./DemoUserFooter";
 
 export function DemoSidebar() {
   const { teams, activeTeamId, channels, chats, messages, presenceMap, unreadCounts, setActiveChannel, setActiveChat, activeChannelId, activeChatId, markRead } =
     useWorkspaceStore();
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
   const activeTeam = teams.find((t) => t.id === activeTeamId);
@@ -136,36 +134,7 @@ export function DemoSidebar() {
         </div>
       </div>
 
-      {/* Mock user footer */}
-      <div className="flex items-center justify-between border-t border-[#3f4144] px-3 py-2">
-        <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-          <UserProfilePopover userId="you" displayName="You (Demo)" availability={presenceMap.you ?? "Available"}>
-            <button type="button" className="relative flex h-9 w-9 flex-shrink-0">
-              <Avatar userId="you" displayName="You (Demo)" size={36} />
-              <PresenceDot availability={presenceMap.you ?? "Available"} />
-            </button>
-          </UserProfilePopover>
-          <div className="min-w-0 overflow-hidden">
-            <p className="truncate text-[13px] font-semibold text-white">You (Demo)</p>
-            <p className="text-[11px] text-[#2bac76]">● Active</p>
-          </div>
-        </div>
-        <button
-          type="button"
-          title="Settings"
-          aria-label="Open settings"
-          onClick={() => setSettingsOpen(true)}
-          className="rounded p-1 text-[#ababad] hover:bg-[#27292d] hover:text-white"
-        >
-          <Settings className="h-4 w-4" />
-        </button>
-      </div>
-
-      <SettingsModal
-        open={settingsOpen}
-        onOpenChange={setSettingsOpen}
-        account={{ name: "You (Demo)", initials: "YO", badge: "Demo session" }}
-      />
+      <DemoUserFooter availability={presenceMap.you ?? "Available"} />
       <SearchModal
         open={searchOpen}
         onOpenChange={setSearchOpen}
