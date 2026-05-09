@@ -6,9 +6,11 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { SettingsModal } from "@/components/modals/SettingsModal";
 import { SearchModal } from "@/components/modals/SearchModal";
+import { Avatar } from "@/components/ui/Avatar";
+import { PresenceDot } from "@/components/ui/PresenceDot";
 
 export function DemoSidebar() {
-  const { teams, activeTeamId, channels, chats, messages, setActiveChannel, setActiveChat, activeChannelId, activeChatId } =
+  const { teams, activeTeamId, channels, chats, messages, presenceMap, setActiveChannel, setActiveChat, activeChannelId, activeChatId } =
     useWorkspaceStore();
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
@@ -97,7 +99,7 @@ export function DemoSidebar() {
                 <SidebarItem
                   key={chat.id}
                   label={label}
-                  icon={<MessageSquare className="h-3.5 w-3.5" />}
+                  icon={<ChatAvatar chat={chat} presenceMap={presenceMap} />}
                   active={activeChatId === chat.id}
                   onClick={() => setActiveChat(chat.id)}
                 />
@@ -109,9 +111,10 @@ export function DemoSidebar() {
       {/* Mock user footer */}
       <div className="flex items-center justify-between border-t border-[#3f4144] px-3 py-2">
         <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-[#1164a3] text-xs font-bold text-white">
-            YO
-          </div>
+          <span className="relative flex h-9 w-9 flex-shrink-0">
+            <Avatar userId="you" displayName="You (Demo)" size={36} />
+            <PresenceDot availability={presenceMap.you ?? "Available"} />
+          </span>
           <div className="min-w-0 overflow-hidden">
             <p className="truncate text-[13px] font-semibold text-white">You (Demo)</p>
             <p className="text-[11px] text-[#2bac76]">● Active</p>
@@ -142,6 +145,27 @@ export function DemoSidebar() {
         messages={messages}
       />
     </div>
+  );
+}
+
+function ChatAvatar({
+  chat,
+  presenceMap,
+}: {
+  chat: MSChat;
+  presenceMap: Record<string, MSPresence["availability"]>;
+}) {
+  if (chat.chatType === "group") return <MessageSquare className="h-3.5 w-3.5" />;
+
+  const member = chat.members?.[0];
+  if (!member) return <MessageSquare className="h-3.5 w-3.5" />;
+
+  const userId = member.userId ?? member.id;
+  return (
+    <span className="relative flex h-6 w-6 flex-shrink-0">
+      <Avatar userId={userId} displayName={member.displayName} size={24} />
+      <PresenceDot availability={presenceMap[userId]} />
+    </span>
   );
 }
 

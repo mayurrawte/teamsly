@@ -108,6 +108,15 @@ export const mockChats: MSChat[] = [
   },
 ];
 
+export const mockPresence: Record<string, MSPresence["availability"]> = {
+  "u-sarah": "Available",
+  "u-ravi": "Busy",
+  "u-alex": "Away",
+  "u-maya": "Available",
+  "u-jordan": "DoNotDisturb",
+  you: "Available",
+};
+
 export const mockChatMessages: Record<string, MSMessage[]> = {
   "chat-1": [
     msg("dm-1", "Sarah Chen", "2026-05-08T10:00:00Z", "Hey! Can you check the staging deploy when you get a sec?"),

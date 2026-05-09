@@ -7,9 +7,11 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { UserFooter } from "./UserFooter";
 import { SearchModal } from "@/components/modals/SearchModal";
+import { Avatar } from "@/components/ui/Avatar";
+import { PresenceDot } from "@/components/ui/PresenceDot";
 
 export function Sidebar() {
-  const { teams, activeTeamId, channels, chats, messages, setChats, setActiveChannel, setActiveChat } =
+  const { teams, activeTeamId, channels, chats, messages, presenceMap, setChats, setActiveChannel, setActiveChat } =
     useWorkspaceStore();
   const router = useRouter();
   const params = useParams();
@@ -116,7 +118,7 @@ export function Sidebar() {
               <SidebarItem
                 key={chat.id}
                 label={getChatLabel(chat)}
-                icon={<MessageSquare className="h-3.5 w-3.5" />}
+                icon={<ChatAvatar chat={chat} presenceMap={presenceMap} />}
                 active={params?.chatId === chat.id}
                 onClick={() => goToChat(chat.id)}
               />
@@ -169,4 +171,25 @@ function getChatLabel(chat: MSChat): string {
   const members = chat.members ?? [];
   if (members.length > 0) return members.map((m) => m.displayName).join(", ");
   return "Direct Message";
+}
+
+function ChatAvatar({
+  chat,
+  presenceMap,
+}: {
+  chat: MSChat;
+  presenceMap: Record<string, MSPresence["availability"]>;
+}) {
+  if (chat.chatType === "group") return <MessageSquare className="h-3.5 w-3.5" />;
+
+  const member = chat.members?.[0];
+  if (!member) return <MessageSquare className="h-3.5 w-3.5" />;
+
+  const userId = member.userId ?? member.id;
+  return (
+    <span className="relative flex h-6 w-6 flex-shrink-0">
+      <Avatar userId={userId} displayName={member.displayName} size={24} />
+      <PresenceDot availability={presenceMap[userId]} />
+    </span>
+  );
 }

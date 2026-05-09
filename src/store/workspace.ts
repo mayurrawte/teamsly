@@ -9,6 +9,7 @@ interface WorkspaceState {
   activeChatId: string | null;
   messages: MSMessage[];
   isLoadingMessages: boolean;
+  presenceMap: Record<string, MSPresence["availability"]>;
 
   setTeams: (teams: MSTeam[]) => void;
   setActiveTeam: (id: string) => void;
@@ -20,6 +21,7 @@ interface WorkspaceState {
   appendMessage: (message: MSMessage) => void;
   toggleReaction: (messageId: string, reactionType: string) => void;
   setLoadingMessages: (v: boolean) => void;
+  setPresenceMap: (presenceMap: Record<string, MSPresence["availability"]>) => void;
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
@@ -31,6 +33,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   activeChatId: null,
   messages: [],
   isLoadingMessages: false,
+  presenceMap: {},
 
   setTeams: (teams) => set({ teams }),
   setActiveTeam: (id) => set({ activeTeamId: id, activeChannelId: null, messages: [] }),
@@ -63,4 +66,5 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
       }),
     })),
   setLoadingMessages: (v) => set({ isLoadingMessages: v }),
+  setPresenceMap: (presenceMap) => set({ presenceMap }),
 }));
