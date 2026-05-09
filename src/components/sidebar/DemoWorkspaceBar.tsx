@@ -3,6 +3,7 @@
 import { useWorkspaceStore } from "@/store/workspace";
 import { mockChannels } from "@/lib/mock/data";
 import { cn } from "@/lib/utils";
+import { MultiTenantSwitcher } from "./MultiTenantSwitcher";
 
 export function DemoWorkspaceBar() {
   const { teams, activeTeamId, channels, unreadCounts, setActiveTeam, setChannels } = useWorkspaceStore();
@@ -32,6 +33,7 @@ export function DemoWorkspaceBar() {
           )}
         </button>
       ))}
+      <MultiTenantSwitcher demo />
     </div>
   );
 }

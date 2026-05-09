@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useWorkspaceStore } from "@/store/workspace";
 import { cn } from "@/lib/utils";
+import { MultiTenantSwitcher } from "./MultiTenantSwitcher";
 
 export function WorkspaceBar() {
   const { teams, activeTeamId, channels, unreadCounts, setTeams, setActiveTeam, setChannels } = useWorkspaceStore();
@@ -45,6 +46,7 @@ export function WorkspaceBar() {
           )}
         </button>
       ))}
+      <MultiTenantSwitcher />
     </div>
   );
 }
