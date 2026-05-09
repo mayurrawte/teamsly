@@ -12,6 +12,7 @@ interface SearchModalProps {
   channels: MSChannel[];
   chats: MSChat[];
   messages: MSMessage[];
+  messageGroupName?: string;
 }
 
 export function SearchModal({
@@ -21,24 +22,33 @@ export function SearchModal({
   channels,
   chats,
   messages,
+  messageGroupName = "Current view",
 }: SearchModalProps) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const normalizedQuery = query.trim().toLowerCase();
   const results = useMemo(() => {
-    if (!normalizedQuery) return { channels: channels.slice(0, 6), chats: chats.slice(0, 6), messages: [] };
+    if (!normalizedQuery) return { channels: channels.slice(0, 6), chats: chats.slice(0, 6), messageGroups: [] };
 
     return {
       channels: channels.filter((channel) => channel.displayName.toLowerCase().includes(normalizedQuery)).slice(0, 8),
       chats: chats.filter((chat) => chatLabel(chat).toLowerCase().includes(normalizedQuery)).slice(0, 8),
-      messages: messages
-        .filter((message) => messageText(message).toLowerCase().includes(normalizedQuery))
-        .slice(0, 12),
+      messageGroups: [
+        {
+          name: messageGroupName,
+          messages: messages
+            .filter((message) => messageText(message).toLowerCase().includes(normalizedQuery))
+            .slice(0, 12),
+        },
+      ].filter((group) => group.messages.length > 0),
     };
-  }, [channels, chats, messages, normalizedQuery]);
+  }, [channels, chats, messageGroupName, messages, normalizedQuery]);
 
-  const hasResults = results.channels.length > 0 || results.chats.length > 0 || results.messages.length > 0;
+  const hasResults =
+    results.channels.length > 0 ||
+    results.chats.length > 0 ||
+    results.messageGroups.some((group) => group.messages.length > 0);
 
   return (
     <Dialog.Root
@@ -83,13 +93,13 @@ export function SearchModal({
               </div>
             ) : (
               <div className="flex flex-col gap-4">
-                {results.messages.length > 0 && (
-                  <ResultSection title="Messages">
-                    {results.messages.map((message) => (
+                {results.messageGroups.map((group) => (
+                  <ResultSection key={group.name} title={group.name}>
+                    {group.messages.map((message) => (
                       <MessageResult key={message.id} message={message} query={normalizedQuery} teamName={teamName} />
                     ))}
                   </ResultSection>
-                )}
+                ))}
 
                 {results.channels.length > 0 && (
                   <ResultSection title="Channels">

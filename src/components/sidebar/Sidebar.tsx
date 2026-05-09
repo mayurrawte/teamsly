@@ -11,7 +11,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { PresenceDot } from "@/components/ui/PresenceDot";
 
 export function Sidebar() {
-  const { teams, activeTeamId, channels, chats, messages, presenceMap, unreadCounts, setChats, setActiveChannel, setActiveChat, markRead } =
+  const { teams, activeTeamId, activeChannelId, activeChatId, channels, chats, messages, presenceMap, unreadCounts, setChats, setActiveChannel, setActiveChat, markRead } =
     useWorkspaceStore();
   const router = useRouter();
   const params = useParams();
@@ -21,11 +21,30 @@ export function Sidebar() {
 
   const activeTeam = teams.find((t) => t.id === activeTeamId);
   const teamChannels = activeTeamId ? (channels[activeTeamId] ?? []) : [];
+  const activeChannel = teamChannels.find((channel) => channel.id === activeChannelId);
+  const activeChat = chats.find((chat) => chat.id === activeChatId);
+  const searchGroupName = activeChannel
+    ? `Messages in #${activeChannel.displayName}`
+    : activeChat
+      ? `Messages in ${getChatLabel(activeChat)}`
+      : "Messages";
 
   useEffect(() => {
     fetch("/api/chats")
       .then((r) => r.json())
       .then((data: MSChat[]) => setChats(data));
+  }, []);
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "f") {
+        event.preventDefault();
+        setSearchOpen(true);
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
   function goToChannel(channelId: string) {
@@ -138,6 +157,7 @@ export function Sidebar() {
         channels={teamChannels}
         chats={chats}
         messages={messages}
+        messageGroupName={searchGroupName}
       />
     </div>
   );

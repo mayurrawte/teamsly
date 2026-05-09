@@ -2,7 +2,7 @@
 
 import { useWorkspaceStore } from "@/store/workspace";
 import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Settings, Search } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { SettingsModal } from "@/components/modals/SettingsModal";
 import { SearchModal } from "@/components/modals/SearchModal";
@@ -19,6 +19,25 @@ export function DemoSidebar() {
 
   const activeTeam = teams.find((t) => t.id === activeTeamId);
   const teamChannels = activeTeamId ? (channels[activeTeamId] ?? []) : [];
+  const activeChannel = teamChannels.find((channel) => channel.id === activeChannelId);
+  const activeChat = chats.find((chat) => chat.id === activeChatId);
+  const searchGroupName = activeChannel
+    ? `Messages in #${activeChannel.displayName}`
+    : activeChat
+      ? `Messages in ${activeChat.topic ?? activeChat.members?.map((member) => member.displayName).join(", ") ?? "DM"}`
+      : "Messages";
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "f") {
+        event.preventDefault();
+        setSearchOpen(true);
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   return (
     <div className="flex w-[260px] flex-shrink-0 flex-col overflow-hidden bg-[#19171d]">
@@ -151,6 +170,7 @@ export function DemoSidebar() {
         channels={teamChannels}
         chats={chats}
         messages={messages}
+        messageGroupName={searchGroupName}
       />
     </div>
   );
