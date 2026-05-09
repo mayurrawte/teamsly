@@ -2,7 +2,7 @@
 
 import { useWorkspaceStore } from "@/store/workspace";
 import { useRouter, useParams } from "next/navigation";
-import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Search } from "lucide-react";
+import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { UserFooter } from "./UserFooter";
@@ -40,7 +40,7 @@ export function Sidebar() {
   return (
     <div className="flex w-[260px] flex-shrink-0 flex-col overflow-hidden bg-[#19171d]">
       {/* Team name header */}
-      <div className="flex h-[49px] items-center justify-between border-b border-[#3f4144] px-4 hover:bg-[#27242c]">
+      <div className="flex h-[49px] items-center justify-between border-b border-[#3f4144] px-4 transition-colors duration-[80ms] ease-out hover:bg-[#27242c]">
         <span className="truncate text-[15px] font-black text-white">
           {activeTeam?.displayName ?? "Teamsly"}
         </span>
@@ -61,14 +61,18 @@ export function Sidebar() {
         <div className="mb-1">
           <button
             onClick={() => setChannelsOpen((v) => !v)}
-            className="flex w-full items-center gap-1 px-4 py-1 text-[13px] font-semibold text-[#ababad] hover:text-white"
+            className="group/section flex w-full items-center justify-between px-4 py-1 text-[13px] font-bold text-[#ababad] transition-colors duration-[80ms] ease-out hover:text-white"
           >
-            {channelsOpen ? (
-              <ChevronDown className="h-3 w-3" />
-            ) : (
-              <ChevronRight className="h-3 w-3" />
-            )}
-            Channels
+            <span className="flex min-w-0 items-center gap-1">
+              <ChevronRight
+                className={cn(
+                  "h-3 w-3 transition-transform duration-200 ease-out",
+                  channelsOpen && "rotate-90"
+                )}
+              />
+              <span className="truncate">Channels</span>
+            </span>
+            <Plus className="h-3.5 w-3.5 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
           </button>
 
           {channelsOpen &&
@@ -93,14 +97,18 @@ export function Sidebar() {
         <div className="mt-3">
           <button
             onClick={() => setDmsOpen((v) => !v)}
-            className="flex w-full items-center gap-1 px-4 py-1 text-[13px] font-semibold text-[#ababad] hover:text-white"
+            className="group/section flex w-full items-center justify-between px-4 py-1 text-[13px] font-bold text-[#ababad] transition-colors duration-[80ms] ease-out hover:text-white"
           >
-            {dmsOpen ? (
-              <ChevronDown className="h-3 w-3" />
-            ) : (
-              <ChevronRight className="h-3 w-3" />
-            )}
-            Direct Messages
+            <span className="flex min-w-0 items-center gap-1">
+              <ChevronRight
+                className={cn(
+                  "h-3 w-3 transition-transform duration-200 ease-out",
+                  dmsOpen && "rotate-90"
+                )}
+              />
+              <span className="truncate">Direct Messages</span>
+            </span>
+            <Plus className="h-3.5 w-3.5 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
           </button>
 
           {dmsOpen &&
@@ -144,7 +152,7 @@ function SidebarItem({
     <button
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-2 px-4 py-1 text-[15px] transition",
+        "mx-2 flex h-7 w-[calc(100%-16px)] items-center gap-2 rounded-md px-2 text-[15px] transition-colors duration-[80ms] ease-out",
         active
           ? "bg-[#1164a3] text-white"
           : "text-[#ababad] hover:bg-[#27292d] hover:text-white"

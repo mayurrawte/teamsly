@@ -49,14 +49,14 @@ export function SearchModal({
       }}
     >
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-[60] bg-[rgba(0,0,0,0.7)] backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out" />
+        <Dialog.Overlay className="search-modal-overlay fixed inset-0 z-[60] bg-[rgba(0,0,0,0.7)] backdrop-blur-[2px]" />
         <Dialog.Content
           aria-describedby={undefined}
           onOpenAutoFocus={(event) => {
             event.preventDefault();
             inputRef.current?.focus();
           }}
-          className="fixed left-1/2 top-1/2 z-[70] flex max-h-[70vh] w-[640px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-[#3f4144] bg-[#1a1d21] text-[#d1d2d3] shadow-[0_16px_64px_rgba(0,0,0,0.6)] outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
+          className="search-modal-content fixed left-1/2 top-1/2 z-[70] flex max-h-[70vh] w-[640px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-[#3f4144] bg-[#1a1d21] text-[#d1d2d3] shadow-[0_16px_64px_rgba(0,0,0,0.6)] outline-none"
         >
           <Dialog.Title className="sr-only">Search</Dialog.Title>
           <div className="flex items-center border-b border-[#3f4144]">
@@ -70,7 +70,7 @@ export function SearchModal({
             />
             <Dialog.Close
               aria-label="Close search"
-              className="mr-3 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-[#ababad] hover:bg-[#27292d] hover:text-white"
+              className="mr-3 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-[#ababad] transition-colors duration-150 hover:bg-[#27292d] hover:text-white"
             >
               <X size={16} />
             </Dialog.Close>
@@ -149,7 +149,7 @@ function MessageResult({ message, query, teamName }: { message: MSMessage; query
   return (
     <button
       type="button"
-      className="flex w-full gap-2 rounded-md px-3 py-2 text-left hover:bg-[#27292d]"
+      className="flex w-full gap-2 rounded-md px-3 py-2 text-left transition-colors duration-[80ms] hover:bg-[#27292d]"
     >
       <div className="mt-[3px] flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-[#1164a3] text-[10px] font-bold text-white">
         {initials || "?"}
@@ -179,7 +179,10 @@ function EntityResult({
   query: string;
 }) {
   return (
-    <button type="button" className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left hover:bg-[#27292d]">
+    <button
+      type="button"
+      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition-colors duration-[80ms] hover:bg-[#27292d]"
+    >
       <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-[#2c2d30] text-[#ababad]">
         {icon}
       </span>

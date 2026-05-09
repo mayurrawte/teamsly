@@ -25,7 +25,7 @@ export function MessageItem({ message, isGroupHead = true }: Props) {
   if (!isGroupHead) {
     const shortTime = format(new Date(message.createdDateTime), "h:mm");
     return (
-      <div className="group relative px-4 py-[2px] pl-[72px] hover:bg-[#27292d]">
+      <div className="group relative px-4 py-[2px] pl-[72px] transition-colors duration-[80ms] ease-out hover:bg-[#27292d]">
         <MessageHoverToolbar messageId={message.id} />
         <span
           className="pointer-events-none absolute left-4 top-[3px] w-9 select-none text-right text-[11px] leading-[18px] text-[#6c6f75] opacity-0 transition-opacity duration-100 group-hover:opacity-100"
@@ -42,7 +42,7 @@ export function MessageItem({ message, isGroupHead = true }: Props) {
   }
 
   return (
-    <div className="group relative flex gap-2 px-4 pb-[2px] pt-2 hover:bg-[#27292d]">
+    <div className="group relative flex gap-2 px-4 pb-[2px] pt-2 transition-colors duration-[80ms] ease-out hover:bg-[#27292d]">
       <MessageHoverToolbar messageId={message.id} />
       <Avatar userId={userId} displayName={author} size={36} />
       <div className="min-w-0 flex-1">
@@ -80,7 +80,7 @@ function ReactionsRow({ reactions }: { reactions: NonNullable<MSMessage["reactio
       {Object.entries(grouped).map(([emoji, count]) => (
         <span
           key={emoji}
-          className="inline-flex items-center gap-1 rounded-full border border-[#3f4144] bg-[#2c2d30] px-2 py-0.5 text-[13px] text-[#ababad]"
+          className="inline-flex items-center gap-1 rounded-full border border-[#3f4144] bg-[#2c2d30] px-2 py-0.5 text-[13px] text-[#ababad] transition-colors duration-150 hover:border-[#1164a3] hover:bg-[rgba(17,100,163,0.1)]"
         >
           {emoji} {count}
         </span>

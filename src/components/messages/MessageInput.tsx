@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, KeyboardEvent } from "react";
+import { useState, KeyboardEvent } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import { Send, Paperclip, Smile } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -35,8 +35,8 @@ export function MessageInput({ placeholder, onSend }: Props) {
 
   return (
     <div className="px-4 pb-4">
-      <div className="flex items-end gap-2 rounded-lg border border-[#3f4144] bg-[#2c2d30] px-3 py-2">
-        <button className="flex-shrink-0 p-1 text-[#ababad] hover:text-white">
+      <div className="flex items-end gap-2 rounded-lg border border-[#565856] bg-[#222529] px-3 py-2 transition-colors duration-150 focus-within:border-white">
+        <button className="flex-shrink-0 rounded p-1 text-[#ababad] transition-colors duration-150 hover:bg-[#27292d] hover:text-white">
           <Paperclip className="h-4 w-4" />
         </button>
         <TextareaAutosize
@@ -49,16 +49,16 @@ export function MessageInput({ placeholder, onSend }: Props) {
           className="flex-1 resize-none bg-transparent text-[15px] text-[#d1d2d3] placeholder-[#6c6f75] outline-none disabled:opacity-50"
         />
         <div className="flex flex-shrink-0 items-center gap-1">
-          <button className="p-1 text-[#ababad] hover:text-white">
+          <button className="rounded p-1 text-[#ababad] transition-colors duration-150 hover:bg-[#27292d] hover:text-white">
             <Smile className="h-4 w-4" />
           </button>
           <button
             onClick={submit}
             disabled={!value.trim() || sending}
             className={cn(
-              "rounded p-1 transition",
+              "flex h-8 w-8 items-center justify-center rounded transition-[background,color] duration-150 ease-out",
               value.trim() && !sending
-                ? "text-[#1164a3] hover:text-white"
+                ? "bg-[#007a5a] text-white hover:bg-[#148567]"
                 : "text-[#6c6f75]"
             )}
           >
