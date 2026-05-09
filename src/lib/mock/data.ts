@@ -40,7 +40,12 @@ export const mockMessages: Record<string, MSMessage[]> = {
         ["heart", "you", "You"],
       ]
     ),
-    msg("msg-6", "Alex Kumar", "2026-05-08T09:24:00Z", "Sure, PR #412 — https://github.com/example/app/pull/412. Main thing to check is the token refresh logic."),
+    htmlMsg(
+      "msg-6",
+      "Alex Kumar",
+      "2026-05-08T09:24:00Z",
+      '<p>Sure, <at id="0">@Priya</at> — <a href="https://github.com/example/app/pull/412">PR #412</a>. Main thing to check is <code>refreshAccessToken()</code>.</p>'
+    ),
     msg("msg-7", "Jordan Lee", "2026-05-08T10:00:00Z", "Deploy to staging is done. QA team please take a look when you get a chance."),
     threadedMsg(
       "msg-8",
@@ -55,7 +60,12 @@ export const mockMessages: Record<string, MSMessage[]> = {
     msg("msg-9", "Sarah Chen", "2026-05-08T10:18:00Z", "Nice catch Ravi. Alex can you grab that one too or should I assign it to someone else?"),
     msg("msg-10", "Alex Kumar", "2026-05-08T10:20:00Z", "I'll grab it, shouldn't take long."),
     msg("msg-11", "Priya Nair", "2026-05-08T11:45:00Z", "PR #412 reviewed ✅ Left a few minor comments but nothing blocking. LGTM overall."),
-    msg("msg-12", "Alex Kumar", "2026-05-08T11:50:00Z", "Thanks Priya! Will address the comments and merge after lunch."),
+    htmlMsg(
+      "msg-12",
+      "Alex Kumar",
+      "2026-05-08T11:50:00Z",
+      "<p>Thanks Priya! Will address the comments and merge after lunch.</p><pre><code>const ready = await checks.pass();\nif (ready) merge();</code></pre>"
+    ),
     msg("msg-13", "Jordan Lee", "2026-05-08T14:02:00Z", "Merged and deployed to staging. Onboarding flow is live for testing."),
     msg("msg-14", "Sarah Chen", "2026-05-08T14:15:00Z", "Amazing! I'll test it now and loop in design for a final check before we push to prod."),
   ],
@@ -145,6 +155,16 @@ function msg(id: string, displayName: string, createdDateTime: string, content: 
     id,
     createdDateTime,
     body: { contentType: "text", content },
+    from: { user: { id: `user-${displayName.replace(" ", "-").toLowerCase()}`, displayName } },
+    reactions: [],
+  };
+}
+
+function htmlMsg(id: string, displayName: string, createdDateTime: string, content: string): MSMessage {
+  return {
+    id,
+    createdDateTime,
+    body: { contentType: "html", content },
     from: { user: { id: `user-${displayName.replace(" ", "-").toLowerCase()}`, displayName } },
     reactions: [],
   };

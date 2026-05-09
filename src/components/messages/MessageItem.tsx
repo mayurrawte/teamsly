@@ -5,6 +5,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { MessageHoverToolbar } from "./MessageHoverToolbar";
 import { AddReactionPill, ReactionPill } from "./ReactionPill";
 import { formatMessageTime, formatFullTimestamp } from "@/lib/utils/dates";
+import { messagePlainText, renderMessageBody } from "@/lib/utils/render-message";
 import type { ReactionType } from "@/lib/utils/reactions";
 
 interface Props {
@@ -19,10 +20,7 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
 
   const author = message.from?.user?.displayName ?? "Unknown";
   const userId = message.from?.user?.id ?? author;
-  const content =
-    message.body.contentType === "html"
-      ? stripHtml(message.body.content)
-      : message.body.content;
+  const content = messagePlainText(message.body.content, message.body.contentType);
 
   if (!content.trim()) return null;
 
@@ -41,9 +39,9 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
         >
           {shortTime}
         </span>
-        <p className="whitespace-pre-wrap break-words text-[15px] leading-[1.46668] text-[#d1d2d3]">
-          {content}
-        </p>
+        <div className="whitespace-pre-wrap break-words text-[15px] leading-[1.46668] text-[#d1d2d3]">
+          {renderMessageBody(message.body.content, message.body.contentType)}
+        </div>
         <ReactionsRow
           messageId={message.id}
           reactions={message.reactions ?? []}
@@ -73,9 +71,9 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
             {formatMessageTime(message.createdDateTime)}
           </span>
         </div>
-        <p className="whitespace-pre-wrap break-words text-[15px] leading-[1.46668] text-[#d1d2d3]">
-          {content}
-        </p>
+        <div className="whitespace-pre-wrap break-words text-[15px] leading-[1.46668] text-[#d1d2d3]">
+          {renderMessageBody(message.body.content, message.body.contentType)}
+        </div>
         <ReactionsRow
           messageId={message.id}
           reactions={message.reactions ?? []}
@@ -122,8 +120,4 @@ function ReactionsRow({
       )}
     </div>
   );
-}
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
 }
