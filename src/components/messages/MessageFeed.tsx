@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, Fragment } from "react";
 import { MessageItem } from "./MessageItem";
 import { DateDivider } from "./DateDivider";
 import { LoadingSkeleton } from "./LoadingSkeleton";
+import { AiSummaryBanner } from "./AiSummaryBanner";
 import type { ReactionType } from "@/lib/utils/reactions";
 
 const GROUP_WINDOW_MS = 7 * 60 * 1000;
@@ -28,6 +29,7 @@ export function MessageFeed({ messages, loading, onReplyInThread, onToggleReacti
 
   return (
     <div className="flex flex-1 flex-col overflow-y-auto py-2">
+      <AiSummaryBanner messages={messages} />
       {messages.length === 0 && (
         <div className="flex flex-1 items-center justify-center text-sm text-[#6c6f75]">
           No messages yet. Say hello!
