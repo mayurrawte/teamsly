@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useWorkspaceStore } from "@/store/workspace";
 import { MessageFeed } from "./MessageFeed";
 import { MessageInput } from "./MessageInput";
+import { ThreadPanel } from "./ThreadPanel";
 import { Hash } from "lucide-react";
 
 export function ChannelView({ teamId, channelId }: { teamId: string; channelId: string }) {
   const { teams, channels, messages, isLoadingMessages, setMessages, appendMessage, setLoadingMessages } =
     useWorkspaceStore();
+  const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
 
   const team = teams.find((t) => t.id === teamId);
   const channel = channels[teamId]?.find((c) => c.id === channelId);
@@ -43,12 +45,17 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="relative flex h-full flex-col overflow-hidden">
       <ChannelHeader name={channel?.displayName} teamName={team?.displayName} />
-      <MessageFeed messages={messages} loading={isLoadingMessages} />
+      <MessageFeed messages={messages} loading={isLoadingMessages} onReplyInThread={setThreadMessage} />
       <MessageInput
         placeholder={`Message #${channel?.displayName ?? "channel"}`}
         onSend={handleSend}
+      />
+      <ThreadPanel
+        open={Boolean(threadMessage)}
+        message={threadMessage}
+        onClose={() => setThreadMessage(null)}
       />
     </div>
   );

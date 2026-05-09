@@ -10,9 +10,10 @@ const GROUP_WINDOW_MS = 7 * 60 * 1000;
 interface Props {
   messages: MSMessage[];
   loading: boolean;
+  onReplyInThread?: (message: MSMessage) => void;
 }
 
-export function MessageFeed({ messages, loading }: Props) {
+export function MessageFeed({ messages, loading, onReplyInThread }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,7 +34,11 @@ export function MessageFeed({ messages, loading }: Props) {
       {messages.map((msg, idx) => (
         <Fragment key={msg.id}>
           {meta[idx].showDivider && <DateDivider date={msg.createdDateTime} />}
-          <MessageItem message={msg} isGroupHead={meta[idx].isGroupHead} />
+          <MessageItem
+            message={msg}
+            isGroupHead={meta[idx].isGroupHead}
+            onReplyInThread={onReplyInThread}
+          />
         </Fragment>
       ))}
       <div ref={bottomRef} />

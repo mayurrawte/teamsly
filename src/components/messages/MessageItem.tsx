@@ -8,9 +8,10 @@ import { formatMessageTime, formatFullTimestamp } from "@/lib/utils/dates";
 interface Props {
   message: MSMessage;
   isGroupHead?: boolean;
+  onReplyInThread?: (message: MSMessage) => void;
 }
 
-export function MessageItem({ message, isGroupHead = true }: Props) {
+export function MessageItem({ message, isGroupHead = true, onReplyInThread }: Props) {
   if (message.deletedDateTime) return null;
 
   const author = message.from?.user?.displayName ?? "Unknown";
@@ -26,7 +27,7 @@ export function MessageItem({ message, isGroupHead = true }: Props) {
     const shortTime = format(new Date(message.createdDateTime), "h:mm");
     return (
       <div className="group relative px-4 py-[2px] pl-[72px] transition-colors duration-[80ms] ease-out hover:bg-[#27292d]">
-        <MessageHoverToolbar messageId={message.id} />
+        <MessageHoverToolbar messageId={message.id} onReplyInThread={() => onReplyInThread?.(message)} />
         <span
           className="pointer-events-none absolute left-4 top-[3px] w-9 select-none text-right text-[11px] leading-[18px] text-[#6c6f75] opacity-0 transition-opacity duration-100 group-hover:opacity-100"
           title={formatFullTimestamp(message.createdDateTime)}
@@ -43,7 +44,7 @@ export function MessageItem({ message, isGroupHead = true }: Props) {
 
   return (
     <div className="group relative flex gap-2 px-4 pb-[2px] pt-2 transition-colors duration-[80ms] ease-out hover:bg-[#27292d]">
-      <MessageHoverToolbar messageId={message.id} />
+      <MessageHoverToolbar messageId={message.id} onReplyInThread={() => onReplyInThread?.(message)} />
       <Avatar userId={userId} displayName={author} size={36} />
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
