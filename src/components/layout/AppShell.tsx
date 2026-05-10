@@ -9,7 +9,7 @@ import { useWorkspaceStore } from "@/store/workspace";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { teams, activeTeamId, channels, chats, setActiveChannel, setActiveChat, markRead } = useWorkspaceStore();
+  const { teams, activeTeamId, channels, chats, setActiveChannel, setActiveChat, markRead, setCurrentUser } = useWorkspaceStore();
   const [jumpToOpen, setJumpToOpen] = useState(false);
 
   useEffect(() => {
@@ -23,6 +23,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  useEffect(() => {
+    fetch("/api/me")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((user: MSUser | null) => {
+        if (user) setCurrentUser({ id: user.id, displayName: user.displayName });
+      });
+  }, [setCurrentUser]);
 
   const items = useMemo<JumpToItem[]>(() => {
     const teamName = teams.find((team) => team.id === activeTeamId)?.displayName ?? "Teamsly";

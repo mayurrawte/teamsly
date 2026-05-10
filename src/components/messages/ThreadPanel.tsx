@@ -4,15 +4,19 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { MessageInput } from "./MessageInput";
 import { MessageItem } from "./MessageItem";
+import { useWorkspaceStore } from "@/store/workspace";
 
 interface ThreadPanelProps {
   message: MSMessage | null;
   open: boolean;
   onClose: () => void;
+  onSendReply?: (messageId: string, content: string) => Promise<MSMessage>;
 }
 
-export function ThreadPanel({ message, open, onClose }: ThreadPanelProps) {
+export function ThreadPanel({ message, open, onClose, onSendReply }: ThreadPanelProps) {
   const [localReplies, setLocalReplies] = useState<MSMessage[]>([]);
+  const currentUserId = useWorkspaceStore((state) => state.currentUserId);
+  const currentUserName = useWorkspaceStore((state) => state.currentUserName);
 
   useEffect(() => {
     setLocalReplies(message?.replies ?? []);
@@ -30,16 +34,27 @@ export function ThreadPanel({ message, open, onClose }: ThreadPanelProps) {
   }, [onClose, open]);
 
   async function handleReply(content: string) {
-    setLocalReplies((replies) => [
-      ...replies,
-      {
-        id: `thread-reply-${Date.now()}`,
-        createdDateTime: new Date().toISOString(),
-        body: { contentType: "text", content },
-        from: { user: { id: "you", displayName: "You" } },
-        reactions: [],
-      },
-    ]);
+    if (!message) return;
+
+    const optimisticReply: MSMessage = {
+      id: `thread-reply-${Date.now()}`,
+      createdDateTime: new Date().toISOString(),
+      body: { contentType: "text", content },
+      from: { user: { id: currentUserId, displayName: currentUserName } },
+      reactions: [],
+    };
+
+    setLocalReplies((replies) => [...replies, optimisticReply]);
+    if (!onSendReply) return;
+
+    try {
+      const savedReply = await onSendReply(message.id, content);
+      setLocalReplies((replies) =>
+        replies.map((reply) => (reply.id === optimisticReply.id ? savedReply : reply))
+      );
+    } catch {
+      setLocalReplies((replies) => replies.filter((reply) => reply.id !== optimisticReply.id));
+    }
   }
 
   if (!message) return null;

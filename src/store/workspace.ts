@@ -11,6 +11,8 @@ interface WorkspaceState {
   isLoadingMessages: boolean;
   presenceMap: Record<string, MSPresence["availability"]>;
   unreadCounts: Record<string, number>;
+  currentUserId: string;
+  currentUserName: string;
 
   setTeams: (teams: MSTeam[]) => void;
   setActiveTeam: (id: string) => void;
@@ -23,6 +25,7 @@ interface WorkspaceState {
   toggleReaction: (messageId: string, reactionType: string) => void;
   setLoadingMessages: (v: boolean) => void;
   setPresenceMap: (presenceMap: Record<string, MSPresence["availability"]>) => void;
+  setCurrentUser: (user: { id: string; displayName: string }) => void;
   initUnreadCounts: (counts: Record<string, number>) => void;
   setUnreadCount: (id: string, count: number) => void;
   markRead: (id: string) => void;
@@ -41,6 +44,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   isLoadingMessages: false,
   presenceMap: {},
   unreadCounts: {},
+  currentUserId: "you",
+  currentUserName: "You",
 
   setTeams: (teams) => set({ teams }),
   setActiveTeam: (id) => set({ activeTeamId: id, activeChannelId: null, messages: [] }),
@@ -58,7 +63,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
 
         const reactions = message.reactions ?? [];
         const existing = reactions.find(
-          (reaction) => reaction.reactionType === reactionType && reaction.user.id === "you"
+          (reaction) => reaction.reactionType === reactionType && reaction.user.id === s.currentUserId
         );
 
         return {
@@ -67,13 +72,14 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
             ? reactions.filter((reaction) => reaction !== existing)
             : [
                 ...reactions,
-                { reactionType, user: { id: "you", displayName: "You" } },
+                { reactionType, user: { id: s.currentUserId, displayName: s.currentUserName } },
               ],
         };
       }),
     })),
   setLoadingMessages: (v) => set({ isLoadingMessages: v }),
   setPresenceMap: (presenceMap) => set({ presenceMap }),
+  setCurrentUser: (user) => set({ currentUserId: user.id, currentUserName: user.displayName }),
   initUnreadCounts: (counts) => {
     const stored = readUnreadCounts();
     set({ unreadCounts: stored ?? counts });

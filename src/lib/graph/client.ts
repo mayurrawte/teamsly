@@ -42,6 +42,19 @@ export async function sendMessage(
   });
 }
 
+export async function sendChannelReply(
+  accessToken: string,
+  teamId: string,
+  channelId: string,
+  messageId: string,
+  content: string
+) {
+  const client = getGraphClient(accessToken);
+  return client.api(`/teams/${teamId}/channels/${channelId}/messages/${messageId}/replies`).post({
+    body: { content, contentType: "html" },
+  });
+}
+
 export async function getChats(accessToken: string) {
   const client = getGraphClient(accessToken);
   const res = await client
@@ -66,6 +79,71 @@ export async function sendChatMessage(
   const client = getGraphClient(accessToken);
   return client.api(`/me/chats/${chatId}/messages`).post({
     body: { content, contentType: "html" },
+  });
+}
+
+export async function replyToChatMessage(
+  accessToken: string,
+  chatId: string,
+  messageId: string,
+  content: string
+) {
+  const client = getGraphClient(accessToken);
+  return client.api(`/chats/${chatId}/messages/replyWithQuote`).post({
+    messageIds: [messageId],
+    replyMessage: {
+      body: { content, contentType: "html" },
+    },
+  });
+}
+
+export async function setChannelMessageReaction(
+  accessToken: string,
+  teamId: string,
+  channelId: string,
+  messageId: string,
+  reactionType: string
+) {
+  const client = getGraphClient(accessToken);
+  await client.api(`/teams/${teamId}/channels/${channelId}/messages/${messageId}/setReaction`).post({
+    reactionType,
+  });
+}
+
+export async function unsetChannelMessageReaction(
+  accessToken: string,
+  teamId: string,
+  channelId: string,
+  messageId: string,
+  reactionType: string
+) {
+  const client = getGraphClient(accessToken);
+  await client.api(`/teams/${teamId}/channels/${channelId}/messages/${messageId}/unsetReaction`).post({
+    reactionType,
+  });
+}
+
+export async function setChatMessageReaction(
+  accessToken: string,
+  chatId: string,
+  messageId: string,
+  reactionType: string
+) {
+  const client = getGraphClient(accessToken);
+  await client.api(`/chats/${chatId}/messages/${messageId}/setReaction`).post({
+    reactionType,
+  });
+}
+
+export async function unsetChatMessageReaction(
+  accessToken: string,
+  chatId: string,
+  messageId: string,
+  reactionType: string
+) {
+  const client = getGraphClient(accessToken);
+  await client.api(`/chats/${chatId}/messages/${messageId}/unsetReaction`).post({
+    reactionType,
   });
 }
 

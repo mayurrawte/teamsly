@@ -10,6 +10,7 @@ import { formatMessageTime, formatFullTimestamp } from "@/lib/utils/dates";
 import { messagePlainText, renderMessageBody } from "@/lib/utils/render-message";
 import type { ReactionType } from "@/lib/utils/reactions";
 import { usePreferencesStore } from "@/store/preferences";
+import { useWorkspaceStore } from "@/store/workspace";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -127,13 +128,15 @@ function ReactionsRow({
   reactions: NonNullable<MSMessage["reactions"]>;
   onToggleReaction?: (messageId: string, reactionType: ReactionType) => void;
 }) {
+  const currentUserId = useWorkspaceStore((state) => state.currentUserId);
+
   if (reactions.length === 0 && !onToggleReaction) return null;
 
   const grouped = reactions.reduce<Record<string, { count: number; active: boolean }>>((acc, reaction) => {
     const current = acc[reaction.reactionType] ?? { count: 0, active: false };
     acc[reaction.reactionType] = {
       count: current.count + 1,
-      active: current.active || reaction.user.id === "you",
+      active: current.active || reaction.user.id === currentUserId,
     };
     return acc;
   }, {});

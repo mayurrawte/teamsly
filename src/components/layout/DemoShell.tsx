@@ -11,7 +11,7 @@ import { JumpToSwitcher, type JumpToItem } from "@/components/modals/JumpToSwitc
 import Link from "next/link";
 
 export function DemoShell() {
-  const { teams, channels, chats, setTeams, setChannels, setChats, setActiveTeam, activeTeamId, activeChannelId, activeChatId, setActiveChannel, setActiveChat, setPresenceMap, initUnreadCounts, markRead } =
+  const { teams, channels, chats, setTeams, setChannels, setChats, setActiveTeam, activeTeamId, activeChannelId, activeChatId, setActiveChannel, setActiveChat, setPresenceMap, initUnreadCounts, markRead, setCurrentUser } =
     useWorkspaceStore();
   const [jumpToOpen, setJumpToOpen] = useState(false);
 
@@ -19,6 +19,7 @@ export function DemoShell() {
     setTeams(mockTeams);
     mockTeams.forEach((t) => setChannels(t.id, mockChannels[t.id] ?? []));
     setChats(mockChats);
+    setCurrentUser({ id: "you", displayName: "You" });
     setPresenceMap(mockPresence);
     initUnreadCounts(mockUnreadCounts);
     setActiveTeam(mockTeams[0].id);
