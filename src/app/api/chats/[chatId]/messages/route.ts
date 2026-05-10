@@ -8,8 +8,12 @@ export async function GET(_req: Request, { params }: { params: Params }) {
   const session = await auth();
   if (!session?.accessToken) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { chatId } = await params;
-  const messages = await getChatMessages(session.accessToken, chatId);
-  return NextResponse.json(messages);
+  try {
+    const messages = await getChatMessages(session.accessToken, chatId);
+    return NextResponse.json(messages);
+  } catch {
+    return NextResponse.json({ error: "Graph chat messages failed" }, { status: 502 });
+  }
 }
 
 export async function POST(req: Request, { params }: { params: Params }) {
@@ -18,6 +22,10 @@ export async function POST(req: Request, { params }: { params: Params }) {
   const { chatId } = await params;
   const { content } = await req.json();
   if (!content?.trim()) return NextResponse.json({ error: "Empty message" }, { status: 400 });
-  const msg = await sendChatMessage(session.accessToken, chatId, content);
-  return NextResponse.json(msg);
+  try {
+    const msg = await sendChatMessage(session.accessToken, chatId, content);
+    return NextResponse.json(msg);
+  } catch {
+    return NextResponse.json({ error: "Graph chat send failed" }, { status: 502 });
+  }
 }

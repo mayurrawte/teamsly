@@ -8,10 +8,13 @@ import { avatarInitials } from "@/lib/utils/avatar";
 import { Avatar } from "@/components/ui/Avatar";
 import { PresenceDot } from "@/components/ui/PresenceDot";
 import { UserProfilePopover } from "@/components/profile/UserProfilePopover";
+import { useWorkspaceStore } from "@/store/workspace";
 
 export function UserFooter() {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
+  const currentUserId = useWorkspaceStore((state) => state.currentUserId);
+  const presence = useWorkspaceStore((state) => state.presenceMap[currentUserId] ?? "Available");
 
   const name = session?.user?.name ?? "User";
   const email = session?.user?.email ?? undefined;
@@ -21,10 +24,10 @@ export function UserFooter() {
     <>
       <div className="flex items-center justify-between border-t border-[#3f4144] px-3 py-2">
         <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-          <UserProfilePopover userId={email ?? name} displayName={name} email={email}>
+          <UserProfilePopover userId={currentUserId || email || name} displayName={name} email={email} availability={presence}>
             <button type="button" className="relative flex h-9 w-9 flex-shrink-0">
-              <Avatar userId={email ?? name} displayName={name} size={36} />
-              <PresenceDot availability="Available" />
+              <Avatar userId={currentUserId || email || name} displayName={name} size={36} />
+              <PresenceDot availability={presence} />
             </button>
           </UserProfilePopover>
           <div className="min-w-0 overflow-hidden">

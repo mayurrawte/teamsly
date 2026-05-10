@@ -11,7 +11,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { PresenceDot } from "@/components/ui/PresenceDot";
 
 export function Sidebar() {
-  const { teams, activeTeamId, activeChannelId, activeChatId, channels, chats, messages, presenceMap, unreadCounts, setChats, setActiveChannel, setActiveChat, markRead } =
+  const { teams, activeTeamId, activeChannelId, activeChatId, channels, chats, messages, presenceMap, unreadCounts, currentUserId, setChats, setActiveChannel, setActiveChat, markRead, setPresenceMap } =
     useWorkspaceStore();
   const router = useRouter();
   const params = useParams();
@@ -34,6 +34,36 @@ export function Sidebar() {
       .then((r) => r.json())
       .then((data: MSChat[]) => setChats(data));
   }, []);
+
+  useEffect(() => {
+    const userIds = [
+      currentUserId,
+      ...chats.flatMap((chat) => chat.members?.map((member) => member.userId ?? member.id) ?? []),
+    ].filter(Boolean);
+    if (userIds.length === 0) return;
+
+    let cancelled = false;
+    async function loadPresence() {
+      const res = await fetch("/api/presence", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userIds }),
+      });
+      if (!res.ok || cancelled) return;
+
+      const presence = (await res.json()) as MSPresence[];
+      setPresenceMap(
+        Object.fromEntries(presence.map((item) => [item.id, item.availability]))
+      );
+    }
+
+    loadPresence();
+    const interval = window.setInterval(loadPresence, 30000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [chats, currentUserId, setPresenceMap]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {

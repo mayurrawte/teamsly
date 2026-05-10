@@ -5,6 +5,10 @@ import { NextResponse } from "next/server";
 export async function GET() {
   const session = await auth();
   if (!session?.accessToken) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const chats = await getChats(session.accessToken);
-  return NextResponse.json(chats);
+  try {
+    const chats = await getChats(session.accessToken);
+    return NextResponse.json(chats);
+  } catch {
+    return NextResponse.json({ error: "Graph chats failed" }, { status: 502 });
+  }
 }

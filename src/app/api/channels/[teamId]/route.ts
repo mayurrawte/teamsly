@@ -6,6 +6,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ teamId:
   const session = await auth();
   if (!session?.accessToken) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { teamId } = await params;
-  const channels = await getChannels(session.accessToken, teamId);
-  return NextResponse.json(channels);
+  try {
+    const channels = await getChannels(session.accessToken, teamId);
+    return NextResponse.json(channels);
+  } catch {
+    return NextResponse.json({ error: "Graph channels failed" }, { status: 502 });
+  }
 }
