@@ -7,41 +7,68 @@ import { MessageInput } from "./MessageInput";
 import { ThreadPanel } from "./ThreadPanel";
 import { MessageSquare } from "lucide-react";
 import { reactionEmoji, type ReactionType } from "@/lib/utils/reactions";
+import { useToastStore } from "@/store/toasts";
 
 export function ChatView({ chatId }: { chatId: string }) {
   const { chats, messages, isLoadingMessages, currentUserId, setMessages, appendMessage, setLoadingMessages, toggleReaction } =
     useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
+  const showToast = useToastStore((state) => state.showToast);
 
   const chat = chats.find((c) => c.id === chatId);
   const label = chat?.topic ?? chat?.members?.map((m) => m.displayName).join(", ") ?? "Direct Message";
 
   useEffect(() => {
-    setLoadingMessages(true);
-    fetch(`/api/chats/${chatId}/messages`)
-      .then((r) => r.json())
-      .then((data: MSMessage[]) => {
-        setMessages([...data].reverse());
-        setLoadingMessages(false);
-      });
+    let cancelled = false;
 
-    const interval = setInterval(() => {
-      fetch(`/api/chats/${chatId}/messages`)
-        .then((r) => r.json())
-        .then((data: MSMessage[]) => setMessages([...data].reverse()));
-    }, 5000);
+    async function loadInitialMessages() {
+      setLoadingMessages(true);
+      try {
+        const response = await fetch(`/api/chats/${chatId}/messages`);
+        if (!response.ok) throw new Error("Failed to load chat messages");
+        const data = (await response.json()) as MSMessage[];
+        if (!cancelled) setMessages([...data].reverse());
+      } catch {
+        if (!cancelled) showToast({ title: "Could not load messages", tone: "error" });
+      } finally {
+        if (!cancelled) setLoadingMessages(false);
+      }
+    }
 
-    return () => clearInterval(interval);
-  }, [chatId]);
+    async function pollMessages() {
+      try {
+        const response = await fetch(`/api/chats/${chatId}/messages`);
+        if (!response.ok) return;
+        const data = (await response.json()) as MSMessage[];
+        if (!cancelled) setMessages([...data].reverse());
+      } catch {
+        // Avoid noisy repeated toasts during background polling.
+      }
+    }
+
+    loadInitialMessages();
+
+    const interval = setInterval(pollMessages, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [chatId, setLoadingMessages, setMessages, showToast]);
 
   async function handleSend(content: string) {
-    const res = await fetch(`/api/chats/${chatId}/messages`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content }),
-    });
-    const msg = await res.json();
-    appendMessage(msg);
+    try {
+      const res = await fetch(`/api/chats/${chatId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      if (!res.ok) throw new Error("Failed to send chat message");
+      const msg = (await res.json()) as MSMessage;
+      appendMessage(msg);
+    } catch {
+      showToast({ title: "Could not send message", tone: "error" });
+      throw new Error("Failed to send message");
+    }
   }
 
   async function handleThreadReply(messageId: string, content: string) {
@@ -57,12 +84,17 @@ export function ChatView({ chatId }: { chatId: string }) {
   async function handleToggleReaction(messageId: string, reactionType: ReactionType) {
     const action = hasReacted(messages, messageId, reactionType, currentUserId) ? "unset" : "set";
     toggleReaction(messageId, reactionType);
-    const res = await fetch(`/api/chats/${chatId}/messages/${messageId}/reactions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reactionType, action }),
-    });
-    if (!res.ok) toggleReaction(messageId, reactionType);
+    try {
+      const res = await fetch(`/api/chats/${chatId}/messages/${messageId}/reactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reactionType, action }),
+      });
+      if (!res.ok) throw new Error("Failed to update reaction");
+    } catch {
+      toggleReaction(messageId, reactionType);
+      showToast({ title: "Could not update reaction", tone: "error" });
+    }
   }
 
   return (

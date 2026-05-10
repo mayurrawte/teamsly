@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { MessageInput } from "./MessageInput";
 import { MessageItem } from "./MessageItem";
 import { useWorkspaceStore } from "@/store/workspace";
+import { useToastStore } from "@/store/toasts";
 
 interface ThreadPanelProps {
   message: MSMessage | null;
@@ -17,6 +18,7 @@ export function ThreadPanel({ message, open, onClose, onSendReply }: ThreadPanel
   const [localReplies, setLocalReplies] = useState<MSMessage[]>([]);
   const currentUserId = useWorkspaceStore((state) => state.currentUserId);
   const currentUserName = useWorkspaceStore((state) => state.currentUserName);
+  const showToast = useToastStore((state) => state.showToast);
 
   useEffect(() => {
     setLocalReplies(message?.replies ?? []);
@@ -54,6 +56,8 @@ export function ThreadPanel({ message, open, onClose, onSendReply }: ThreadPanel
       );
     } catch {
       setLocalReplies((replies) => replies.filter((reply) => reply.id !== optimisticReply.id));
+      showToast({ title: "Could not send reply", tone: "error" });
+      throw new Error("Failed to send reply");
     }
   }
 

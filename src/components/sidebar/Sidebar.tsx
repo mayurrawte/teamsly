@@ -3,12 +3,13 @@
 import { useWorkspaceStore } from "@/store/workspace";
 import { useRouter, useParams } from "next/navigation";
 import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { UserFooter } from "./UserFooter";
 import { SearchModal } from "@/components/modals/SearchModal";
 import { Avatar } from "@/components/ui/Avatar";
 import { PresenceDot } from "@/components/ui/PresenceDot";
+import { useToastStore } from "@/store/toasts";
 
 export function Sidebar() {
   const { teams, activeTeamId, activeChannelId, activeChatId, channels, chats, messages, presenceMap, unreadCounts, currentUserId, setChats, setActiveChannel, setActiveChat, markRead, setPresenceMap } =
@@ -18,6 +19,8 @@ export function Sidebar() {
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
+  const presenceErrorShownRef = useRef(false);
+  const showToast = useToastStore((state) => state.showToast);
 
   const activeTeam = teams.find((t) => t.id === activeTeamId);
   const teamChannels = activeTeamId ? (channels[activeTeamId] ?? []) : [];
@@ -30,10 +33,19 @@ export function Sidebar() {
       : "Messages";
 
   useEffect(() => {
-    fetch("/api/chats")
-      .then((r) => r.json())
-      .then((data: MSChat[]) => setChats(data));
-  }, []);
+    async function loadChats() {
+      try {
+        const response = await fetch("/api/chats");
+        if (!response.ok) throw new Error("Failed to load chats");
+        const data = (await response.json()) as MSChat[];
+        setChats(data);
+      } catch {
+        showToast({ title: "Could not load direct messages", tone: "error" });
+      }
+    }
+
+    loadChats();
+  }, [setChats, showToast]);
 
   useEffect(() => {
     const userIds = [
@@ -44,17 +56,24 @@ export function Sidebar() {
 
     let cancelled = false;
     async function loadPresence() {
-      const res = await fetch("/api/presence", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userIds }),
-      });
-      if (!res.ok || cancelled) return;
+      try {
+        const res = await fetch("/api/presence", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userIds }),
+        });
+        if (!res.ok || cancelled) throw new Error("Failed to load presence");
 
-      const presence = (await res.json()) as MSPresence[];
-      setPresenceMap(
-        Object.fromEntries(presence.map((item) => [item.id, item.availability]))
-      );
+        const presence = (await res.json()) as MSPresence[];
+        setPresenceMap(
+          Object.fromEntries(presence.map((item) => [item.id, item.availability]))
+        );
+      } catch {
+        if (!cancelled && !presenceErrorShownRef.current) {
+          presenceErrorShownRef.current = true;
+          showToast({ title: "Could not load presence", tone: "error" });
+        }
+      }
     }
 
     loadPresence();
@@ -63,7 +82,7 @@ export function Sidebar() {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [chats, currentUserId, setPresenceMap]);
+  }, [chats, currentUserId, setPresenceMap, showToast]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {

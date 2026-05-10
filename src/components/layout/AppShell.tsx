@@ -6,10 +6,13 @@ import { Sidebar } from "@/components/sidebar/Sidebar";
 import { WorkspaceBar } from "@/components/sidebar/WorkspaceBar";
 import { JumpToSwitcher, type JumpToItem } from "@/components/modals/JumpToSwitcher";
 import { useWorkspaceStore } from "@/store/workspace";
+import { ToastViewport } from "@/components/ui/ToastViewport";
+import { useToastStore } from "@/store/toasts";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { teams, activeTeamId, channels, chats, setActiveChannel, setActiveChat, markRead, setCurrentUser } = useWorkspaceStore();
+  const showToast = useToastStore((state) => state.showToast);
   const [jumpToOpen, setJumpToOpen] = useState(false);
 
   useEffect(() => {
@@ -29,8 +32,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       .then((response) => (response.ok ? response.json() : null))
       .then((user: MSUser | null) => {
         if (user) setCurrentUser({ id: user.id, displayName: user.displayName });
+        else showToast({ title: "Could not load your profile", tone: "error" });
+      })
+      .catch(() => {
+        showToast({ title: "Could not load your profile", tone: "error" });
       });
-  }, [setCurrentUser]);
+  }, [setCurrentUser, showToast]);
 
   const items = useMemo<JumpToItem[]>(() => {
     const teamName = teams.find((team) => team.id === activeTeamId)?.displayName ?? "Teamsly";
@@ -70,6 +77,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <JumpToSwitcher open={jumpToOpen} onOpenChange={setJumpToOpen} items={items} />
+      <ToastViewport />
     </div>
   );
 }

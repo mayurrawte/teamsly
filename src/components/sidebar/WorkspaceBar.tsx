@@ -4,27 +4,46 @@ import { useEffect } from "react";
 import { useWorkspaceStore } from "@/store/workspace";
 import { cn } from "@/lib/utils";
 import { MultiTenantSwitcher } from "./MultiTenantSwitcher";
+import { useToastStore } from "@/store/toasts";
 
 export function WorkspaceBar() {
   const { teams, activeTeamId, channels, unreadCounts, setTeams, setActiveTeam, setChannels } = useWorkspaceStore();
+  const showToast = useToastStore((state) => state.showToast);
 
   useEffect(() => {
-    fetch("/api/teams")
-      .then((r) => r.json())
-      .then((data: MSTeam[]) => {
+    async function loadTeams() {
+      try {
+        const response = await fetch("/api/teams");
+        if (!response.ok) throw new Error("Failed to load teams");
+        const data = (await response.json()) as MSTeam[];
         setTeams(data);
-        if (data.length > 0 && !activeTeamId) {
+        if (data.length > 0 && !useWorkspaceStore.getState().activeTeamId) {
           setActiveTeam(data[0].id);
         }
-      });
-  }, []);
+      } catch {
+        showToast({ title: "Could not load teams", tone: "error" });
+      }
+    }
+
+    loadTeams();
+  }, [setActiveTeam, setTeams, showToast]);
 
   useEffect(() => {
     if (!activeTeamId) return;
-    fetch(`/api/channels/${activeTeamId}`)
-      .then((r) => r.json())
-      .then((data: MSChannel[]) => setChannels(activeTeamId, data));
-  }, [activeTeamId]);
+    const teamId = activeTeamId;
+    async function loadChannels() {
+      try {
+        const response = await fetch(`/api/channels/${teamId}`);
+        if (!response.ok) throw new Error("Failed to load channels");
+        const data = (await response.json()) as MSChannel[];
+        setChannels(teamId, data);
+      } catch {
+        showToast({ title: "Could not load channels", tone: "error" });
+      }
+    }
+
+    loadChannels();
+  }, [activeTeamId, setChannels, showToast]);
 
   return (
     <div className="flex w-[68px] flex-col items-center gap-2 overflow-y-auto bg-[#19171d] py-3">

@@ -21,6 +21,8 @@ export function MessageInput({ placeholder, onSend }: Props) {
     setValue("");
     try {
       await onSend(trimmed);
+    } catch {
+      setValue(trimmed);
     } finally {
       setSending(false);
     }

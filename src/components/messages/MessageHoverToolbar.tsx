@@ -30,10 +30,12 @@ export function MessageHoverToolbar({
       <EmojiPicker onSelect={(reactionType) => onReact?.(messageId, reactionType)}>
         <ToolbarButton icon={Smile} label="Add reaction" />
       </EmojiPicker>
-      <ToolbarButton icon={MessageSquare} label="Reply in thread" onClick={() => onReplyInThread?.(messageId)} />
-      <ToolbarButton icon={Forward} label="Forward message" onClick={() => onForward?.(messageId)} />
-      <ToolbarButton icon={Pin} label="Pin message" onClick={() => onPin?.(messageId)} />
-      <ToolbarButton icon={MoreHorizontal} label="More actions" onClick={() => onMore?.(messageId)} />
+      {onReplyInThread && (
+        <ToolbarButton icon={MessageSquare} label="Reply in thread" onClick={() => onReplyInThread(messageId)} />
+      )}
+      {onForward && <ToolbarButton icon={Forward} label="Forward message" onClick={() => onForward(messageId)} />}
+      {onPin && <ToolbarButton icon={Pin} label="Pin message" onClick={() => onPin(messageId)} />}
+      {onMore && <ToolbarButton icon={MoreHorizontal} label="More actions" onClick={() => onMore(messageId)} />}
     </div>
   );
 }

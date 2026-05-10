@@ -8,6 +8,7 @@ import { DemoWorkspaceBar } from "@/components/sidebar/DemoWorkspaceBar";
 import { DemoChannelView } from "@/components/messages/DemoChannelView";
 import { DemoChatView } from "@/components/messages/DemoChatView";
 import { JumpToSwitcher, type JumpToItem } from "@/components/modals/JumpToSwitcher";
+import { ToastViewport } from "@/components/ui/ToastViewport";
 import Link from "next/link";
 
 export function DemoShell() {
@@ -94,6 +95,7 @@ export function DemoShell() {
         </main>
       </div>
       <JumpToSwitcher open={jumpToOpen} onOpenChange={setJumpToOpen} items={jumpItems} />
+      <ToastViewport />
     </div>
   );
 }
