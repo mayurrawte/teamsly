@@ -1,0 +1,14 @@
+# Activates the "Sponsor" button on the GitHub repo.
+# You also need to set up a Sponsor profile at github.com/sponsors/mayurrawte
+# for the GitHub Sponsors link to actually accept payment.
+
+github: mayurrawte
+
+# Uncomment additional funding channels as you set them up:
+# polar: mayurrawte
+# open_collective: teamsly
+# ko_fi: mayurrawte
+# patreon: mayurrawte
+# liberapay: mayurrawte
+# tidelift: npm/teamsly
+# custom: ['https://teamsly.app/sponsor']

@@ -1,0 +1,41 @@
+version: 2
+
+updates:
+  # npm dependencies — Next.js app, Electron wrapper, all in one tree.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      # Group safe minor+patch updates by type so each Monday produces at most
+      # two PRs (one for prod, one for dev) instead of dozens. Major updates
+      # still come through as individual PRs since they may need migration work.
+      production-deps:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+      development-deps:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Keep GitHub Actions versions current (security & feature parity).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "chore(ci)"
