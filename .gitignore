@@ -9,3 +9,7 @@ dist/
 *.pem
 tsconfig.tsbuildinfo
 AGENTS.md
+
+# Electron build outputs
+electron/dist/
+release/
