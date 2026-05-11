@@ -3,261 +3,334 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Teamsly - Slack UI for Microsoft Teams</title>
+    <title>Teamsly — A Slack-style interface for Microsoft Teams</title>
     <meta
       name="description"
-      content="Teamsly is an open-source Slack-style interface for Microsoft Teams data, powered by Microsoft Graph."
+      content="Teamsly is an open-source Slack-style interface for Microsoft Teams. Channels, DMs, threads, reactions, and search powered by the Microsoft Graph API. Self-hosted, AGPL-3.0."
     />
+    <meta name="theme-color" content="#1164a3" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Teamsly — A Slack-style interface for Microsoft Teams" />
+    <meta property="og:description" content="Open-source, self-hosted, AGPL-3.0. Reads and writes Microsoft Teams data through the Graph API. Conversations stay in Microsoft 365." />
+    <meta property="og:url" content="https://github.com/mayurrawte/teamsly" />
+    <meta property="og:site_name" content="Teamsly" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Teamsly — A Slack-style interface for Microsoft Teams" />
+    <meta name="twitter:description" content="Open-source, self-hosted, AGPL-3.0. Built on Microsoft Graph." />
+
+    <link rel="icon" type="image/svg+xml" href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4.5" fill="none" stroke="%231164a3" stroke-width="2.4"/><circle cx="16.5" cy="7.5" r="2.4" fill="%231164a3"/></svg>' />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="site-header" data-elevated="false">
-      <a class="brand" href="#top" aria-label="Teamsly home">
-        <span class="brand-mark">Ts</span>
-        <span>Teamsly</span>
-      </a>
-      <nav aria-label="Primary navigation">
-        <a href="#product">Product</a>
-        <a href="#architecture">Architecture</a>
-        <a href="#launch">Launch</a>
-        <a href="#next">Next steps</a>
-      </nav>
-      <a class="header-cta" href="http://localhost:3000/demo">Preview UI</a>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a href="#top" class="brand">
+          <svg class="brand-mark" width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="4.5" fill="none" stroke="#1164a3" stroke-width="2.4" />
+            <circle cx="16.5" cy="7.5" r="2.4" fill="#1164a3" />
+          </svg>
+          <span class="brand-name">Teamsly</span>
+        </a>
+        <nav class="primary-nav" aria-label="Primary">
+          <a href="#features">Features</a>
+          <a href="#how">How it works</a>
+          <a href="#compare">vs Teams</a>
+          <a href="#install">Self-host</a>
+          <a href="#faq">FAQ</a>
+        </nav>
+        <a class="btn btn-primary header-cta" href="https://github.com/mayurrawte/teamsly">
+          GitHub
+        </a>
+      </div>
     </header>
 
     <main id="top">
       <section class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow">Open-source Teams client</p>
-          <h1>Teamsly</h1>
-          <p class="hero-lede">
-            A Slack-dark interface for Microsoft Teams data. Teamsly keeps conversations in
-            Microsoft 365 while giving users a faster, cleaner workspace for channels, DMs,
-            threads, reactions, search, and launch-ready demos.
-          </p>
-          <div class="hero-actions">
-            <a class="primary-action" href="http://localhost:3000/demo">Open demo</a>
-            <a class="secondary-action" href="../LAUNCH_NEXT_STEPS.md">Launch checklist</a>
+        <div class="container hero-inner">
+          <div class="hero-copy">
+            <p class="kicker">Open source · AGPL-3.0</p>
+            <h1>A Slack-style interface for Microsoft Teams.</h1>
+            <p class="lede">
+              Teamsly reads and writes your real Microsoft Teams data through the official
+              Microsoft Graph API and renders a faster, cleaner UI on top. Conversations stay
+              in Microsoft 365. Nothing is stored anywhere else.
+            </p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="https://github.com/mayurrawte/teamsly">View on GitHub</a>
+              <a class="btn btn-secondary" href="#install">Self-host guide</a>
+            </div>
+            <p class="meta">
+              Built with Next.js, NextAuth, and the Microsoft Graph SDK.
+            </p>
           </div>
-          <dl class="hero-stats" aria-label="Project status">
-            <div>
-              <dt>Priority spec</dt>
-              <dd>1-4 complete</dd>
-            </div>
-            <div>
-              <dt>Audit</dt>
-              <dd>0 prod vulns</dd>
-            </div>
-            <div>
-              <dt>Mode</dt>
-              <dd>Demo first</dd>
-            </div>
-          </dl>
-        </div>
 
-        <div class="product-frame" aria-label="Teamsly product preview">
-          <div class="preview-window">
-            <div class="workspace-rail">
-              <span class="team-pill active">TG</span>
-              <span class="team-pill">AI</span>
-              <span class="team-pill unread">PM</span>
-              <span class="team-add">+</span>
-            </div>
-            <aside class="preview-sidebar">
-              <div class="sidebar-title">
-                <strong>The Psy Geek</strong>
-                <span>v</span>
+          <div class="preview" aria-label="Teamsly preview">
+            <div class="preview-window">
+              <div class="rail">
+                <span class="team active">TG</span>
+                <span class="team">AI</span>
+                <span class="team unread">PM</span>
               </div>
-              <div class="sidebar-search">Search...</div>
-              <div class="sidebar-section">
-                <div class="section-title">Channels</div>
-                <div class="nav-row active"># launch</div>
-                <div class="nav-row unread"># product</div>
-                <div class="nav-row"># engineering</div>
-              </div>
-              <div class="sidebar-section">
-                <div class="section-title">Direct Messages</div>
-                <div class="dm-row">
-                  <span class="avatar mini">MR</span>
-                  <span>Mayur</span>
-                  <span class="presence"></span>
+              <aside class="sidebar">
+                <div class="sidebar-title">The Psy Geek</div>
+                <div class="sidebar-search">Search</div>
+                <div class="nav-group">
+                  <div class="nav-group-title">Channels</div>
+                  <div class="nav-row active"># general</div>
+                  <div class="nav-row unread"># product</div>
+                  <div class="nav-row"># engineering</div>
+                  <div class="nav-row"># design</div>
                 </div>
-                <div class="dm-row">
-                  <span class="avatar mini coral">SA</span>
-                  <span>Sarah</span>
-                  <span class="badge">3</span>
+                <div class="nav-group">
+                  <div class="nav-group-title">Direct Messages</div>
+                  <div class="dm">
+                    <span class="avatar">M</span>
+                    <span>Mayur</span>
+                    <span class="dot"></span>
+                  </div>
+                  <div class="dm">
+                    <span class="avatar coral">S</span>
+                    <span>Sarah</span>
+                    <span class="badge">3</span>
+                  </div>
                 </div>
-              </div>
-              <div class="sidebar-footer">
-                <span class="avatar">YO</span>
-                <div>
-                  <strong>You</strong>
-                  <small>Active</small>
+              </aside>
+              <section class="main-pane">
+                <div class="channel-header">
+                  <strong># general</strong>
+                  <span>24 members</span>
                 </div>
-              </div>
-            </aside>
-            <section class="preview-main">
-              <div class="channel-bar">
-                <strong># launch</strong>
-                <span>12 members</span>
-                <div class="bar-actions">
-                  <span></span><span></span><span></span>
-                </div>
-              </div>
-              <div class="message-feed">
-                <div class="date-pill">Today</div>
-                <article class="message">
-                  <span class="avatar blue">MR</span>
-                  <div>
-                    <h3>Mayur <time>Today at 2:34 PM</time></h3>
-                    <p>Launch checklist is in place. Real Graph smoke test is next.</p>
-                    <div class="reactions">
-                      <span>like 4</span>
-                      <span>heart 2</span>
+                <div class="feed">
+                  <div class="day">Today</div>
+                  <article class="msg">
+                    <span class="avatar blue">M</span>
+                    <div>
+                      <div class="msg-meta"><strong>Mayur</strong> <time>9:14 AM</time></div>
+                      <p>Shipped the search modal. Cmd+K is wired up.</p>
                     </div>
-                  </div>
-                  <div class="hover-tools">
-                    <span></span><span></span>
-                  </div>
-                </article>
-                <article class="message compact">
-                  <p><span class="mention">@Sarah</span> can you verify the tenant sign-in path?</p>
-                </article>
-                <article class="message">
-                  <span class="avatar coral">SA</span>
-                  <div>
-                    <h3>Sarah <time>Today at 2:41 PM</time></h3>
-                    <p>Demo is clean. I will check auth, channels, messages, reactions, and presence.</p>
-                    <button class="thread-link">3 replies - last reply 2m ago</button>
-                  </div>
-                </article>
-              </div>
-              <div class="composer">Message #launch</div>
-            </section>
-            <aside class="thread-preview">
-              <header>
-                <strong>Thread</strong>
-                <span>x</span>
-              </header>
-              <p>Real tenant smoke test</p>
-              <div class="thread-input">Reply in thread...</div>
-            </aside>
+                  </article>
+                  <article class="msg">
+                    <span class="avatar coral">S</span>
+                    <div>
+                      <div class="msg-meta"><strong>Sarah</strong> <time>9:22 AM</time></div>
+                      <p>Looks great. Threads slide in cleanly on desktop.</p>
+                      <button class="thread-link">3 replies · last 4m ago</button>
+                    </div>
+                  </article>
+                </div>
+                <div class="composer">Message #general</div>
+              </section>
+            </div>
+            <p class="preview-caption">Demo data shown. Real instances render your actual Teams channels and messages.</p>
           </div>
         </div>
       </section>
 
-      <section id="product" class="section">
-        <div class="section-heading">
-          <p class="eyebrow">Product</p>
-          <h2>Slack mechanics, Microsoft data.</h2>
-          <p>
-            Teamsly does not store conversations. It signs users in with Microsoft Entra ID,
-            proxies Graph API calls through server routes, and renders a Slack-like interface
-            over the data already living in Microsoft Teams.
+      <section id="features" class="section">
+        <div class="container">
+          <h2>What's in the box</h2>
+          <p class="section-lede">
+            Everything you'd expect from a modern chat client, mapped onto your existing Teams data.
+          </p>
+
+          <div class="feature-grid">
+            <div class="feature">
+              <h3>Channels and DMs</h3>
+              <p>Workspace switcher, sidebar navigation, unread counts, and presence dots backed by Microsoft Graph.</p>
+            </div>
+            <div class="feature">
+              <h3>Threads and reactions</h3>
+              <p>Slide-in thread panel, optimistic replies and reactions, and clear rollback when a Graph call fails.</p>
+            </div>
+            <div class="feature">
+              <h3>Search and Cmd+K</h3>
+              <p>Search across channels, DMs, and loaded messages. A keyboard switcher gets you anywhere in two keystrokes.</p>
+            </div>
+            <div class="feature">
+              <h3>Rich messages</h3>
+              <p>Inline mentions, code blocks with copy-to-clipboard, and file attachment cards rendered safely.</p>
+            </div>
+            <div class="feature">
+              <h3>Settings and density</h3>
+              <p>Compact and comfortable density modes, per-user preferences in localStorage, and a clean settings modal.</p>
+            </div>
+            <div class="feature">
+              <h3>Optional Pro features</h3>
+              <p>AI unread summaries, multi-tenant account switcher, and smart browser notifications — behind a feature flag.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="how" class="section section-alt">
+        <div class="container">
+          <h2>How it works</h2>
+          <p class="section-lede">
+            Teamsly never holds your conversations. It signs users in with Microsoft Entra ID and proxies every Microsoft Graph
+            call through server routes, so access tokens never reach the browser.
+          </p>
+
+          <div class="steps">
+            <div class="step">
+              <span class="step-num">1</span>
+              <h3>Sign in</h3>
+              <p>NextAuth handles the OAuth flow with your Azure AD tenant. Sessions live in an HTTP-only cookie.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">2</span>
+              <h3>Server proxy</h3>
+              <p>API routes call Microsoft Graph using the session's access token. The browser never sees the token.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">3</span>
+              <h3>Render</h3>
+              <p>Client components render channels, messages, threads, and presence from the data the proxy returns.</p>
+            </div>
+          </div>
+
+          <p class="muted">
+            A no-auth demo at <code>/demo</code> swaps the Graph proxy for mock data so you can preview the UI without an
+            Azure tenant.
           </p>
         </div>
-        <div class="feature-grid">
-          <article>
-            <span class="feature-icon">#</span>
-            <h3>Channels and DMs</h3>
-            <p>Workspace rail, sidebar navigation, unread badges, presence dots, and direct message lists.</p>
-          </article>
-          <article>
-            <span class="feature-icon">T</span>
-            <h3>Threads and reactions</h3>
-            <p>Thread panel, optimistic replies, six Teams reaction types, and rollback toasts on failure.</p>
-          </article>
-          <article>
-            <span class="feature-icon">K</span>
-            <h3>Fast switching</h3>
-            <p>Search modal, Cmd/Ctrl+K jump switcher, proper timestamps, grouping, and date dividers.</p>
-          </article>
-          <article>
-            <span class="feature-icon">G</span>
-            <h3>Graph-first</h3>
-            <p>Client components never call Graph directly. Access tokens stay server-side in API routes.</p>
-          </article>
-        </div>
       </section>
 
-      <section id="architecture" class="architecture">
-        <div class="section-heading">
-          <p class="eyebrow">Architecture</p>
-          <h2>Built for a no-login preview and a real tenant path.</h2>
-        </div>
-        <div class="flow">
-          <div class="flow-card">
-            <strong>Demo mode</strong>
-            <span>Mock data powers /demo for QA without Azure AD.</span>
-          </div>
-          <div class="flow-line"></div>
-          <div class="flow-card">
-            <strong>App shell</strong>
-            <span>Shared pure UI components accept real or mock data by props.</span>
-          </div>
-          <div class="flow-line"></div>
-          <div class="flow-card">
-            <strong>Graph proxy</strong>
-            <span>Server API routes call Microsoft Graph with session access tokens.</span>
+      <section id="compare" class="section">
+        <div class="container">
+          <h2>Teams vs Teamsly</h2>
+          <p class="section-lede">
+            Same data. Different surface.
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Microsoft Teams</th>
+                  <th>Teamsly</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Source available</td><td>No</td><td>Yes (AGPL-3.0)</td></tr>
+                <tr><td>Self-hostable</td><td>No</td><td>Yes</td></tr>
+                <tr><td>Cmd+K switcher</td><td>Limited</td><td>Yes</td></tr>
+                <tr><td>Density preference</td><td>No</td><td>Compact / Comfortable</td></tr>
+                <tr><td>Keyboard navigation</td><td>Limited</td><td>First-class</td></tr>
+                <tr><td>Where messages live</td><td>Microsoft 365</td><td>Microsoft 365 (unchanged)</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
 
-      <section id="launch" class="section split">
-        <div>
-          <p class="eyebrow">Launch readiness</p>
-          <h2>What is already in place.</h2>
-          <ul class="check-list">
-            <li>Priority 1-4 product scope completed in the app.</li>
-            <li>Production dependency audit reports zero vulnerabilities.</li>
-            <li>Filtered TypeScript check is clean except the documented auth config mismatch.</li>
-            <li>Demo route returns HTTP 200 and compiles cleanly.</li>
-            <li>Recoverable failures surface visible toasts instead of silent failure.</li>
-          </ul>
-        </div>
-        <div class="status-panel">
-          <button class="status-tab active" data-tab="demo">Demo</button>
-          <button class="status-tab" data-tab="real">Real mode</button>
-          <button class="status-tab" data-tab="build">Build</button>
-          <div class="status-copy" id="status-copy">
-            `/demo` is the current verification path. It uses mock teams, channels, DMs,
-            reactions, threads, presence, search, and launch UI without requiring Microsoft auth.
-          </div>
+      <section id="install" class="section section-alt">
+        <div class="container">
+          <h2>Self-host</h2>
+          <p class="section-lede">
+            One repository. No managed service to depend on.
+          </p>
+
+          <pre><code>git clone https://github.com/mayurrawte/teamsly
+cd teamsly
+npm install
+cp .env.example .env.local
+npm run dev</code></pre>
+
+          <p>
+            Fill in <code>.env.local</code> with your Azure AD app credentials:
+          </p>
+
+          <pre><code>AZURE_AD_CLIENT_ID=<span class="hash">your-client-id</span>
+AZURE_AD_CLIENT_SECRET=<span class="hash">your-client-secret</span>
+AZURE_AD_TENANT_ID=common
+AUTH_SECRET=<span class="hash">openssl rand -base64 32</span>
+NEXTAUTH_URL=http://localhost:3000</code></pre>
+
+          <p>
+            Then open <code>http://localhost:3000</code> and sign in, or visit <code>/demo</code> to preview the UI without auth.
+            For production, any Node 20+ host works (<code>npm run build &amp;&amp; npm start</code>) and Vercel deploys
+            cleanly with the same environment variables.
+          </p>
         </div>
       </section>
 
-      <section id="next" class="next-steps">
-        <div class="section-heading">
-          <p class="eyebrow">Next steps</p>
-          <h2>Owner checklist before public launch.</h2>
+      <section id="faq" class="section">
+        <div class="container faq">
+          <h2>FAQ</h2>
+
+          <div class="qa">
+            <h3>Does Teamsly store my messages?</h3>
+            <p>No. Conversations stay in Microsoft 365. Teamsly only holds an authenticated session token, server-side, for the
+              duration of the request.</p>
+          </div>
+
+          <div class="qa">
+            <h3>Do I need an Azure AD tenant?</h3>
+            <p>For the real app, yes — Teamsly authenticates through Microsoft Entra ID. For a UI preview without auth, run
+              <code>/demo</code>.</p>
+          </div>
+
+          <div class="qa">
+            <h3>Is it really open source?</h3>
+            <p>Yes. AGPL-3.0. The full source is on
+              <a href="https://github.com/mayurrawte/teamsly">GitHub</a>. Free to self-host, modify, and contribute.
+              Commercial hosting requires a separate license.</p>
+          </div>
+
+          <div class="qa">
+            <h3>Is there a mobile app?</h3>
+            <p>Not yet. The web app is responsive and works in mobile browsers; a desktop wrapper (Electron) is on the
+              roadmap.</p>
+          </div>
+
+          <div class="qa">
+            <h3>What's the stack?</h3>
+            <p>Next.js 15, NextAuth, Zustand, the Microsoft Graph SDK, Tailwind, and Radix primitives. The optional AI summary
+              route uses the Anthropic SDK.</p>
+          </div>
         </div>
-        <ol>
-          <li>
-            <strong>Resolve the known production build decision.</strong>
-            Keep, suppress, or refactor the `tenantId` type mismatch only after confirming real
-            Azure sign-in.
-          </li>
-          <li>
-            <strong>Run real Microsoft Graph smoke tests.</strong>
-            Verify sign-in, teams, channels, chats, messages, sends, reactions, replies, and presence.
-          </li>
-          <li>
-            <strong>Do visual QA on the demo.</strong>
-            Check desktop, tablet, and mobile widths for overflow, overlap, and interaction polish.
-          </li>
-        </ol>
-        <a class="primary-action" href="../LAUNCH_NEXT_STEPS.md">Read full checklist</a>
       </section>
     </main>
 
-    <footer>
-      <div class="brand">
-        <span class="brand-mark">Ts</span>
-        <span>Teamsly</span>
-      </div>
-      <p>Open-source Slack-style UI for Microsoft Teams data.</p>
-    </footer>
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div class="footer-brand">
+          <div class="brand">
+            <svg class="brand-mark" width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="4.5" fill="none" stroke="#1164a3" stroke-width="2.4" />
+              <circle cx="16.5" cy="7.5" r="2.4" fill="#1164a3" />
+            </svg>
+            <span class="brand-name">Teamsly</span>
+          </div>
+          <p>A Slack-style interface for Microsoft Teams.<br>Open source, self-hosted, AGPL-3.0.</p>
+        </div>
 
-    <script src="script.js"></script>
+        <div class="footer-cols">
+          <div>
+            <h4>Project</h4>
+            <a href="https://github.com/mayurrawte/teamsly">GitHub</a>
+            <a href="https://github.com/mayurrawte/teamsly/issues">Issues</a>
+            <a href="https://github.com/mayurrawte/teamsly/blob/main/LICENSE">License</a>
+          </div>
+          <div>
+            <h4>Docs</h4>
+            <a href="https://github.com/mayurrawte/teamsly/blob/main/README.md">README</a>
+            <a href="#install">Self-host</a>
+            <a href="#faq">FAQ</a>
+          </div>
+          <div>
+            <h4>Author</h4>
+            <a href="https://github.com/mayurrawte">@mayurrawte</a>
+          </div>
+        </div>
+      </div>
+      <div class="container footer-bottom">
+        <span>&copy; 2026 Teamsly contributors</span>
+        <span>Not affiliated with Microsoft.</span>
+      </div>
+    </footer>
   </body>
 </html>
