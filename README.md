@@ -14,21 +14,19 @@ No data leaves Microsoft. No shadow IT. Just a better interface.
 
 ### Desktop apps (zero config — sign in and go)
 
+Desktop installers are produced automatically by the GitHub Actions release workflow on every `v*.*.*` tag push.
+
 | Platform | Download |
 |---|---|
-| macOS (Apple Silicon + Intel) | [Teamsly.dmg](https://teamsly.app/download/mac) |
-| Windows | [Teamsly-Setup.exe](https://teamsly.app/download/win) |
-| Linux | [Teamsly.AppImage](https://teamsly.app/download/linux) |
+| macOS (Apple Silicon + Intel) | [Latest release](https://github.com/mayurrawte/teamsly/releases/latest) → `.dmg` |
+| Windows | [Latest release](https://github.com/mayurrawte/teamsly/releases/latest) → `.exe` |
+| Linux | [Latest release](https://github.com/mayurrawte/teamsly/releases/latest) → `.AppImage` or `.deb` |
 
-**No Azure setup. No env files. No IT involvement.** Download → open → sign in with Microsoft → done in ~90 seconds.
-
-### Web
-
-Just go to [teamsly.app](https://teamsly.app) and sign in. Same UX, no install.
+The desktop wrapper loads the Teamsly web app in a native window and opens Microsoft sign-in in the system browser. By default it points at a hosted instance; set `TEAMSLY_URL` to point at your own deployment.
 
 ### Self-host
 
-Want to run your own instance? See [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md). One command: `docker compose up`.
+Run your own instance with Next.js 20+ and Node.js. See [CONTRIBUTING.md](CONTRIBUTING.md) for the dev setup. For production deploys, any Node-capable host works (Vercel, Fly, Render, your own VM).
 
 ---
 
@@ -41,11 +39,15 @@ Want to run your own instance? See [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md).
 - **Self-hostable** — deploy anywhere, your data stays in Microsoft's infrastructure
 - **Dark theme** — easy on the eyes, inspired by Slack's dark mode
 
-### Coming soon (Pro / hosted)
-- AI message summaries — catch up on 200 unread messages in 10 seconds
-- Multi-tenant — connect multiple Teams orgs in one sidebar
-- Smart notifications — keyword alerts, digest mode, snooze
-- Richer message formatting — full Slack-compatible markdown
+### Pro features (behind `NEXT_PUBLIC_PRO=true`)
+- **AI message summaries** — catch up on unread messages in seconds (uses Anthropic SDK; requires `ANTHROPIC_API_KEY`)
+- **Multi-tenant switcher** — workspace bar UI for connecting multiple Microsoft accounts
+- **Smart notifications** — browser notifications with mentions-only and keyword alert filtering
+
+### Roadmap
+- Graph change notifications for true real-time updates
+- Richer file preview (currently surfaces attachment cards with download)
+- Slack-compatible markdown editor in the composer
 
 ---
 
@@ -179,15 +181,12 @@ Users authenticate directly with Microsoft via OAuth 2.0. Teamsly never sees you
 
 PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup.
 
-Key areas for contribution:
-- [ ] Graph change notifications (real-time)
-- [ ] Thread/reply support
-- [ ] File preview
-- [ ] Emoji picker
-- [ ] Message reactions
-- [ ] Search
-- [ ] Electron desktop wrapper
-- [ ] AI message summaries (Pro feature)
+Open areas for contribution:
+- [ ] Graph change notifications subscription for true real-time updates (currently 30s presence polling + on-demand refetch)
+- [ ] Full file preview pane (currently surfaces attachment cards with safe download links)
+- [ ] Slack-compatible markdown editor in the composer
+- [ ] Native Electron bundling of the Next.js standalone server (currently the wrapper points at a hosted URL)
+- [ ] CLA-assistant bot wiring (the CLA flow is documented in CONTRIBUTING.md but not yet enforced on PRs)
 
 ---
 
