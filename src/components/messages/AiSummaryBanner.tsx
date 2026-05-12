@@ -48,7 +48,7 @@ export function AiSummaryBanner({ messages }: AiSummaryBannerProps) {
   if (!enabled || messages.length < 10) return null;
 
   return (
-    <div className="mx-4 mb-2 mt-3 rounded-md border border-[#3f4144] bg-[rgba(17,100,163,0.15)] px-3 py-2 text-[13px] text-[#d1d2d3]">
+    <div className="mx-4 mb-2 mt-3 rounded-md border border-[#3f4144] bg-[rgba(15,90,143,0.15)] px-3 py-2 text-[13px] text-[#d1d2d3]">
       <div className="mb-1 flex items-center gap-2 font-bold text-white">
         <Sparkles size={14} className="text-[#1d9bd1]" />
         AI unread summary

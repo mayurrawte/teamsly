@@ -21,7 +21,7 @@ export function MultiTenantSwitcher({ demo = false }: MultiTenantSwitcherProps) 
         onClick={() => {
           if (!demo) signIn("microsoft-entra-id");
         }}
-        className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-[#3f0e40] text-[#ababad] [transition:border-radius_200ms_ease,background-color_150ms_ease] hover:rounded-lg hover:text-white"
+        className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-[#26415C] text-[#ababad] [transition:border-radius_200ms_ease,background-color_150ms_ease] hover:rounded-lg hover:text-white"
       >
         <Plus size={18} />
       </button>
@@ -36,7 +36,7 @@ function CurrentAccount() {
   return (
     <div
       title={name}
-      className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#1164a3] text-[12px] font-bold text-white"
+      className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0F5A8F] text-[12px] font-bold text-white"
     >
       {avatarInitials(name)}
     </div>
@@ -47,7 +47,7 @@ function DemoAccount() {
   return (
     <div
       title="Demo account"
-      className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#1164a3] text-white"
+      className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0F5A8F] text-white"
     >
       <UserRound size={17} />
     </div>

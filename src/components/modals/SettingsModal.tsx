@@ -92,7 +92,7 @@ function TabButton({
       type="button"
       onClick={onClick}
       className={`flex items-center gap-2 rounded-md px-2 py-[6px] text-left text-[14px] transition-colors duration-100 ${
-        active ? "bg-[#1164a3] text-white" : "text-[#ababad] hover:bg-[#27242c] hover:text-white"
+        active ? "bg-[#0F5A8F] text-white" : "text-[#ababad] hover:bg-[#27242c] hover:text-white"
       }`}
     >
       <Icon size={14} />
@@ -105,7 +105,7 @@ function AccountPanel({ account, onSignOut }: { account: AccountInfo; onSignOut?
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded bg-[#1164a3] text-[16px] font-bold text-white">
+        <div className="flex h-12 w-12 items-center justify-center rounded bg-[#0F5A8F] text-[16px] font-bold text-white">
           {account.initials}
         </div>
         <div className="min-w-0">
@@ -313,16 +313,16 @@ function RadioRow({
       disabled={disabled}
       className={`flex items-start gap-3 rounded-md border px-3 py-2 text-left transition-colors duration-100 ${
         checked
-          ? "border-[#1164a3] bg-[rgba(17,100,163,0.15)]"
+          ? "border-[#0F5A8F] bg-[rgba(15,90,143,0.15)]"
           : "border-[#3f4144] bg-[#222529]"
       } ${disabled ? "cursor-not-allowed opacity-50" : "hover:border-[#565856]"}`}
     >
       <span
         className={`mt-[2px] flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border-2 ${
-          checked ? "border-[#1164a3]" : "border-[#565856]"
+          checked ? "border-[#0F5A8F]" : "border-[#565856]"
         }`}
       >
-        {checked && <span className="h-2 w-2 rounded-full bg-[#1164a3]" />}
+        {checked && <span className="h-2 w-2 rounded-full bg-[#0F5A8F]" />}
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-[13px] font-bold text-white">{label}</span>

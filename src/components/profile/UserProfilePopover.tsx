@@ -53,7 +53,7 @@ export function UserProfilePopover({
             <button
               type="button"
               onClick={onSendDm}
-              className="mt-4 inline-flex h-8 items-center gap-2 rounded-md bg-[#1164a3] px-3 text-[13px] font-bold text-white transition-colors duration-150 hover:bg-[#0b4f8a]"
+              className="mt-4 inline-flex h-8 items-center gap-2 rounded-md bg-[#0F5A8F] px-3 text-[13px] font-bold text-white transition-colors duration-150 hover:bg-[#0A4571]"
             >
               <MessageSquare size={14} />
               Send DM

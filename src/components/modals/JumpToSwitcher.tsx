@@ -108,7 +108,7 @@ export function JumpToSwitcher({ open, onOpenChange, items }: JumpToSwitcherProp
                     onMouseEnter={() => setActiveIndex(index)}
                     onClick={() => selectItem(item)}
                     className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors duration-[80ms] ${
-                      index === activeIndex ? "bg-[#1164a3] text-white" : "text-[#d1d2d3] hover:bg-[#27292d]"
+                      index === activeIndex ? "bg-[#0F5A8F] text-white" : "text-[#d1d2d3] hover:bg-[#27292d]"
                     }`}
                   >
                     <span

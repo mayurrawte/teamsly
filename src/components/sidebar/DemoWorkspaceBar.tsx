@@ -23,8 +23,8 @@ export function DemoWorkspaceBar() {
           className={cn(
             "relative flex h-10 w-10 items-center justify-center rounded-[14px] text-sm font-bold [transition:border-radius_200ms_ease,background-color_150ms_ease]",
             activeTeamId === team.id
-              ? "rounded-lg bg-[#1164a3] text-white"
-              : "bg-[#3f0e40] text-white hover:rounded-lg"
+              ? "rounded-lg bg-[#0F5A8F] text-white"
+              : "bg-[#26415C] text-white hover:rounded-lg"
           )}
         >
           {team.displayName.slice(0, 2).toUpperCase()}

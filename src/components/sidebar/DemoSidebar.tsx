@@ -193,7 +193,7 @@ function SidebarItem({
       onClick={onClick}
       className={cn(
         "mx-2 flex h-7 w-[calc(100%-16px)] items-center gap-2 rounded-md px-2 text-[15px] transition-colors duration-[80ms] ease-out",
-        active ? "bg-[#1164a3] text-white" : "text-[#ababad] hover:bg-[#27292d] hover:text-white"
+        active ? "bg-[#0F5A8F] text-white" : "text-[#ababad] hover:bg-[#27292d] hover:text-white"
       )}
     >
       <span className="flex-shrink-0 opacity-70">{icon}</span>

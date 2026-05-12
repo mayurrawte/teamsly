@@ -70,7 +70,7 @@ export function DemoShell() {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       {/* Demo banner */}
-      <div className="flex items-center justify-between bg-[#1164a3] px-4 py-1.5 text-sm text-white">
+      <div className="flex items-center justify-between bg-[#0F5A8F] px-4 py-1.5 text-sm text-white">
         <span>
           <span className="font-semibold">Demo mode</span> — mock data, no Microsoft account needed
         </span>

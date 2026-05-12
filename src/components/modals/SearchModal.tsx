@@ -194,7 +194,7 @@ function MessageResult({ message, query, teamName, onSelect }: { message: MSMess
       onClick={onSelect}
       className="flex w-full gap-2 rounded-md px-3 py-2 text-left transition-colors duration-[80ms] hover:bg-[#27292d]"
     >
-      <div className="mt-[3px] flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-[#1164a3] text-[10px] font-bold text-white">
+      <div className="mt-[3px] flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-[#0F5A8F] text-[10px] font-bold text-white">
         {initials || "?"}
       </div>
       <div className="min-w-0 flex-1">
@@ -248,7 +248,7 @@ function highlight(value: string, query: string): React.ReactNode {
   return (
     <>
       {value.slice(0, index)}
-      <span className="rounded-sm bg-[#1164a3] px-[2px] text-white">{value.slice(index, index + query.length)}</span>
+      <span className="rounded-sm bg-[#0F5A8F] px-[2px] text-white">{value.slice(index, index + query.length)}</span>
       {value.slice(index + query.length)}
     </>
   );

@@ -8,7 +8,7 @@
   /* Backgrounds */
   --sidebar-bg: #19171d;
   --sidebar-hover: #27242c;
-  --sidebar-active-bg: #1164a3;
+  --sidebar-active-bg: #0F5A8F;
   --content-bg: #1a1d21;
   --message-bg: #222529;
   --message-hover-bg: #27292d;
@@ -30,9 +30,9 @@
   --border-input: #565856;
 
   /* Accent */
-  --accent: #1164a3;
-  --accent-hover: #0b4f8a;
-  --accent-light: rgba(17, 100, 163, 0.15);
+  --accent: #0F5A8F;
+  --accent-hover: #0A4571;
+  --accent-light: rgba(15, 90, 143, 0.15);
 
   /* Status */
   --status-online: #2bac76;
@@ -43,8 +43,8 @@
   /* Reactions */
   --reaction-bg: #2c2d30;
   --reaction-border: #3f4144;
-  --reaction-active-bg: rgba(17, 100, 163, 0.2);
-  --reaction-active-border: #1164a3;
+  --reaction-active-bg: rgba(15, 90, 143, 0.2);
+  --reaction-active-border: #0F5A8F;
 }
 
 * {
