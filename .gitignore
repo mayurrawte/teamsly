@@ -13,3 +13,4 @@ AGENTS.md
 # Electron build outputs
 electron/dist/
 release/
+.vercel

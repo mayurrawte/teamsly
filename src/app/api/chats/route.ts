@@ -8,7 +8,8 @@ export async function GET() {
   try {
     const chats = await getChats(session.accessToken);
     return NextResponse.json(chats);
-  } catch {
+  } catch (err) {
+    console.error("[graph] chats failed:", err);
     return NextResponse.json({ error: "Graph chats failed" }, { status: 502 });
   }
 }

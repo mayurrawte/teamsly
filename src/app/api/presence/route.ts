@@ -13,7 +13,8 @@ export async function POST(req: Request) {
   try {
     const presence = await getPresence(session.accessToken, ids);
     return NextResponse.json(presence);
-  } catch {
+  } catch (err) {
+    console.error("[graph] presence failed:", err);
     return NextResponse.json({ error: "Graph presence failed" }, { status: 502 });
   }
 }

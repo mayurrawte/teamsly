@@ -8,7 +8,8 @@ export async function GET() {
   try {
     const teams = await getTeams(session.accessToken);
     return NextResponse.json(teams);
-  } catch {
+  } catch (err) {
+    console.error("[graph] teams failed:", err);
     return NextResponse.json({ error: "Graph teams failed" }, { status: 502 });
   }
 }
