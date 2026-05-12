@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 import { PreferencesModal } from "@/components/modals/PreferencesModal";
+import { useWorkspaceStore } from "@/store/workspace";
 
 interface NavItem {
   label: string;
@@ -50,6 +51,10 @@ export function LeftRail() {
   const [prefsOpen, setPrefsOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
+  // Unread badge: sum of all unread channels + unread DMs
+  const unreadCounts = useWorkspaceStore((s) => s.unreadCounts);
+  const totalUnread = Object.values(unreadCounts).reduce((sum, n) => sum + n, 0);
+
   // Close popover when clicking outside
   useEffect(() => {
     if (!moreOpen) return;
@@ -72,11 +77,12 @@ export function LeftRail() {
         {NAV_ITEMS.map((item) => {
           const active = isActive(pathname, item);
           const Icon = item.icon;
+          const showBadge = item.label === "Activity" && totalUnread > 0 && !active;
           return (
             <Link
               key={item.label}
               href={item.href}
-              aria-label={item.label}
+              aria-label={showBadge ? `${item.label}, ${totalUnread} unread` : item.label}
               title={item.label}
               className={cn(
                 "group relative flex w-full flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-medium transition-colors",
@@ -93,21 +99,31 @@ export function LeftRail() {
                 />
               )}
               {/* Icon container with hover/active fill */}
-              <span
-                className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
-                  active
-                    ? "bg-[#0F5A8F]/20"
-                    : "group-hover:bg-white/8"
-                )}
-              >
-                <Icon
-                  size={18}
-                  strokeWidth={active ? 2.2 : 1.8}
+              <span className="relative">
+                <span
                   className={cn(
-                    active ? "text-[#4da3e0]" : "text-[#a0a3a8] group-hover:text-[#d1d2d3]"
+                    "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
+                    active
+                      ? "bg-[#0F5A8F]/20"
+                      : "group-hover:bg-white/8"
                   )}
-                />
+                >
+                  <Icon
+                    size={18}
+                    strokeWidth={active ? 2.2 : 1.8}
+                    className={cn(
+                      active ? "text-[#4da3e0]" : "text-[#a0a3a8] group-hover:text-[#d1d2d3]"
+                    )}
+                  />
+                </span>
+                {showBadge && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -right-1 -top-1 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-[#cd2553] px-[3px] text-[9px] font-bold leading-none text-white"
+                  >
+                    {totalUnread > 99 ? "99+" : totalUnread}
+                  </span>
+                )}
               </span>
               <span
                 className={cn(

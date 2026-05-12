@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Search, HelpCircle } from "lucide-react";
 import { useWorkspaceStore } from "@/store/workspace";
 import { mockTeams, mockChannels, mockChats, mockPresence, mockUnreadCounts } from "@/lib/mock/data";
 import { DemoSidebar } from "@/components/sidebar/DemoSidebar";
 import { DemoWorkspaceBar } from "@/components/sidebar/DemoWorkspaceBar";
 import { LeftRail } from "@/components/layout/LeftRail";
+import { MemberPanel } from "@/components/layout/MemberPanel";
 import { DemoChannelView } from "@/components/messages/DemoChannelView";
 import { DemoChatView } from "@/components/messages/DemoChatView";
 import { JumpToSwitcher, type JumpToItem } from "@/components/modals/JumpToSwitcher";
+import { Logo } from "@/components/ui/Logo";
 import { ToastViewport } from "@/components/ui/ToastViewport";
 import Link from "next/link";
 
@@ -82,6 +85,37 @@ export function DemoShell() {
         </Link>
       </div>
 
+      {/* Global top search bar */}
+      <header className="flex h-[50px] flex-shrink-0 items-center gap-3 border-b border-[#3f4144] bg-[#19171d] px-4">
+        {/* Left: logomark */}
+        <div className="flex w-[56px] flex-shrink-0 items-center justify-center">
+          <Logo size={22} className="text-[#4da3e0]" />
+        </div>
+
+        {/* Center: non-functional search bar (demo only) */}
+        <div className="flex flex-1 items-center justify-center">
+          <div
+            aria-label="Search (not functional in demo)"
+            className="flex h-8 w-full max-w-[480px] items-center gap-2 rounded-md border border-[#3f4144] bg-[#2b2d31] px-3 text-sm text-[#6c6f75] opacity-60 cursor-default"
+          >
+            <Search className="h-4 w-4 flex-shrink-0 text-[#6c6f75]" />
+            <span className="flex-1 text-left">Search Teamsly</span>
+          </div>
+        </div>
+
+        {/* Right: help affordance placeholder */}
+        <div className="flex w-[56px] flex-shrink-0 items-center justify-end">
+          <button
+            type="button"
+            aria-label="Help"
+            title="Help"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-[#ababad] transition-colors hover:bg-[#2b2d31] hover:text-[#d1d2d3]"
+          >
+            <HelpCircle className="h-4 w-4" />
+          </button>
+        </div>
+      </header>
+
       <div className="flex flex-1 overflow-hidden bg-[#1a1d21]">
         <LeftRail />
         <DemoWorkspaceBar />
@@ -95,6 +129,7 @@ export function DemoShell() {
             <EmptyState />
           )}
         </main>
+        <MemberPanel />
       </div>
       <JumpToSwitcher open={jumpToOpen} onOpenChange={setJumpToOpen} items={jumpItems} />
       <ToastViewport />

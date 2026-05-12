@@ -11,6 +11,7 @@ interface ChannelHeaderProps {
   memberCount?: number;
   activeTab: Tab;
   onTabChange: (tab: Tab) => void;
+  onOpenMembers?: () => void;
 }
 
 interface DmHeaderProps {
@@ -20,6 +21,7 @@ interface DmHeaderProps {
   activeTab: Tab;
   onTabChange: (tab: Tab) => void;
   onSearchClick?: () => void;
+  onOpenMembers?: () => void;
 }
 
 const TAB_LABELS: { id: Tab; label: string }[] = [
@@ -55,7 +57,13 @@ function TabRow({
   );
 }
 
-function IconCluster({ onSearchClick }: { onSearchClick?: () => void }) {
+function IconCluster({
+  onSearchClick,
+  onOpenMembers,
+}: {
+  onSearchClick?: () => void;
+  onOpenMembers?: () => void;
+}) {
   return (
     <div className="flex items-center gap-1">
       <button
@@ -82,7 +90,8 @@ function IconCluster({ onSearchClick }: { onSearchClick?: () => void }) {
       </button>
       <button
         type="button"
-        title="More options"
+        title="Members"
+        onClick={onOpenMembers}
         className="rounded p-1.5 text-[#ababad] transition-colors hover:bg-[#2b2d31] hover:text-[#d1d2d3] focus:outline-none"
       >
         <MoreVertical className="h-4 w-4" />
@@ -94,14 +103,21 @@ function IconCluster({ onSearchClick }: { onSearchClick?: () => void }) {
 function MemberAvatarStack({
   members,
   currentUserId,
+  onOpenMembers,
 }: {
   members: MSChatMember[];
   currentUserId: string;
+  onOpenMembers?: () => void;
 }) {
   const shown = members.slice(0, 5);
   const overflow = members.length > 5 ? members.length - 5 : 0;
   return (
-    <div className="flex items-center">
+    <button
+      type="button"
+      onClick={onOpenMembers}
+      title="View members"
+      className="flex items-center rounded p-0.5 transition-colors hover:bg-[#2b2d31] focus:outline-none"
+    >
       <div className="flex -space-x-1.5">
         {shown.map((m) => (
           <div key={m.id} className="ring-2 ring-[#1a1d21]" style={{ borderRadius: 4 }}>
@@ -116,7 +132,7 @@ function MemberAvatarStack({
       {overflow > 0 && (
         <span className="ml-1.5 text-xs text-[#ababad]">+{overflow}</span>
       )}
-    </div>
+    </button>
   );
 }
 
@@ -126,6 +142,7 @@ export function ChannelMessageHeader({
   activeTab,
   onTabChange,
   onSearchClick,
+  onOpenMembers,
 }: ChannelHeaderProps & { onSearchClick?: () => void }) {
   return (
     <div className="flex flex-col border-b border-[#3f4144] bg-[#1a1d21] px-4 shadow-sm">
@@ -144,7 +161,7 @@ export function ChannelMessageHeader({
         </div>
         {/* Right: icon cluster */}
         <div className="flex flex-shrink-0 items-center gap-2">
-          <IconCluster onSearchClick={onSearchClick} />
+          <IconCluster onSearchClick={onSearchClick} onOpenMembers={onOpenMembers} />
         </div>
       </div>
       {/* Tab row */}
@@ -160,6 +177,7 @@ export function DmMessageHeader({
   activeTab,
   onTabChange,
   onSearchClick,
+  onOpenMembers,
 }: DmHeaderProps) {
   const otherMembers = members.filter(
     (m) => (m.userId ?? m.id) !== currentUserId
@@ -176,13 +194,14 @@ export function DmMessageHeader({
             <MemberAvatarStack
               members={displayMembers.slice(0, 5)}
               currentUserId={currentUserId}
+              onOpenMembers={onOpenMembers}
             />
           ) : null}
           <span className="truncate font-bold text-white">{label}</span>
         </div>
         {/* Right: icon cluster */}
         <div className="flex flex-shrink-0 items-center gap-2">
-          <IconCluster onSearchClick={onSearchClick} />
+          <IconCluster onSearchClick={onSearchClick} onOpenMembers={onOpenMembers} />
         </div>
       </div>
       {/* Tab row */}

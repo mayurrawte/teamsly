@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 interface WorkspaceState {
   teams: MSTeam[];
@@ -36,108 +37,114 @@ interface WorkspaceState {
 }
 
 const UNREAD_STORAGE_KEY = "teamsly:unread-counts";
-const STARRED_STORAGE_KEY = "teamsly:starred-ids";
 
-function readStarredIds(): string[] {
-  if (typeof window === "undefined") return [];
-  const raw = window.localStorage.getItem(STARRED_STORAGE_KEY);
-  if (!raw) return [];
-  try {
-    return JSON.parse(raw) as string[];
-  } catch {
-    return [];
-  }
-}
+export const useWorkspaceStore = create<WorkspaceState>()(
+  persist(
+    (set) => ({
+      teams: [],
+      activeTeamId: null,
+      channels: {},
+      activeChannelId: null,
+      chats: [],
+      chatsNextLink: null,
+      activeChatId: null,
+      messages: [],
+      isLoadingMessages: false,
+      presenceMap: {},
+      unreadCounts: {},
+      currentUserId: "you",
+      currentUserName: "You",
+      starredIds: [],
 
-function writeStarredIds(ids: string[]) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(STARRED_STORAGE_KEY, JSON.stringify(ids));
-}
+      setTeams: (teams) => set({ teams }),
+      setActiveTeam: (id) => set({ activeTeamId: id, activeChannelId: null, messages: [] }),
+      setChannels: (teamId, channels) =>
+        set((s) => ({ channels: { ...s.channels, [teamId]: channels } })),
+      setActiveChannel: (id) => set({ activeChannelId: id, activeChatId: null, messages: [] }),
+      setChats: (chats, nextLink = null) => set({ chats, chatsNextLink: nextLink }),
+      appendChats: (incoming, nextLink) =>
+        set((s) => {
+          const existingIds = new Set(s.chats.map((c) => c.id));
+          const deduped = incoming.filter((c) => !existingIds.has(c.id));
+          return { chats: [...s.chats, ...deduped], chatsNextLink: nextLink };
+        }),
+      setActiveChat: (id) => set({ activeChatId: id, activeChannelId: null, messages: [] }),
+      setMessages: (messages) => set({ messages }),
+      appendMessage: (message) => set((s) => ({ messages: [...s.messages, message] })),
+      toggleReaction: (messageId, reactionType) =>
+        set((s) => ({
+          messages: s.messages.map((message) => {
+            if (message.id !== messageId) return message;
 
-export const useWorkspaceStore = create<WorkspaceState>((set) => ({
-  teams: [],
-  activeTeamId: null,
-  channels: {},
-  activeChannelId: null,
-  chats: [],
-  chatsNextLink: null,
-  activeChatId: null,
-  messages: [],
-  isLoadingMessages: false,
-  presenceMap: {},
-  unreadCounts: {},
-  currentUserId: "you",
-  currentUserName: "You",
-  starredIds: typeof window !== "undefined" ? readStarredIds() : [],
+            const reactions = message.reactions ?? [];
+            const existing = reactions.find(
+              (reaction) => reaction.reactionType === reactionType && reaction.user.id === s.currentUserId
+            );
 
-  setTeams: (teams) => set({ teams }),
-  setActiveTeam: (id) => set({ activeTeamId: id, activeChannelId: null, messages: [] }),
-  setChannels: (teamId, channels) =>
-    set((s) => ({ channels: { ...s.channels, [teamId]: channels } })),
-  setActiveChannel: (id) => set({ activeChannelId: id, activeChatId: null, messages: [] }),
-  setChats: (chats, nextLink = null) => set({ chats, chatsNextLink: nextLink }),
-  appendChats: (incoming, nextLink) =>
-    set((s) => {
-      const existingIds = new Set(s.chats.map((c) => c.id));
-      const deduped = incoming.filter((c) => !existingIds.has(c.id));
-      return { chats: [...s.chats, ...deduped], chatsNextLink: nextLink };
+            return {
+              ...message,
+              reactions: existing
+                ? reactions.filter((reaction) => reaction !== existing)
+                : [
+                    ...reactions,
+                    { reactionType, user: { id: s.currentUserId, displayName: s.currentUserName } },
+                  ],
+            };
+          }),
+        })),
+      setLoadingMessages: (v) => set({ isLoadingMessages: v }),
+      setPresenceMap: (presenceMap) => set({ presenceMap }),
+      setCurrentUser: (user) => set({ currentUserId: user.id, currentUserName: user.displayName }),
+      initUnreadCounts: (counts) => {
+        const stored = readUnreadCounts();
+        set({ unreadCounts: stored ?? counts });
+        if (!stored) writeUnreadCounts(counts);
+      },
+      setUnreadCount: (id, count) =>
+        set((s) => {
+          const next = { ...s.unreadCounts, [id]: count };
+          if (count <= 0) delete next[id];
+          writeUnreadCounts(next);
+          return { unreadCounts: next };
+        }),
+      markRead: (id) =>
+        set((s) => {
+          if (!s.unreadCounts[id]) return s;
+          const next = { ...s.unreadCounts };
+          delete next[id];
+          writeUnreadCounts(next);
+          return { unreadCounts: next };
+        }),
+      toggleStar: (id) =>
+        set((s) => {
+          const next = s.starredIds.includes(id)
+            ? s.starredIds.filter((sid) => sid !== id)
+            : [...s.starredIds, id];
+          return { starredIds: next };
+        }),
     }),
-  setActiveChat: (id) => set({ activeChatId: id, activeChannelId: null, messages: [] }),
-  setMessages: (messages) => set({ messages }),
-  appendMessage: (message) => set((s) => ({ messages: [...s.messages, message] })),
-  toggleReaction: (messageId, reactionType) =>
-    set((s) => ({
-      messages: s.messages.map((message) => {
-        if (message.id !== messageId) return message;
-
-        const reactions = message.reactions ?? [];
-        const existing = reactions.find(
-          (reaction) => reaction.reactionType === reactionType && reaction.user.id === s.currentUserId
-        );
-
-        return {
-          ...message,
-          reactions: existing
-            ? reactions.filter((reaction) => reaction !== existing)
-            : [
-                ...reactions,
-                { reactionType, user: { id: s.currentUserId, displayName: s.currentUserName } },
-              ],
-        };
+    {
+      name: "teamsly:workspace",
+      storage: createJSONStorage(() =>
+        typeof window !== "undefined" ? localStorage : (undefined as unknown as Storage)
+      ),
+      version: 1,
+      migrate: (persistedState, _version) => {
+        // Placeholder: return persisted state as-is for future schema migrations.
+        return persistedState as WorkspaceState;
+      },
+      partialize: (state) => ({
+        teams: state.teams,
+        channels: state.channels,
+        chats: state.chats,
+        chatsNextLink: state.chatsNextLink,
+        currentUserId: state.currentUserId,
+        currentUserName: state.currentUserName,
+        starredIds: state.starredIds,
       }),
-    })),
-  setLoadingMessages: (v) => set({ isLoadingMessages: v }),
-  setPresenceMap: (presenceMap) => set({ presenceMap }),
-  setCurrentUser: (user) => set({ currentUserId: user.id, currentUserName: user.displayName }),
-  initUnreadCounts: (counts) => {
-    const stored = readUnreadCounts();
-    set({ unreadCounts: stored ?? counts });
-    if (!stored) writeUnreadCounts(counts);
-  },
-  setUnreadCount: (id, count) =>
-    set((s) => {
-      const next = { ...s.unreadCounts, [id]: count };
-      if (count <= 0) delete next[id];
-      writeUnreadCounts(next);
-      return { unreadCounts: next };
-    }),
-  markRead: (id) =>
-    set((s) => {
-      if (!s.unreadCounts[id]) return s;
-      const next = { ...s.unreadCounts };
-      delete next[id];
-      writeUnreadCounts(next);
-      return { unreadCounts: next };
-    }),
-  toggleStar: (id) =>
-    set((s) => {
-      const next = s.starredIds.includes(id)
-        ? s.starredIds.filter((sid) => sid !== id)
-        : [...s.starredIds, id];
-      writeStarredIds(next);
-      return { starredIds: next };
-    }),
-}));
+    }
+  )
+);
 
 function readUnreadCounts(): Record<string, number> | null {
   if (typeof window === "undefined") return null;

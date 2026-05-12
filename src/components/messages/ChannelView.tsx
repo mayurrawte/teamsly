@@ -9,6 +9,7 @@ import { ChannelMessageHeader, type Tab } from "./MessageHeader";
 import { ChannelIntroCard } from "./IntroCard";
 import { reactionEmoji, type ReactionType } from "@/lib/utils/reactions";
 import { useToastStore } from "@/store/toasts";
+import { useMemberPanelStore } from "@/store/memberPanel";
 
 export function ChannelView({ teamId, channelId }: { teamId: string; channelId: string }) {
   const { teams, channels, messages, isLoadingMessages, currentUserId, setMessages, appendMessage, setLoadingMessages, toggleReaction } =
@@ -16,6 +17,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
   const showToast = useToastStore((state) => state.showToast);
+  const openChannelMembers = useMemberPanelStore((s) => s.openChannelMembers);
 
   const team = teams.find((t) => t.id === teamId);
   const channel = channels[teamId]?.find((c) => c.id === channelId);
@@ -118,6 +120,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
         description={channel?.description}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        onOpenMembers={openChannelMembers}
       />
       {activeTab === "messages" ? (
         <>
