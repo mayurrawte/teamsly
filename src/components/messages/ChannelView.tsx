@@ -5,7 +5,8 @@ import { useWorkspaceStore } from "@/store/workspace";
 import { MessageFeed } from "./MessageFeed";
 import { MessageInput } from "./MessageInput";
 import { ThreadPanel } from "./ThreadPanel";
-import { Hash } from "lucide-react";
+import { ChannelMessageHeader, type Tab } from "./MessageHeader";
+import { ChannelIntroCard } from "./IntroCard";
 import { reactionEmoji, type ReactionType } from "@/lib/utils/reactions";
 import { useToastStore } from "@/store/toasts";
 
@@ -13,10 +14,16 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
   const { teams, channels, messages, isLoadingMessages, currentUserId, setMessages, appendMessage, setLoadingMessages, toggleReaction } =
     useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>("messages");
   const showToast = useToastStore((state) => state.showToast);
 
   const team = teams.find((t) => t.id === teamId);
   const channel = channels[teamId]?.find((c) => c.id === channelId);
+
+  // Reset tab when channel changes
+  useEffect(() => {
+    setActiveTab("messages");
+  }, [channelId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -97,26 +104,53 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
     }
   }
 
+  const introCard = channel ? (
+    <ChannelIntroCard
+      channelName={channel.displayName}
+      description={channel.description}
+    />
+  ) : null;
+
   return (
     <div className="relative flex h-full flex-col overflow-hidden">
-      <ChannelHeader name={channel?.displayName} teamName={team?.displayName} />
-      <MessageFeed
-        messages={messages}
-        loading={isLoadingMessages}
-        contextName={channel?.displayName ? `#${channel.displayName}` : "Channel"}
-        onReplyInThread={setThreadMessage}
-        onToggleReaction={handleToggleReaction}
+      <ChannelMessageHeader
+        name={channel?.displayName}
+        description={channel?.description}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
       />
-      <MessageInput
-        placeholder={`Message #${channel?.displayName ?? "channel"}`}
-        onSend={handleSend}
-      />
+      {activeTab === "messages" ? (
+        <>
+          <MessageFeed
+            messages={messages}
+            loading={isLoadingMessages}
+            contextName={channel?.displayName ? `#${channel.displayName}` : "Channel"}
+            introCard={introCard}
+            onReplyInThread={setThreadMessage}
+            onToggleReaction={handleToggleReaction}
+          />
+          <MessageInput
+            placeholder={`Message #${channel?.displayName ?? "channel"}`}
+            onSend={handleSend}
+          />
+        </>
+      ) : (
+        <ComingSoonPanel label={activeTab === "files" ? "Files" : "About"} />
+      )}
       <ThreadPanel
         open={Boolean(threadMessage)}
         message={threadMessage}
         onClose={() => setThreadMessage(null)}
         onSendReply={handleThreadReply}
       />
+    </div>
+  );
+}
+
+function ComingSoonPanel({ label }: { label: string }) {
+  return (
+    <div className="flex flex-1 items-center justify-center text-sm text-[#6c6f75]">
+      {label} — coming soon
     </div>
   );
 }
@@ -141,15 +175,5 @@ function hasReacted(
         reaction.user.id === currentUserId &&
         (reaction.reactionType === reactionType || reaction.reactionType === unicodeReaction)
     )
-  );
-}
-
-function ChannelHeader({ name, teamName }: { name?: string; teamName?: string }) {
-  return (
-    <div className="flex h-[49px] items-center gap-2 border-b border-[#3f4144] px-4 shadow-sm">
-      <Hash className="h-4 w-4 text-[#ababad]" />
-      <span className="font-bold text-white">{name}</span>
-      {teamName && <span className="text-sm text-[#6c6f75]">· {teamName}</span>}
-    </div>
   );
 }

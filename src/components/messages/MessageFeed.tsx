@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, Fragment } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, Fragment, type ReactNode } from "react";
 import { ArrowDown } from "lucide-react";
 import { MessageItem } from "./MessageItem";
 import { DateDivider } from "./DateDivider";
@@ -16,12 +16,13 @@ interface Props {
   messages: MSMessage[];
   loading: boolean;
   contextName?: string;
+  introCard?: ReactNode;
   onReplyInThread?: (message: MSMessage) => void;
   onToggleReaction?: (messageId: string, reactionType: ReactionType) => void;
   onSendOwn?: (callback: () => void) => void;
 }
 
-export function MessageFeed({ messages, loading, contextName, onReplyInThread, onToggleReaction }: Props) {
+export function MessageFeed({ messages, loading, contextName, introCard, onReplyInThread, onToggleReaction }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
@@ -105,6 +106,7 @@ export function MessageFeed({ messages, loading, contextName, onReplyInThread, o
         onScroll={checkNearBottom}
         className="flex flex-1 flex-col overflow-y-auto py-2"
       >
+        {introCard}
         <AiSummaryBanner messages={messages} />
         {messages.length === 0 && (
           <div className="flex flex-1 items-center justify-center text-sm text-[#6c6f75]">

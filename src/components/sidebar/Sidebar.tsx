@@ -2,26 +2,72 @@
 
 import { useWorkspaceStore } from "@/store/workspace";
 import { useRouter, useParams } from "next/navigation";
-import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search, Settings, UserPlus, Moon, LogOut, Inbox, GitBranch, Star } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { UserFooter } from "./UserFooter";
 import { SearchModal } from "@/components/modals/SearchModal";
+import { PreferencesModal } from "@/components/modals/PreferencesModal";
 import { Avatar } from "@/components/ui/Avatar";
 import { PresenceDot } from "@/components/ui/PresenceDot";
 import { useToastStore } from "@/store/toasts";
+import { useSession } from "next-auth/react";
+import { avatarInitials } from "@/lib/utils/avatar";
+
+// localStorage keys for per-section collapsed state
+const COLLAPSE_KEYS = {
+  unreads: "teamsly.sidebar.unreads.collapsed",
+  threads: "teamsly.sidebar.threads.collapsed",
+  starred: "teamsly.sidebar.starred.collapsed",
+} as const;
+
+function writeCollapsed(key: string, collapsed: boolean) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(key, String(collapsed));
+}
+
+function useCollapsible(storageKey: string, defaultOpen = true): [boolean, () => void] {
+  const [open, setOpen] = useState<boolean>(() => {
+    if (typeof window === "undefined") return defaultOpen;
+    const stored = window.localStorage.getItem(storageKey);
+    if (stored === null) return defaultOpen;
+    // stored is "true" when collapsed, so open = stored !== "true"
+    return stored !== "true";
+  });
+
+  const toggle = useCallback(() => {
+    setOpen((prev) => {
+      const next = !prev;
+      writeCollapsed(storageKey, !next);
+      return next;
+    });
+  }, [storageKey]);
+
+  return [open, toggle];
+}
 
 export function Sidebar() {
-  const { teams, activeTeamId, activeChannelId, activeChatId, channels, chats, chatsNextLink, messages, presenceMap, unreadCounts, currentUserId, setChats, appendChats, setActiveChannel, setActiveChat, markRead, setPresenceMap } =
+  const { teams, activeTeamId, activeChannelId, activeChatId, channels, chats, chatsNextLink, messages, presenceMap, unreadCounts, starredIds, currentUserId, setChats, appendChats, setActiveChannel, setActiveChat, markRead, setPresenceMap } =
     useWorkspaceStore();
   const router = useRouter();
   const params = useParams();
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [loadingMoreChats, setLoadingMoreChats] = useState(false);
   const presenceErrorShownRef = useRef(false);
   const showToast = useToastStore((state) => state.showToast);
+  const { data: session } = useSession();
+  const sessionName = session?.user?.name ?? "User";
+  const sessionEmail = session?.user?.email ?? undefined;
+  const sessionInitials = avatarInitials(sessionName);
+
+  const [unreadsOpen, toggleUnreads] = useCollapsible(COLLAPSE_KEYS.unreads, true);
+  const [threadsOpen, toggleThreads] = useCollapsible(COLLAPSE_KEYS.threads, true);
+  const [starredOpen, toggleStarred] = useCollapsible(COLLAPSE_KEYS.starred, true);
 
   const activeTeam = teams.find((t) => t.id === activeTeamId);
   const teamChannels = activeTeamId ? (channels[activeTeamId] ?? []) : [];
@@ -32,6 +78,16 @@ export function Sidebar() {
     : activeChat
       ? `Messages in ${getChatLabel(activeChat, currentUserId)}`
       : "Messages";
+
+  // Unread items: channels + DMs with unreadCounts > 0
+  const unreadChannelItems = teamChannels.filter((ch) => (unreadCounts[ch.id] ?? 0) > 0);
+  const unreadChatItems = chats.filter((chat) => (unreadCounts[chat.id] ?? 0) > 0);
+  const totalUnreads = unreadChannelItems.length + unreadChatItems.length;
+
+  // Starred items: channels + DMs whose ids are in starredIds
+  const starredChannelItems = teamChannels.filter((ch) => starredIds.includes(ch.id));
+  const starredChatItems = chats.filter((chat) => starredIds.includes(chat.id));
+  const totalStarred = starredChannelItems.length + starredChatItems.length;
 
   useEffect(() => {
     async function loadChats() {
@@ -128,13 +184,66 @@ export function Sidebar() {
 
   return (
     <div className="flex w-[260px] flex-shrink-0 flex-col overflow-hidden bg-[#19171d]">
-      {/* Team name header */}
-      <div className="flex h-[49px] items-center justify-between border-b border-[#3f4144] px-4 transition-colors duration-[80ms] ease-out hover:bg-[#27242c]">
-        <span className="truncate text-[15px] font-black text-white">
-          {activeTeam?.displayName ?? "Teamsly"}
-        </span>
-        <ChevronDown className="h-4 w-4 text-[#ababad]" />
-      </div>
+      {/* Team name header — dropdown trigger */}
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <button
+            type="button"
+            className="flex h-[49px] w-full items-center justify-between border-b border-[#3f4144] px-4 transition-colors duration-[80ms] ease-out hover:bg-[#27242c] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]"
+          >
+            <span className="truncate text-[15px] font-black text-white">
+              {activeTeam?.displayName ?? "Teamsly"}
+            </span>
+            <ChevronDown className="h-4 w-4 flex-shrink-0 text-[#ababad]" />
+          </button>
+        </DropdownMenu.Trigger>
+
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content
+            sideOffset={4}
+            align="start"
+            className="z-50 min-w-[220px] overflow-hidden rounded-lg border border-[#3f4144] bg-[#1a1d21] py-1 shadow-[0_8px_32px_rgba(0,0,0,0.55)] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
+          >
+            <DropdownMenu.Item
+              onSelect={() => setSettingsOpen(true)}
+              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[#d1d2d3] outline-none transition-colors duration-75 data-[highlighted]:bg-[#0F5A8F] data-[highlighted]:text-white"
+            >
+              <Settings className="h-4 w-4 flex-shrink-0" />
+              Preferences
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              onSelect={() => {
+                // TODO: open invite people flow
+              }}
+              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[#d1d2d3] outline-none transition-colors duration-75 data-[highlighted]:bg-[#0F5A8F] data-[highlighted]:text-white"
+            >
+              <UserPlus className="h-4 w-4 flex-shrink-0" />
+              Invite people
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              onSelect={() => {
+                // TODO: set away / presence toggle
+              }}
+              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[#d1d2d3] outline-none transition-colors duration-75 data-[highlighted]:bg-[#0F5A8F] data-[highlighted]:text-white"
+            >
+              <Moon className="h-4 w-4 flex-shrink-0" />
+              Set away
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Separator className="my-1 h-px bg-[#3f4144]" />
+
+            <DropdownMenu.Item
+              onSelect={() => signOut({ callbackUrl: "/" })}
+              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[#d1d2d3] outline-none transition-colors duration-75 data-[highlighted]:bg-[#cd2553] data-[highlighted]:text-white"
+            >
+              <LogOut className="h-4 w-4 flex-shrink-0" />
+              Sign out
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
 
       <button
         type="button"
@@ -146,6 +255,110 @@ export function Sidebar() {
       </button>
 
       <div className="flex-1 overflow-y-auto pb-2">
+        {/* Unreads section */}
+        <div className="mb-1">
+          <SectionHeader
+            label="Unreads"
+            icon={<Inbox className="h-3.5 w-3.5" />}
+            open={unreadsOpen}
+            count={totalUnreads}
+            onToggle={toggleUnreads}
+          />
+          {unreadsOpen && (
+            <>
+              {unreadChannelItems.map((ch) => (
+                <SidebarItem
+                  key={ch.id}
+                  label={ch.displayName}
+                  icon={
+                    ch.membershipType === "private" ? (
+                      <Lock className="h-3.5 w-3.5" />
+                    ) : (
+                      <Hash className="h-3.5 w-3.5" />
+                    )
+                  }
+                  active={params?.channelId === ch.id}
+                  unreadCount={unreadCounts[ch.id] ?? 0}
+                  onClick={() => goToChannel(ch.id)}
+                />
+              ))}
+              {unreadChatItems.map((chat) => (
+                <SidebarItem
+                  key={chat.id}
+                  label={getChatLabel(chat, currentUserId)}
+                  icon={<ChatAvatar chat={chat} presenceMap={presenceMap} currentUserId={currentUserId} />}
+                  active={params?.chatId === chat.id}
+                  unreadCount={unreadCounts[chat.id] ?? 0}
+                  onClick={() => goToChat(chat.id)}
+                />
+              ))}
+              {totalUnreads === 0 && (
+                <p className="px-4 py-1 text-[12px] text-[#6c6f75]">All caught up</p>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Threads section */}
+        <div className="mb-1">
+          <SectionHeader
+            label="Threads"
+            icon={<GitBranch className="h-3.5 w-3.5" />}
+            open={threadsOpen}
+            count={0}
+            onToggle={toggleThreads}
+          />
+          {threadsOpen && (
+            <p className="px-4 py-1 text-[12px] text-[#6c6f75]">Coming soon</p>
+          )}
+        </div>
+
+        {/* Starred section */}
+        <div className="mb-1">
+          <SectionHeader
+            label="Starred"
+            icon={<Star className="h-3.5 w-3.5" />}
+            open={starredOpen}
+            count={totalStarred}
+            onToggle={toggleStarred}
+          />
+          {starredOpen && (
+            <>
+              {starredChannelItems.map((ch) => (
+                <SidebarItem
+                  key={ch.id}
+                  label={ch.displayName}
+                  icon={
+                    ch.membershipType === "private" ? (
+                      <Lock className="h-3.5 w-3.5" />
+                    ) : (
+                      <Hash className="h-3.5 w-3.5" />
+                    )
+                  }
+                  active={params?.channelId === ch.id}
+                  unreadCount={unreadCounts[ch.id] ?? 0}
+                  onClick={() => goToChannel(ch.id)}
+                />
+              ))}
+              {starredChatItems.map((chat) => (
+                <SidebarItem
+                  key={chat.id}
+                  label={getChatLabel(chat, currentUserId)}
+                  icon={<ChatAvatar chat={chat} presenceMap={presenceMap} currentUserId={currentUserId} />}
+                  active={params?.chatId === chat.id}
+                  unreadCount={unreadCounts[chat.id] ?? 0}
+                  onClick={() => goToChat(chat.id)}
+                />
+              ))}
+              {totalStarred === 0 && (
+                <p className="px-4 py-1 text-[12px] text-[#6c6f75]">
+                  Star channels and DMs to find them faster
+                </p>
+              )}
+            </>
+          )}
+        </div>
+
         {/* Channels section */}
         <div className="mb-1">
           <button
@@ -243,7 +456,44 @@ export function Sidebar() {
           // is sufficient since the user is already in that conversation.
         }}
       />
+      <PreferencesModal open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
+  );
+}
+
+function SectionHeader({
+  label,
+  icon,
+  open,
+  count,
+  onToggle,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  open: boolean;
+  count: number;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="group/section flex w-full items-center gap-1.5 px-4 py-1 text-[13px] font-bold text-[#ababad] transition-colors duration-[80ms] ease-out hover:text-white"
+    >
+      <ChevronRight
+        className={cn(
+          "h-3 w-3 flex-shrink-0 transition-transform duration-200 ease-out",
+          open && "rotate-90"
+        )}
+      />
+      <span className="flex-shrink-0 opacity-70">{icon}</span>
+      <span className="truncate">{label}</span>
+      {count > 0 && (
+        <span className="ml-auto flex h-[16px] min-w-[16px] flex-shrink-0 items-center justify-center rounded-full bg-[#cd2553] px-[4px] text-[10px] font-bold text-white">
+          {count > 99 ? "99+" : count}
+        </span>
+      )}
+    </button>
   );
 }
 

@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { Settings, LogOut } from "lucide-react";
-import { SettingsModal } from "@/components/modals/SettingsModal";
-import { avatarInitials } from "@/lib/utils/avatar";
+import { PreferencesModal } from "@/components/modals/PreferencesModal";
 import { Avatar } from "@/components/ui/Avatar";
 import { PresenceDot } from "@/components/ui/PresenceDot";
 import { UserProfilePopover } from "@/components/profile/UserProfilePopover";
@@ -18,7 +17,6 @@ export function UserFooter() {
 
   const name = session?.user?.name ?? "User";
   const email = session?.user?.email ?? undefined;
-  const initials = avatarInitials(name);
 
   return (
     <>
@@ -57,12 +55,7 @@ export function UserFooter() {
         </div>
       </div>
 
-      <SettingsModal
-        open={open}
-        onOpenChange={setOpen}
-        account={{ name, email, initials }}
-        onSignOut={() => signOut({ callbackUrl: "/" })}
-      />
+      <PreferencesModal open={open} onOpenChange={setOpen} />
     </>
   );
 }

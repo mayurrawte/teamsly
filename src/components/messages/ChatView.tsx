@@ -5,7 +5,8 @@ import { useWorkspaceStore } from "@/store/workspace";
 import { MessageFeed } from "./MessageFeed";
 import { MessageInput } from "./MessageInput";
 import { ThreadPanel } from "./ThreadPanel";
-import { MessageSquare } from "lucide-react";
+import { DmMessageHeader, type Tab } from "./MessageHeader";
+import { DmIntroCard } from "./IntroCard";
 import { reactionEmoji, type ReactionType } from "@/lib/utils/reactions";
 import { useToastStore } from "@/store/toasts";
 
@@ -13,10 +14,17 @@ export function ChatView({ chatId }: { chatId: string }) {
   const { chats, messages, isLoadingMessages, currentUserId, setMessages, appendMessage, setLoadingMessages, toggleReaction } =
     useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>("messages");
   const showToast = useToastStore((state) => state.showToast);
 
   const chat = chats.find((c) => c.id === chatId);
   const label = getChatLabel(chat, currentUserId);
+  const members = chat?.members ?? [];
+
+  // Reset tab when chat changes
+  useEffect(() => {
+    setActiveTab("messages");
+  }, [chatId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -97,26 +105,57 @@ export function ChatView({ chatId }: { chatId: string }) {
     }
   }
 
+  // Detect self-DM: no other members or the only member is current user
+  const otherMembers = members.filter((m) => (m.userId ?? m.id) !== currentUserId);
+  const isSelfDm = otherMembers.length === 0;
+
+  const introCard = (
+    <DmIntroCard
+      label={label}
+      members={members}
+      currentUserId={currentUserId}
+      isSelfDm={isSelfDm}
+    />
+  );
+
   return (
     <div className="relative flex h-full flex-col overflow-hidden">
-      <div className="flex h-[49px] items-center gap-2 border-b border-[#3f4144] px-4 shadow-sm">
-        <MessageSquare className="h-4 w-4 text-[#ababad]" />
-        <span className="font-bold text-white">{label}</span>
-      </div>
-      <MessageFeed
-        messages={messages}
-        loading={isLoadingMessages}
-        contextName={label}
-        onReplyInThread={setThreadMessage}
-        onToggleReaction={handleToggleReaction}
+      <DmMessageHeader
+        label={label}
+        members={members}
+        currentUserId={currentUserId}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
       />
-      <MessageInput placeholder={`Message ${label}`} onSend={handleSend} />
+      {activeTab === "messages" ? (
+        <>
+          <MessageFeed
+            messages={messages}
+            loading={isLoadingMessages}
+            contextName={label}
+            introCard={introCard}
+            onReplyInThread={setThreadMessage}
+            onToggleReaction={handleToggleReaction}
+          />
+          <MessageInput placeholder={`Message ${label}`} onSend={handleSend} />
+        </>
+      ) : (
+        <ComingSoonPanel label={activeTab === "files" ? "Files" : "About"} />
+      )}
       <ThreadPanel
         open={Boolean(threadMessage)}
         message={threadMessage}
         onClose={() => setThreadMessage(null)}
         onSendReply={handleThreadReply}
       />
+    </div>
+  );
+}
+
+function ComingSoonPanel({ label }: { label: string }) {
+  return (
+    <div className="flex flex-1 items-center justify-center text-sm text-[#6c6f75]">
+      {label} — coming soon
     </div>
   );
 }

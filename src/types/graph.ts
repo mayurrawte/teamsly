@@ -36,6 +36,8 @@ interface MSMessage {
     contentType: string;
     name: string;
     contentUrl?: string;
+    /** Adaptive Card JSON — may be a string or pre-parsed object from the Graph SDK */
+    content?: string | Record<string, unknown> | null;
   }>;
   replies?: MSMessage[];
 }

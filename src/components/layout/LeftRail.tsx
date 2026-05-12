@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   Home,
   MessageSquare,
@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
+import { PreferencesModal } from "@/components/modals/PreferencesModal";
 
 interface NavItem {
   label: string;
@@ -45,8 +46,8 @@ function isActive(pathname: string, item: NavItem): boolean {
 
 export function LeftRail() {
   const pathname = usePathname();
-  const router = useRouter();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [prefsOpen, setPrefsOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
   // Close popover when clicking outside
@@ -161,7 +162,7 @@ export function LeftRail() {
               role="menuitem"
               onClick={() => {
                 setMoreOpen(false);
-                router.push("/app/preferences");
+                setPrefsOpen(true);
               }}
               className="flex w-full items-center gap-3 px-3 py-2 text-sm text-[#d1d2d3] transition-colors hover:bg-white/8"
             >
@@ -191,6 +192,8 @@ export function LeftRail() {
           </div>
         )}
       </div>
+
+      <PreferencesModal open={prefsOpen} onOpenChange={setPrefsOpen} />
     </nav>
   );
 }

@@ -4,6 +4,7 @@
   --font-family-sans: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* ─── Base design tokens (dark — app ships dark-first) ──────────────────── */
 :root {
   /* Backgrounds */
   --sidebar-bg: #19171d;
@@ -29,7 +30,7 @@
   --border: #3f4144;
   --border-input: #565856;
 
-  /* Accent */
+  /* Accent — overridden at runtime by ThemeSync / localStorage */
   --accent: #0F5A8F;
   --accent-hover: #0A4571;
   --accent-light: rgba(15, 90, 143, 0.15);
@@ -45,6 +46,48 @@
   --reaction-border: #3f4144;
   --reaction-active-bg: rgba(15, 90, 143, 0.2);
   --reaction-active-border: #0F5A8F;
+}
+
+/* ─── Dark mode (explicit or inherited default) ─────────────────────────── */
+[data-color-mode="dark"] {
+  /* Inherits :root dark values — nothing to override.
+     Add overrides here if you diverge from :root defaults. */
+}
+
+/* ─── Light mode ────────────────────────────────────────────────────────── */
+/* TODO: Full light-mode token audit. These are minimal stubs — UI will still
+   render in dark colours on many components until each is migrated. */
+[data-color-mode="light"] {
+  --sidebar-bg: #f8f9fa;
+  --sidebar-hover: #e8eaed;
+  --sidebar-active-bg: var(--accent);
+  --content-bg: #ffffff;
+  --message-bg: #f4f5f7;
+  --message-hover-bg: #eaebee;
+  --input-bg: #ffffff;
+  --input-border: #c7c9cc;
+  --modal-bg: #ffffff;
+  --modal-overlay: rgba(0, 0, 0, 0.5);
+
+  --text-primary: #1d1c1d;
+  --text-secondary: #454245;
+  --text-muted: #868688;
+  --text-link: #0b5e8e;
+  --text-mention: #b0004a;
+  --text-white: #1d1c1d;
+
+  --border: #d6d6d7;
+  --border-input: #b3b3b4;
+
+  --status-online: #007a5a;
+  --status-away: #c07d00;
+  --status-busy: #cd2553;
+  --status-offline: #868688;
+
+  --reaction-bg: #e8eaed;
+  --reaction-border: #c7c9cc;
+  --reaction-active-bg: rgba(15, 90, 143, 0.12);
+  --reaction-active-border: var(--accent);
 }
 
 * {

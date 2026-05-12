@@ -14,6 +14,7 @@ interface WorkspaceState {
   unreadCounts: Record<string, number>;
   currentUserId: string;
   currentUserName: string;
+  starredIds: string[];
 
   setTeams: (teams: MSTeam[]) => void;
   setActiveTeam: (id: string) => void;
@@ -31,9 +32,27 @@ interface WorkspaceState {
   initUnreadCounts: (counts: Record<string, number>) => void;
   setUnreadCount: (id: string, count: number) => void;
   markRead: (id: string) => void;
+  toggleStar: (id: string) => void;
 }
 
 const UNREAD_STORAGE_KEY = "teamsly:unread-counts";
+const STARRED_STORAGE_KEY = "teamsly:starred-ids";
+
+function readStarredIds(): string[] {
+  if (typeof window === "undefined") return [];
+  const raw = window.localStorage.getItem(STARRED_STORAGE_KEY);
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw) as string[];
+  } catch {
+    return [];
+  }
+}
+
+function writeStarredIds(ids: string[]) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(STARRED_STORAGE_KEY, JSON.stringify(ids));
+}
 
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   teams: [],
@@ -49,6 +68,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   unreadCounts: {},
   currentUserId: "you",
   currentUserName: "You",
+  starredIds: typeof window !== "undefined" ? readStarredIds() : [],
 
   setTeams: (teams) => set({ teams }),
   setActiveTeam: (id) => set({ activeTeamId: id, activeChannelId: null, messages: [] }),
@@ -108,6 +128,14 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
       delete next[id];
       writeUnreadCounts(next);
       return { unreadCounts: next };
+    }),
+  toggleStar: (id) =>
+    set((s) => {
+      const next = s.starredIds.includes(id)
+        ? s.starredIds.filter((sid) => sid !== id)
+        : [...s.starredIds, id];
+      writeStarredIds(next);
+      return { starredIds: next };
     }),
 }));
 

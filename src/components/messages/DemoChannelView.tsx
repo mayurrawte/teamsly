@@ -2,21 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { useWorkspaceStore } from "@/store/workspace";
-import { mockMessages, mockChannels } from "@/lib/mock/data";
+import { mockMessages } from "@/lib/mock/data";
 import { MessageFeed } from "./MessageFeed";
 import { MessageInput } from "./MessageInput";
 import { ThreadPanel } from "./ThreadPanel";
-import { Hash, Lock } from "lucide-react";
+import { ChannelMessageHeader, type Tab } from "./MessageHeader";
+import { ChannelIntroCard } from "./IntroCard";
 
 export function DemoChannelView({ channelId }: { channelId: string }) {
   const { activeTeamId, channels, messages, setMessages, appendMessage, toggleReaction } = useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>("messages");
   const teamChannels = activeTeamId ? (channels[activeTeamId] ?? []) : [];
   const channel = teamChannels.find((c) => c.id === channelId);
 
   useEffect(() => {
     const msgs = mockMessages[channelId] ?? [];
     setMessages(msgs);
+    setActiveTab("messages");
   }, [channelId]);
 
   async function handleSend(content: string) {
@@ -30,28 +33,41 @@ export function DemoChannelView({ channelId }: { channelId: string }) {
     appendMessage(newMsg);
   }
 
+  const introCard = channel ? (
+    <ChannelIntroCard
+      channelName={channel.displayName}
+      description={channel.description}
+    />
+  ) : null;
+
   return (
     <div className="relative flex h-full flex-col overflow-hidden">
-      <div className="flex h-[49px] items-center gap-2 border-b border-[#3f4144] px-4 shadow-sm">
-        {channel?.membershipType === "private" ? (
-          <Lock className="h-4 w-4 text-[#ababad]" />
-        ) : (
-          <Hash className="h-4 w-4 text-[#ababad]" />
-        )}
-        <span className="font-bold text-white">{channel?.displayName ?? channelId}</span>
-        <span className="text-sm text-[#6c6f75]">— demo mode</span>
-      </div>
-      <MessageFeed
-        messages={messages}
-        loading={false}
-        contextName={channel?.displayName ? `#${channel.displayName}` : "Channel"}
-        onReplyInThread={setThreadMessage}
-        onToggleReaction={toggleReaction}
+      <ChannelMessageHeader
+        name={channel?.displayName ?? channelId}
+        description={channel?.description}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
       />
-      <MessageInput
-        placeholder={`Message #${channel?.displayName ?? "channel"}`}
-        onSend={handleSend}
-      />
+      {activeTab === "messages" ? (
+        <>
+          <MessageFeed
+            messages={messages}
+            loading={false}
+            contextName={channel?.displayName ? `#${channel.displayName}` : "Channel"}
+            introCard={introCard}
+            onReplyInThread={setThreadMessage}
+            onToggleReaction={toggleReaction}
+          />
+          <MessageInput
+            placeholder={`Message #${channel?.displayName ?? "channel"}`}
+            onSend={handleSend}
+          />
+        </>
+      ) : (
+        <div className="flex flex-1 items-center justify-center text-sm text-[#6c6f75]">
+          {activeTab === "files" ? "Files" : "About"} — coming soon
+        </div>
+      )}
       <ThreadPanel
         open={Boolean(threadMessage)}
         message={threadMessage}
