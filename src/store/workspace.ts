@@ -6,6 +6,7 @@ interface WorkspaceState {
   channels: Record<string, MSChannel[]>;
   activeChannelId: string | null;
   chats: MSChat[];
+  chatsNextLink: string | null;
   activeChatId: string | null;
   messages: MSMessage[];
   isLoadingMessages: boolean;
@@ -18,7 +19,8 @@ interface WorkspaceState {
   setActiveTeam: (id: string) => void;
   setChannels: (teamId: string, channels: MSChannel[]) => void;
   setActiveChannel: (id: string | null) => void;
-  setChats: (chats: MSChat[]) => void;
+  setChats: (chats: MSChat[], nextLink?: string | null) => void;
+  appendChats: (chats: MSChat[], nextLink: string | null) => void;
   setActiveChat: (id: string | null) => void;
   setMessages: (messages: MSMessage[]) => void;
   appendMessage: (message: MSMessage) => void;
@@ -39,6 +41,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   channels: {},
   activeChannelId: null,
   chats: [],
+  chatsNextLink: null,
   activeChatId: null,
   messages: [],
   isLoadingMessages: false,
@@ -52,7 +55,13 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setChannels: (teamId, channels) =>
     set((s) => ({ channels: { ...s.channels, [teamId]: channels } })),
   setActiveChannel: (id) => set({ activeChannelId: id, activeChatId: null, messages: [] }),
-  setChats: (chats) => set({ chats }),
+  setChats: (chats, nextLink = null) => set({ chats, chatsNextLink: nextLink }),
+  appendChats: (incoming, nextLink) =>
+    set((s) => {
+      const existingIds = new Set(s.chats.map((c) => c.id));
+      const deduped = incoming.filter((c) => !existingIds.has(c.id));
+      return { chats: [...s.chats, ...deduped], chatsNextLink: nextLink };
+    }),
   setActiveChat: (id) => set({ activeChatId: id, activeChannelId: null, messages: [] }),
   setMessages: (messages) => set({ messages }),
   appendMessage: (message) => set((s) => ({ messages: [...s.messages, message] })),

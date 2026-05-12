@@ -12,13 +12,14 @@ import { PresenceDot } from "@/components/ui/PresenceDot";
 import { useToastStore } from "@/store/toasts";
 
 export function Sidebar() {
-  const { teams, activeTeamId, activeChannelId, activeChatId, channels, chats, messages, presenceMap, unreadCounts, currentUserId, setChats, setActiveChannel, setActiveChat, markRead, setPresenceMap } =
+  const { teams, activeTeamId, activeChannelId, activeChatId, channels, chats, chatsNextLink, messages, presenceMap, unreadCounts, currentUserId, setChats, appendChats, setActiveChannel, setActiveChat, markRead, setPresenceMap } =
     useWorkspaceStore();
   const router = useRouter();
   const params = useParams();
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [loadingMoreChats, setLoadingMoreChats] = useState(false);
   const presenceErrorShownRef = useRef(false);
   const showToast = useToastStore((state) => state.showToast);
 
@@ -37,8 +38,8 @@ export function Sidebar() {
       try {
         const response = await fetch("/api/chats");
         if (!response.ok) throw new Error("Failed to load chats");
-        const data = (await response.json()) as MSChat[];
-        setChats(data);
+        const data = (await response.json()) as { chats: MSChat[]; nextLink: string | null };
+        setChats(data.chats, data.nextLink);
       } catch {
         showToast({ title: "Could not load direct messages", tone: "error" });
       }
@@ -46,6 +47,22 @@ export function Sidebar() {
 
     loadChats();
   }, [setChats, showToast]);
+
+  async function loadMoreChats() {
+    if (!chatsNextLink || loadingMoreChats) return;
+    setLoadingMoreChats(true);
+    try {
+      const url = `/api/chats?next=${encodeURIComponent(chatsNextLink)}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Failed to load more chats");
+      const data = (await response.json()) as { chats: MSChat[]; nextLink: string | null };
+      appendChats(data.chats, data.nextLink);
+    } catch {
+      showToast({ title: "Could not load older direct messages", tone: "error" });
+    } finally {
+      setLoadingMoreChats(false);
+    }
+  }
 
   useEffect(() => {
     const userIds = [
@@ -195,6 +212,18 @@ export function Sidebar() {
                 onClick={() => goToChat(chat.id)}
               />
             ))}
+
+          {dmsOpen && chatsNextLink && (
+            <button
+              type="button"
+              disabled={loadingMoreChats}
+              onClick={loadMoreChats}
+              className="mx-2 mt-0.5 flex h-7 w-[calc(100%-16px)] items-center gap-1.5 rounded-md px-2 text-[13px] text-[#6c6f75] transition-colors duration-[80ms] ease-out hover:bg-[#27292d] hover:text-[#ababad] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <ChevronDown className="h-3 w-3 flex-shrink-0" />
+              <span>{loadingMoreChats ? "Loading..." : "Show older chats"}</span>
+            </button>
+          )}
         </div>
       </div>
 

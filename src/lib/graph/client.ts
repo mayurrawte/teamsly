@@ -55,32 +55,31 @@ export async function sendChannelReply(
   });
 }
 
-export async function getChats(accessToken: string): Promise<MSChat[]> {
+export interface ChatsPage {
+  chats: MSChat[];
+  nextLink: string | null;
+}
+
+export async function getChats(
+  accessToken: string,
+  options: { pageSize?: number; nextLink?: string } = {}
+): Promise<ChatsPage> {
   const client = getGraphClient(accessToken);
-  const all: MSChat[] = [];
-  const MAX_CHATS = 200;
+  const { pageSize = 20, nextLink } = options;
 
-  let res = await client
-    .api("/me/chats")
-    .expand("members")
-    .select("id,chatType,topic,lastUpdatedDateTime")
-    .top(50)
-    .get();
+  const res = nextLink
+    ? await client.api(nextLink).get()
+    : await client
+        .api("/me/chats")
+        .expand("members")
+        .select("id,chatType,topic,lastUpdatedDateTime")
+        .top(pageSize)
+        .get();
 
-  while (true) {
-    const page = res.value as MSChat[];
-    for (const chat of page) {
-      all.push(chat);
-      if (all.length >= MAX_CHATS) return all;
-    }
-
-    const nextLink: string | undefined = res["@odata.nextLink"];
-    if (!nextLink) break;
-
-    res = await client.api(nextLink).get();
-  }
-
-  return all;
+  return {
+    chats: res.value as MSChat[],
+    nextLink: (res["@odata.nextLink"] as string | undefined) ?? null,
+  };
 }
 
 export async function getChatMessages(accessToken: string, chatId: string) {
