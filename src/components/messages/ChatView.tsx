@@ -16,7 +16,7 @@ export function ChatView({ chatId }: { chatId: string }) {
   const showToast = useToastStore((state) => state.showToast);
 
   const chat = chats.find((c) => c.id === chatId);
-  const label = chat?.topic ?? chat?.members?.map((m) => m.displayName).join(", ") ?? "Direct Message";
+  const label = getChatLabel(chat, currentUserId);
 
   useEffect(() => {
     let cancelled = false;
@@ -119,6 +119,23 @@ export function ChatView({ chatId }: { chatId: string }) {
       />
     </div>
   );
+}
+
+function getChatLabel(chat: MSChat | undefined, currentUserId: string): string {
+  if (!chat) return "Direct Message";
+  if (chat.topic) return chat.topic;
+
+  const members = chat.members ?? [];
+  if (members.length === 0) return "Direct Message";
+
+  const otherMembers = members.filter((m) => (m.userId ?? m.id) !== currentUserId);
+
+  if (otherMembers.length === 0) {
+    const currentUserName = members[0]?.displayName ?? "You";
+    return `${currentUserName} (you)`;
+  }
+
+  return otherMembers.map((m) => m.displayName).join(", ");
 }
 
 function hasReacted(

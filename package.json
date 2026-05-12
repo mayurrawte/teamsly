@@ -2,7 +2,7 @@
   "name": "teamsly",
   "version": "0.1.0",
   "private": false,
-  "description": "Open-source Slack-like UI for Microsoft Teams",
+  "description": "Open-source modern client for Microsoft Teams",
   "license": "AGPL-3.0",
   "main": "electron/dist/main.js",
   "scripts": {

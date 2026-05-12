@@ -143,6 +143,18 @@ export function DemoSidebar() {
         chats={chats}
         messages={messages}
         messageGroupName={searchGroupName}
+        onSelectChannel={(channelId) => {
+          markRead(channelId);
+          setActiveChannel(channelId);
+        }}
+        onSelectChat={(chatId) => {
+          markRead(chatId);
+          setActiveChat(chatId);
+        }}
+        onSelectMessage={() => {
+          // Messages shown are from the current view; closing the modal
+          // is sufficient since the user is already in that conversation.
+        }}
       />
     </div>
   );

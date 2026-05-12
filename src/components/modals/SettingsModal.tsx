@@ -189,7 +189,7 @@ function AppearancePanel() {
     <div className="flex flex-col gap-5">
       <FieldGroup label="Theme" hint="Light theme is on the roadmap.">
         <div className="flex flex-col gap-2">
-          <RadioRow checked label="Dark" description="Slack-style dark theme" onClick={() => undefined} />
+          <RadioRow checked label="Dark" description="Dark theme" onClick={() => undefined} />
           <RadioRow checked={false} disabled label="Light" description="Coming soon" onClick={() => undefined} />
           <RadioRow checked={false} disabled label="Sync with OS" description="Coming soon" onClick={() => undefined} />
         </div>
@@ -219,7 +219,7 @@ function AboutPanel() {
   return (
     <div className="flex flex-col gap-3 text-[13px] text-[#d1d2d3]">
       <p className="text-[15px] font-black text-white">Teamsly</p>
-      <p className="text-[#ababad]">Open-source Slack-style UI for Microsoft Teams. All data stays in Microsoft Graph — Teamsly stores nothing.</p>
+      <p className="text-[#ababad]">Open-source Microsoft Teams client built for focus. All data stays in Microsoft Graph — Teamsly stores nothing.</p>
       <dl className="grid grid-cols-[100px_1fr] gap-y-1 text-[12px]">
         <dt className="text-[#6c6f75]">Version</dt>
         <dd className="text-[#d1d2d3]">0.1.0</dd>

@@ -12,7 +12,7 @@ const lato = Lato({
 
 export const metadata: Metadata = {
   title: "Teamsly",
-  description: "Slack-like UI for Microsoft Teams",
+  description: "A modern, open-source Microsoft Teams client built for focus.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

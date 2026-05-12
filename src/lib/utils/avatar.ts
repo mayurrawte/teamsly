@@ -1,5 +1,5 @@
 export const AVATAR_COLORS = [
-  "#4a154b", // Slack purple
+  "#0F5A8F", // slate blue (Teamsly primary)
   "#350d36", // dark purple
   "#1264a3", // blue
   "#0b6e99", // teal

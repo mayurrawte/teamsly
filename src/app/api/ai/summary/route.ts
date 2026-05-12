@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     messages: [
       {
         role: "user",
-        content: `Summarize these Microsoft Teams messages for a Slack-style unread summary. Use 2 concise bullets and include blockers or decisions if present.\n\n${transcript}`,
+        content: `Summarize these Microsoft Teams messages as a concise unread summary. Use 2 bullets and include blockers or decisions if present.\n\n${transcript}`,
       },
     ],
   });

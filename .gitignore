@@ -14,3 +14,4 @@ AGENTS.md
 electron/dist/
 release/
 .vercel
+.claude/

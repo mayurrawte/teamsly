@@ -1,8 +1,8 @@
 # Teamsly
 
-**The Slack experience, powered by Microsoft Teams.**
+**A modern open-source client for Microsoft Teams.**
 
-Your company forces you to use Teams. You miss Slack. Teamsly gives you the familiar sidebar, clean message feed, and fast keyboard-driven UX — all reading and writing directly to your real Microsoft Teams data via the official Graph API.
+Teamsly gives you a clean, fast interface for Microsoft Teams: familiar sidebar, clean message feed, and fast keyboard-driven UX — all reading and writing directly to your real Microsoft Teams data via the official Graph API.
 
 No data leaves Microsoft. No shadow IT. Just a better interface.
 
@@ -32,12 +32,12 @@ Run your own instance with Next.js 20+ and Node.js. See [CONTRIBUTING.md](CONTRI
 
 ## Features
 
-- **Slack-like sidebar** — workspace switcher, channels list, DMs
+- **Modern sidebar** — workspace switcher, channels list, DMs
 - **Clean message feed** — threaded conversations, reactions, file attachments
 - **Fast message input** — keyboard shortcuts, Enter to send, Shift+Enter for newline
 - **Real data** — reads and writes via Microsoft Graph API (official, no scraping)
 - **Self-hostable** — deploy anywhere, your data stays in Microsoft's infrastructure
-- **Dark theme** — easy on the eyes, inspired by Slack's dark mode
+- **Dark theme** — easy on the eyes
 
 ### Pro features (behind `NEXT_PUBLIC_PRO=true`)
 - **AI message summaries** — catch up on unread messages in seconds (uses Anthropic SDK; requires `ANTHROPIC_API_KEY`)
@@ -47,7 +47,7 @@ Run your own instance with Next.js 20+ and Node.js. See [CONTRIBUTING.md](CONTRI
 ### Roadmap
 - Graph change notifications for true real-time updates
 - Richer file preview (currently surfaces attachment cards with download)
-- Slack-compatible markdown editor in the composer
+- Markdown editor in the composer
 
 ---
 
@@ -184,7 +184,7 @@ PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup.
 Open areas for contribution:
 - [ ] Graph change notifications subscription for true real-time updates (currently 30s presence polling + on-demand refetch)
 - [ ] Full file preview pane (currently surfaces attachment cards with safe download links)
-- [ ] Slack-compatible markdown editor in the composer
+- [ ] Markdown editor in the composer
 - [ ] Native Electron bundling of the Next.js standalone server (currently the wrapper points at a hosted URL)
 - [ ] CLA-assistant bot wiring (the CLA flow is documented in CONTRIBUTING.md but not yet enforced on PRs)
 

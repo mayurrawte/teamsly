@@ -130,7 +130,7 @@ function ReactionsRow({
 }) {
   const currentUserId = useWorkspaceStore((state) => state.currentUserId);
 
-  if (reactions.length === 0 && !onToggleReaction) return null;
+  if (reactions.length === 0) return null;
 
   const grouped = reactions.reduce<Record<string, { count: number; active: boolean }>>((acc, reaction) => {
     const current = acc[reaction.reactionType] ?? { count: 0, active: false };

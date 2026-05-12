@@ -29,7 +29,7 @@ export function Sidebar() {
   const searchGroupName = activeChannel
     ? `Messages in #${activeChannel.displayName}`
     : activeChat
-      ? `Messages in ${getChatLabel(activeChat)}`
+      ? `Messages in ${getChatLabel(activeChat, currentUserId)}`
       : "Messages";
 
   useEffect(() => {
@@ -185,10 +185,10 @@ export function Sidebar() {
           </button>
 
           {dmsOpen &&
-            chats.slice(0, 20).map((chat) => (
+            chats.map((chat) => (
               <SidebarItem
                 key={chat.id}
-                label={getChatLabel(chat)}
+                label={getChatLabel(chat, currentUserId)}
                 icon={<ChatAvatar chat={chat} presenceMap={presenceMap} />}
                 active={params?.chatId === chat.id}
                 unreadCount={unreadCounts[chat.id] ?? 0}
@@ -207,6 +207,12 @@ export function Sidebar() {
         chats={chats}
         messages={messages}
         messageGroupName={searchGroupName}
+        onSelectChannel={(channelId) => goToChannel(channelId)}
+        onSelectChat={(chatId) => goToChat(chatId)}
+        onSelectMessage={() => {
+          // Messages shown are from the current view; closing the modal
+          // is sufficient since the user is already in that conversation.
+        }}
       />
     </div>
   );
@@ -248,11 +254,20 @@ function SidebarItem({
   );
 }
 
-function getChatLabel(chat: MSChat): string {
+function getChatLabel(chat: MSChat, currentUserId: string): string {
   if (chat.topic) return chat.topic;
+
   const members = chat.members ?? [];
-  if (members.length > 0) return members.map((m) => m.displayName).join(", ");
-  return "Direct Message";
+  if (members.length === 0) return "Direct Message";
+
+  const otherMembers = members.filter((m) => (m.userId ?? m.id) !== currentUserId);
+
+  if (otherMembers.length === 0) {
+    const currentUserName = members[0]?.displayName ?? "You";
+    return `${currentUserName} (you)`;
+  }
+
+  return otherMembers.map((m) => m.displayName).join(", ");
 }
 
 function ChatAvatar({

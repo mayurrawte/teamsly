@@ -55,14 +55,32 @@ export async function sendChannelReply(
   });
 }
 
-export async function getChats(accessToken: string) {
+export async function getChats(accessToken: string): Promise<MSChat[]> {
   const client = getGraphClient(accessToken);
-  const res = await client
+  const all: MSChat[] = [];
+  const MAX_CHATS = 200;
+
+  let res = await client
     .api("/me/chats")
     .expand("members")
     .select("id,chatType,topic,lastUpdatedDateTime")
+    .top(50)
     .get();
-  return res.value as MSChat[];
+
+  while (true) {
+    const page = res.value as MSChat[];
+    for (const chat of page) {
+      all.push(chat);
+      if (all.length >= MAX_CHATS) return all;
+    }
+
+    const nextLink: string | undefined = res["@odata.nextLink"];
+    if (!nextLink) break;
+
+    res = await client.api(nextLink).get();
+  }
+
+  return all;
 }
 
 export async function getChatMessages(accessToken: string, chatId: string) {

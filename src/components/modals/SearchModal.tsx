@@ -13,6 +13,9 @@ interface SearchModalProps {
   chats: MSChat[];
   messages: MSMessage[];
   messageGroupName?: string;
+  onSelectChannel?: (channelId: string) => void;
+  onSelectChat?: (chatId: string) => void;
+  onSelectMessage?: (message: MSMessage) => void;
 }
 
 export function SearchModal({
@@ -23,6 +26,9 @@ export function SearchModal({
   chats,
   messages,
   messageGroupName = "Current view",
+  onSelectChannel,
+  onSelectChat,
+  onSelectMessage,
 }: SearchModalProps) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -49,6 +55,24 @@ export function SearchModal({
     results.channels.length > 0 ||
     results.chats.length > 0 ||
     results.messageGroups.some((group) => group.messages.length > 0);
+
+  function handleSelectChannel(channelId: string) {
+    onOpenChange(false);
+    setQuery("");
+    onSelectChannel?.(channelId);
+  }
+
+  function handleSelectChat(chatId: string) {
+    onOpenChange(false);
+    setQuery("");
+    onSelectChat?.(chatId);
+  }
+
+  function handleSelectMessage(message: MSMessage) {
+    onOpenChange(false);
+    setQuery("");
+    onSelectMessage?.(message);
+  }
 
   return (
     <Dialog.Root
@@ -96,7 +120,13 @@ export function SearchModal({
                 {results.messageGroups.map((group) => (
                   <ResultSection key={group.name} title={group.name}>
                     {group.messages.map((message) => (
-                      <MessageResult key={message.id} message={message} query={normalizedQuery} teamName={teamName} />
+                      <MessageResult
+                        key={message.id}
+                        message={message}
+                        query={normalizedQuery}
+                        teamName={teamName}
+                        onSelect={() => handleSelectMessage(message)}
+                      />
                     ))}
                   </ResultSection>
                 ))}
@@ -110,6 +140,7 @@ export function SearchModal({
                         title={channel.displayName}
                         subtitle={teamName}
                         query={normalizedQuery}
+                        onSelect={() => handleSelectChannel(channel.id)}
                       />
                     ))}
                   </ResultSection>
@@ -124,6 +155,7 @@ export function SearchModal({
                         title={chatLabel(chat)}
                         subtitle={chat.chatType === "group" ? "Group DM" : "Direct message"}
                         query={normalizedQuery}
+                        onSelect={() => handleSelectChat(chat.id)}
                       />
                     ))}
                   </ResultSection>
@@ -146,7 +178,7 @@ function ResultSection({ title, children }: { title: string; children: React.Rea
   );
 }
 
-function MessageResult({ message, query, teamName }: { message: MSMessage; query: string; teamName: string }) {
+function MessageResult({ message, query, teamName, onSelect }: { message: MSMessage; query: string; teamName: string; onSelect: () => void }) {
   const author = message.from?.user?.displayName ?? "Unknown";
   const initials = author
     .split(/\s+/)
@@ -159,6 +191,7 @@ function MessageResult({ message, query, teamName }: { message: MSMessage; query
   return (
     <button
       type="button"
+      onClick={onSelect}
       className="flex w-full gap-2 rounded-md px-3 py-2 text-left transition-colors duration-[80ms] hover:bg-[#27292d]"
     >
       <div className="mt-[3px] flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-[#1164a3] text-[10px] font-bold text-white">
@@ -182,15 +215,18 @@ function EntityResult({
   title,
   subtitle,
   query,
+  onSelect,
 }: {
   icon: React.ReactNode;
   title: string;
   subtitle: string;
   query: string;
+  onSelect: () => void;
 }) {
   return (
     <button
       type="button"
+      onClick={onSelect}
       className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition-colors duration-[80ms] hover:bg-[#27292d]"
     >
       <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-[#2c2d30] text-[#ababad]">
