@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { WorkspaceBar } from "@/components/sidebar/WorkspaceBar";
+import { LeftRail } from "@/components/layout/LeftRail";
 import { JumpToSwitcher, type JumpToItem } from "@/components/modals/JumpToSwitcher";
 import { useWorkspaceStore } from "@/store/workspace";
 import { ToastViewport } from "@/components/ui/ToastViewport";
@@ -71,6 +72,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#1a1d21]">
+      <LeftRail />
       <WorkspaceBar />
       <Sidebar />
       <main className="flex flex-1 flex-col overflow-hidden bg-[#222529]">

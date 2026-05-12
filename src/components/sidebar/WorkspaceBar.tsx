@@ -80,8 +80,8 @@ export function WorkspaceBar() {
             className={cn(
               "relative flex h-10 w-10 items-center justify-center rounded-[14px] text-sm font-bold [transition:border-radius_200ms_ease,background-color_150ms_ease,box-shadow_150ms_ease]",
               isActive
-                ? "rounded-lg bg-[#1164a3] text-white shadow-[0_0_0_2px_white]"
-                : "bg-[#3f0e40] text-white hover:rounded-lg hover:bg-[#5c1e5e]"
+                ? "rounded-lg bg-[#0F5A8F] text-white shadow-[0_0_0_2px_white]"
+                : "bg-[#26415C] text-white hover:rounded-lg hover:bg-[#3A5577]"
             )}
           >
             {getTeamInitials(team.displayName)}

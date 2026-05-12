@@ -5,6 +5,7 @@ import { useWorkspaceStore } from "@/store/workspace";
 import { mockTeams, mockChannels, mockChats, mockPresence, mockUnreadCounts } from "@/lib/mock/data";
 import { DemoSidebar } from "@/components/sidebar/DemoSidebar";
 import { DemoWorkspaceBar } from "@/components/sidebar/DemoWorkspaceBar";
+import { LeftRail } from "@/components/layout/LeftRail";
 import { DemoChannelView } from "@/components/messages/DemoChannelView";
 import { DemoChatView } from "@/components/messages/DemoChatView";
 import { JumpToSwitcher, type JumpToItem } from "@/components/modals/JumpToSwitcher";
@@ -82,6 +83,7 @@ export function DemoShell() {
       </div>
 
       <div className="flex flex-1 overflow-hidden bg-[#1a1d21]">
+        <LeftRail />
         <DemoWorkspaceBar />
         <DemoSidebar />
         <main className="flex flex-1 flex-col overflow-hidden bg-[#222529]">

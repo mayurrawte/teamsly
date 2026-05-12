@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { ShieldCheck, GitFork, Database } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 
 const features = [
   {
@@ -48,16 +49,8 @@ export function SignInPage() {
         />
 
         {/* Wordmark */}
-        <div className="relative flex items-center gap-3">
-          <div
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-[17px] font-black tracking-tight text-white"
-            style={{
-              background: "linear-gradient(135deg, #0F5A8F 0%, #0B7BA8 100%)",
-              boxShadow: "0 0 0 1px rgba(15,90,143,0.6)",
-            }}
-          >
-            T
-          </div>
+        <div className="relative flex items-center gap-3" style={{ color: "#2E2A6F" }}>
+          <Logo size={36} className="text-white" />
           <span className="text-[17px] font-semibold tracking-tight text-white">
             Teamsly
           </span>
@@ -118,16 +111,7 @@ export function SignInPage() {
         >
           {/* Logomark */}
           <div className="mb-8 flex justify-center">
-            <div
-              className="flex h-14 w-14 items-center justify-center rounded-2xl text-2xl font-black tracking-tight text-white"
-              style={{
-                background: "linear-gradient(135deg, #0F5A8F 0%, #0B7BA8 100%)",
-                boxShadow:
-                  "0 0 0 1px rgba(15,90,143,0.5), 0 8px 24px rgba(15,90,143,0.30)",
-              }}
-            >
-              T
-            </div>
+            <Logo size={56} className="text-white" />
           </div>
 
           <h2 className="mb-1 text-center text-xl font-bold text-white">

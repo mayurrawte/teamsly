@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#2E2A6F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2E2A6F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
   <!-- node-graph detail: two filled circles connected by a line, top-left -->
   <circle cx="2.5" cy="3.5" r="1.2" fill="#2E2A6F" stroke="none" />
   <circle cx="6.2" cy="1.4" r="0.9" fill="#2E2A6F" stroke="none" />

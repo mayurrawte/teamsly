@@ -3,33 +3,50 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Teamsly — A Slack-style interface for Microsoft Teams</title>
+    <title>Teamsly — Open-source Microsoft Teams client</title>
     <meta
       name="description"
-      content="Teamsly is an open-source Slack-style interface for Microsoft Teams. Channels, DMs, threads, reactions, and search powered by the Microsoft Graph API. Self-hosted, AGPL-3.0."
+      content="Teamsly is an open-source, self-hostable Microsoft Teams client. Channels, DMs, threads, reactions, and search powered by the Microsoft Graph API. AGPL-3.0."
     />
-    <meta name="theme-color" content="#1164a3" />
+    <meta name="theme-color" content="#0F5A8F" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Teamsly — A Slack-style interface for Microsoft Teams" />
-    <meta property="og:description" content="Open-source, self-hosted, AGPL-3.0. Reads and writes Microsoft Teams data through the Graph API. Conversations stay in Microsoft 365." />
+    <meta property="og:title" content="Teamsly — Open-source Microsoft Teams client" />
+    <meta property="og:description" content="Open-source, self-hosted, AGPL-3.0. Reads and writes Microsoft Teams data through the Graph API. Your conversations stay in Microsoft 365." />
     <meta property="og:url" content="https://github.com/mayurrawte/teamsly" />
     <meta property="og:site_name" content="Teamsly" />
 
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Teamsly — A Slack-style interface for Microsoft Teams" />
+    <meta name="twitter:title" content="Teamsly — Open-source Microsoft Teams client" />
     <meta name="twitter:description" content="Open-source, self-hosted, AGPL-3.0. Built on Microsoft Graph." />
 
-    <link rel="icon" type="image/svg+xml" href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4.5" fill="none" stroke="%231164a3" stroke-width="2.4"/><circle cx="16.5" cy="7.5" r="2.4" fill="%231164a3"/></svg>' />
+    <!-- Inline SVG favicon: speech-bubble with terminal prompt -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+
+    <!-- IBM Plex Sans via Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="site-header">
       <div class="container header-inner">
         <a href="#top" class="brand">
-          <svg class="brand-mark" width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="3" y="3" width="18" height="18" rx="4.5" fill="none" stroke="#1164a3" stroke-width="2.4" />
-            <circle cx="16.5" cy="7.5" r="2.4" fill="#1164a3" />
+          <!-- Teamsly logo: speech bubble with terminal prompt and node-graph detail -->
+          <svg class="brand-mark logo-mark" width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <!-- node-graph detail at top-left: two filled circles connected by a line -->
+            <circle cx="2.5" cy="3.5" r="1.2" fill="currentColor" stroke="none" />
+            <circle cx="6.2" cy="1.4" r="0.9" fill="currentColor" stroke="none" />
+            <line x1="3.5" y1="3" x2="5.5" y2="2" stroke="currentColor" stroke-width="1" />
+            <!-- speech bubble: rounded rectangle -->
+            <rect x="3" y="5" width="18" height="13" rx="3" stroke="currentColor" stroke-width="2" />
+            <!-- bubble tail pointing down-left -->
+            <polyline points="5,18 3,22 7,18" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none" />
+            <!-- terminal prompt: > _ inside bubble -->
+            <polyline points="8,10.5 10.5,12 8,13.5" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none" />
+            <line x1="12.5" y1="13.5" x2="15.5" y2="13.5" stroke="currentColor" stroke-width="2" />
           </svg>
           <span class="brand-name">Teamsly</span>
         </a>
@@ -51,11 +68,11 @@
         <div class="container hero-inner">
           <div class="hero-copy">
             <p class="kicker">Open source · AGPL-3.0</p>
-            <h1>A Slack-style interface for Microsoft Teams.</h1>
+            <h1>A modern client for Microsoft Teams.</h1>
             <p class="lede">
               Teamsly reads and writes your real Microsoft Teams data through the official
-              Microsoft Graph API and renders a faster, cleaner UI on top. Conversations stay
-              in Microsoft 365. Nothing is stored anywhere else.
+              Microsoft Graph API and renders a faster, focus-friendly interface on top.
+              Your conversations stay in Microsoft 365. Nothing is stored anywhere else.
             </p>
             <div class="hero-actions">
               <a class="btn btn-primary" href="https://github.com/mayurrawte/teamsly">View on GitHub</a>
@@ -91,7 +108,7 @@
                     <span class="dot"></span>
                   </div>
                   <div class="dm">
-                    <span class="avatar coral">S</span>
+                    <span class="avatar teal">S</span>
                     <span>Sarah</span>
                     <span class="badge">3</span>
                   </div>
@@ -112,7 +129,7 @@
                     </div>
                   </article>
                   <article class="msg">
-                    <span class="avatar coral">S</span>
+                    <span class="avatar teal">S</span>
                     <div>
                       <div class="msg-meta"><strong>Sarah</strong> <time>9:22 AM</time></div>
                       <p>Looks great. Threads slide in cleanly on desktop.</p>
@@ -130,15 +147,15 @@
 
       <section id="features" class="section">
         <div class="container">
-          <h2>What's in the box</h2>
+          <h2>What you get</h2>
           <p class="section-lede">
-            Everything you'd expect from a modern chat client, mapped onto your existing Teams data.
+            A complete Teams experience designed for focus — everything mapped onto your existing data, nothing extra.
           </p>
 
           <div class="feature-grid">
             <div class="feature">
-              <h3>Channels and DMs</h3>
-              <p>Workspace switcher, sidebar navigation, unread counts, and presence dots backed by Microsoft Graph.</p>
+              <h3>Channels and direct messages</h3>
+              <p>Workspace switcher, sidebar navigation, unread counts, and presence indicators backed by Microsoft Graph.</p>
             </div>
             <div class="feature">
               <h3>Threads and reactions</h3>
@@ -153,11 +170,11 @@
               <p>Inline mentions, code blocks with copy-to-clipboard, and file attachment cards rendered safely.</p>
             </div>
             <div class="feature">
-              <h3>Settings and density</h3>
-              <p>Compact and comfortable density modes, per-user preferences in localStorage, and a clean settings modal.</p>
+              <h3>Density and preferences</h3>
+              <p>Compact and comfortable density modes, per-user preferences stored locally, and a clean settings modal.</p>
             </div>
             <div class="feature">
-              <h3>Optional Pro features</h3>
+              <h3>Optional AI features</h3>
               <p>AI unread summaries, multi-tenant account switcher, and smart browser notifications — behind a feature flag.</p>
             </div>
           </div>
@@ -299,13 +316,19 @@ NEXTAUTH_URL=http://localhost:3000</code></pre>
       <div class="container footer-inner">
         <div class="footer-brand">
           <div class="brand">
-            <svg class="brand-mark" width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
-              <rect x="3" y="3" width="18" height="18" rx="4.5" fill="none" stroke="#1164a3" stroke-width="2.4" />
-              <circle cx="16.5" cy="7.5" r="2.4" fill="#1164a3" />
+            <!-- Teamsly logo: speech bubble with terminal prompt and node-graph detail -->
+            <svg class="brand-mark logo-mark" width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="2.5" cy="3.5" r="1.2" fill="currentColor" stroke="none" />
+              <circle cx="6.2" cy="1.4" r="0.9" fill="currentColor" stroke="none" />
+              <line x1="3.5" y1="3" x2="5.5" y2="2" stroke="currentColor" stroke-width="1" />
+              <rect x="3" y="5" width="18" height="13" rx="3" stroke="currentColor" stroke-width="2" />
+              <polyline points="5,18 3,22 7,18" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none" />
+              <polyline points="8,10.5 10.5,12 8,13.5" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none" />
+              <line x1="12.5" y1="13.5" x2="15.5" y2="13.5" stroke="currentColor" stroke-width="2" />
             </svg>
             <span class="brand-name">Teamsly</span>
           </div>
-          <p>A Slack-style interface for Microsoft Teams.<br>Open source, self-hosted, AGPL-3.0.</p>
+          <p>Open-source client for Microsoft Teams.<br>Self-hosted, AGPL-3.0.</p>
         </div>
 
         <div class="footer-cols">
@@ -313,7 +336,7 @@ NEXTAUTH_URL=http://localhost:3000</code></pre>
             <h4>Project</h4>
             <a href="https://github.com/mayurrawte/teamsly">GitHub</a>
             <a href="https://github.com/mayurrawte/teamsly/issues">Issues</a>
-            <a href="https://github.com/mayurrawte/teamsly/blob/main/LICENSE">License</a>
+            <a href="https://github.com/mayurrawte/teamsly/blob/main/LICENSE">License (AGPL-3.0)</a>
           </div>
           <div>
             <h4>Docs</h4>
@@ -322,14 +345,26 @@ NEXTAUTH_URL=http://localhost:3000</code></pre>
             <a href="#faq">FAQ</a>
           </div>
           <div>
-            <h4>Author</h4>
+            <h4>Legal</h4>
+            <a href="https://github.com/mayurrawte/teamsly/blob/main/NOTICE.md">Notice</a>
+            <a href="https://github.com/mayurrawte/teamsly/blob/main/LICENSE">License</a>
             <a href="https://github.com/mayurrawte">@mayurrawte</a>
           </div>
         </div>
       </div>
       <div class="container footer-bottom">
         <span>&copy; 2026 Teamsly contributors</span>
-        <span>Not affiliated with Microsoft.</span>
+        <span>Not affiliated with Microsoft Corporation.</span>
+      </div>
+      <div class="container footer-disclaimer">
+        Teamsly is not affiliated with, endorsed by, or sponsored by Slack Technologies LLC, Salesforce Inc., or Microsoft Corporation.
+        Microsoft Teams is a trademark of Microsoft Corporation. Slack is a trademark of Slack Technologies LLC.
+        Both marks are used only as nominative references to their respective products.
+        Teamsly accesses Microsoft Teams data via the public Microsoft Graph API.
+        No private APIs, scraped content, or reverse-engineered protocols are used.
+        <a href="https://github.com/mayurrawte/teamsly/blob/main/NOTICE.md">Full notice</a> ·
+        <a href="https://github.com/mayurrawte/teamsly/blob/main/LICENSE">License</a> ·
+        <a href="https://github.com/mayurrawte/teamsly">GitHub</a>
       </div>
     </footer>
   </body>

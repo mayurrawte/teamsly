@@ -4,6 +4,7 @@ import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, User, Bell, Palette, Info, LogOut } from "lucide-react";
 import { usePreferencesStore, type Density } from "@/store/preferences";
+import { Logo } from "@/components/ui/Logo";
 
 type TabKey = "account" | "notifications" | "appearance" | "about";
 
@@ -218,7 +219,10 @@ function AppearancePanel() {
 function AboutPanel() {
   return (
     <div className="flex flex-col gap-3 text-[13px] text-[#d1d2d3]">
-      <p className="text-[15px] font-black text-white">Teamsly</p>
+      <div className="flex items-center gap-3">
+        <Logo size={28} className="text-white" />
+        <p className="text-[15px] font-black text-white">Teamsly</p>
+      </div>
       <p className="text-[#ababad]">Open-source Microsoft Teams client built for focus. All data stays in Microsoft Graph — Teamsly stores nothing.</p>
       <dl className="grid grid-cols-[100px_1fr] gap-y-1 text-[12px]">
         <dt className="text-[#6c6f75]">Version</dt>

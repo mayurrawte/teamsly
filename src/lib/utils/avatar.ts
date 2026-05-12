@@ -1,7 +1,7 @@
 export const AVATAR_COLORS = [
   "#0F5A8F", // slate blue (Teamsly primary)
-  "#350d36", // dark purple
-  "#1264a3", // blue
+  "#26415C", // muted blue-gray (brand-aligned replacement)
+  "#0B7BA8", // deep blue-teal (Ocean theme)
   "#0b6e99", // teal
   "#007a5a", // green
   "#3d8e2f", // lime
