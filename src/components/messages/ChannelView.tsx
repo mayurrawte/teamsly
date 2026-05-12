@@ -27,7 +27,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
         const response = await fetch(`/api/messages/${teamId}/${channelId}`);
         if (!response.ok) throw new Error("Failed to load messages");
         const data = (await response.json()) as MSMessage[];
-        if (!cancelled) setMessages([...data].reverse());
+        if (!cancelled) setMessages(sortByCreated(data));
       } catch {
         if (!cancelled) showToast({ title: "Could not load messages", tone: "error" });
       } finally {
@@ -40,7 +40,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
         const response = await fetch(`/api/messages/${teamId}/${channelId}`);
         if (!response.ok) return;
         const data = (await response.json()) as MSMessage[];
-        if (!cancelled) setMessages([...data].reverse());
+        if (!cancelled) setMessages(sortByCreated(data));
       } catch {
         // Avoid noisy repeated toasts during background polling.
       }
@@ -118,6 +118,12 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
         onSendReply={handleThreadReply}
       />
     </div>
+  );
+}
+
+function sortByCreated(messages: MSMessage[]): MSMessage[] {
+  return [...messages].sort(
+    (a, b) => new Date(a.createdDateTime).getTime() - new Date(b.createdDateTime).getTime()
   );
 }
 

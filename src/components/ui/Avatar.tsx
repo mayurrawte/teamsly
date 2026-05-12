@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { avatarColor, avatarInitials } from "@/lib/utils/avatar";
 
 type AvatarSize = 18 | 20 | 24 | 36;
@@ -25,26 +28,15 @@ const RADIUS: Record<AvatarSize, number> = {
 };
 
 export function Avatar({ userId, displayName, size = 36, photoUrl, className }: AvatarProps) {
+  const [imageError, setImageError] = useState(false);
+
   const bg = avatarColor(userId);
   const initials = avatarInitials(displayName);
   const px = `${size}px`;
   const radius = `${RADIUS[size]}px`;
   const font = `${FONT_SIZE[size]}px`;
 
-  if (photoUrl) {
-    return (
-      <img
-        src={photoUrl}
-        alt={displayName}
-        width={size}
-        height={size}
-        style={{ width: px, height: px, borderRadius: radius }}
-        className={`flex-shrink-0 object-cover ${className ?? ""}`}
-      />
-    );
-  }
-
-  return (
+  const initialsEl = (
     <div
       aria-label={displayName}
       role="img"
@@ -60,4 +52,46 @@ export function Avatar({ userId, displayName, size = 36, photoUrl, className }: 
       {initials}
     </div>
   );
+
+  // photoUrl prop takes priority (legacy support)
+  if (photoUrl && !imageError) {
+    return (
+      <img
+        src={photoUrl}
+        alt={displayName}
+        width={size}
+        height={size}
+        loading="lazy"
+        style={{ width: px, height: px, borderRadius: radius }}
+        className={`flex-shrink-0 object-cover ${className ?? ""}`}
+        onError={() => setImageError(true)}
+      />
+    );
+  }
+
+  if (photoUrl && imageError) {
+    return initialsEl;
+  }
+
+  // Use proxy route when userId looks like a Graph object id (non-empty, not an email)
+  const isGraphId = userId && !userId.includes("@") && !userId.includes(" ");
+
+  if (isGraphId && !imageError) {
+    return (
+      <>
+        <img
+          src={`/api/users/${encodeURIComponent(userId)}/photo`}
+          alt={displayName}
+          width={size}
+          height={size}
+          loading="lazy"
+          style={{ width: px, height: px, borderRadius: radius }}
+          className={`flex-shrink-0 object-cover ${className ?? ""}`}
+          onError={() => setImageError(true)}
+        />
+      </>
+    );
+  }
+
+  return initialsEl;
 }

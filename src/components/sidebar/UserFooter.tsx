@@ -24,9 +24,9 @@ export function UserFooter() {
     <>
       <div className="flex items-center justify-between border-t border-[#3f4144] px-3 py-2">
         <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-          <UserProfilePopover userId={currentUserId || email || name} displayName={name} email={email} availability={presence}>
+          <UserProfilePopover userId={currentUserId || "me"} displayName={name} email={email} availability={presence}>
             <button type="button" className="relative flex h-9 w-9 flex-shrink-0">
-              <Avatar userId={currentUserId || email || name} displayName={name} size={36} />
+              <Avatar userId={currentUserId || "me"} displayName={name} size={36} />
               <PresenceDot availability={presence} />
             </button>
           </UserProfilePopover>

@@ -206,7 +206,7 @@ export function Sidebar() {
               <SidebarItem
                 key={chat.id}
                 label={getChatLabel(chat, currentUserId)}
-                icon={<ChatAvatar chat={chat} presenceMap={presenceMap} />}
+                icon={<ChatAvatar chat={chat} presenceMap={presenceMap} currentUserId={currentUserId} />}
                 active={params?.chatId === chat.id}
                 unreadCount={unreadCounts[chat.id] ?? 0}
                 onClick={() => goToChat(chat.id)}
@@ -302,13 +302,17 @@ function getChatLabel(chat: MSChat, currentUserId: string): string {
 function ChatAvatar({
   chat,
   presenceMap,
+  currentUserId,
 }: {
   chat: MSChat;
   presenceMap: Record<string, MSPresence["availability"]>;
+  currentUserId: string;
 }) {
   if (chat.chatType === "group") return <MessageSquare className="h-3.5 w-3.5" />;
 
-  const member = chat.members?.[0];
+  const members = chat.members ?? [];
+  const otherMembers = members.filter((m) => (m.userId ?? m.id) !== currentUserId);
+  const member = otherMembers[0] ?? members[0];
   if (!member) return <MessageSquare className="h-3.5 w-3.5" />;
 
   const userId = member.userId ?? member.id;
