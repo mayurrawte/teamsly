@@ -7,9 +7,50 @@ type ContentType = MSMessage["body"]["contentType"];
 
 const ALLOWED_INLINE_TAGS = new Set(["b", "strong", "i", "em", "s", "u", "span"]);
 
-export function renderMessageBody(content: string, contentType: ContentType): React.ReactNode {
-  if (contentType !== "html") return renderTextWithMentions(content);
+// Matches one or more consecutive <br> tags (with optional whitespace/attributes)
+const MULTI_BR_RE = /(<br\s*\/?>(\s*<br\s*\/?>)+)/gi;
 
+// Matches a block of consecutive lines starting with "- " or "* " that are NOT
+// already inside a <ul> or <ol>. Used only on text segments outside existing list tags.
+const MARKDOWN_LIST_BLOCK_RE = /(?:^|\n)((?:[ \t]*[-*] .+(?:\n|$))+)/g;
+
+// Detects paragraphs whose trimmed text content is entirely emoji characters
+const EMOJI_ONLY_RE = /^[\p{Emoji}\u{FE0F}\u{20E3}\u{200D}\s]+$/u;
+
+function preprocessHtml(html: string): string {
+  // Collapse runs of 2+ <br> down to a single <br>
+  return html.replace(MULTI_BR_RE, "<br>");
+}
+
+function convertMarkdownLists(text: string): string {
+  // Convert runs of markdown-style "- item" / "* item" lines into <ul><li> HTML.
+  // Only applied to plain-text content (contentType === "text"), so no risk of
+  // double-converting real HTML lists.
+  return text.replace(MARKDOWN_LIST_BLOCK_RE, (_match, block) => {
+    const items = block
+      .split("\n")
+      .filter((line: string) => /^\s*[-*] /.test(line))
+      .map((line: string) => `<li>${line.replace(/^\s*[-*] /, "")}</li>`)
+      .join("");
+    return `\n<ul>${items}</ul>\n`;
+  });
+}
+
+export function renderMessageBody(content: string, contentType: ContentType): React.ReactNode {
+  if (contentType !== "html") {
+    const withLists = convertMarkdownLists(content);
+    // If the preprocessing produced any HTML tags, parse the result; otherwise
+    // fall back to the plain-text mention renderer.
+    if (/<[a-z][\s\S]*>/i.test(withLists)) {
+      return renderHtml(withLists);
+    }
+    return renderTextWithMentions(content);
+  }
+
+  return renderHtml(preprocessHtml(content));
+}
+
+function renderHtml(html: string): React.ReactNode {
   const options: HTMLReactParserOptions = {
     replace: (node) => {
       if (!(node instanceof Element)) return undefined;
@@ -25,7 +66,15 @@ export function renderMessageBody(content: string, contentType: ContentType): Re
         );
       }
       if (node.name === "br") return <br />;
-      if (node.name === "p") return <p>{domToReact(node.children as DOMNode[], options)}</p>;
+      if (node.name === "p") {
+        const text = getText(node).trim();
+        const isEmojiOnly = text.length > 0 && EMOJI_ONLY_RE.test(text);
+        return (
+          <p className={isEmojiOnly ? "emoji-only" : undefined}>
+            {domToReact(node.children as DOMNode[], options)}
+          </p>
+        );
+      }
       if (node.name === "pre") return <CodeBlock code={getText(node)} />;
       if (node.name === "code") {
         return (
@@ -41,8 +90,8 @@ export function renderMessageBody(content: string, contentType: ContentType): Re
           </blockquote>
         );
       }
-      if (node.name === "ul") return <ul className="ml-5 list-disc">{domToReact(node.children as DOMNode[], options)}</ul>;
-      if (node.name === "ol") return <ol className="ml-5 list-decimal">{domToReact(node.children as DOMNode[], options)}</ol>;
+      if (node.name === "ul") return <ul>{domToReact(node.children as DOMNode[], options)}</ul>;
+      if (node.name === "ol") return <ol>{domToReact(node.children as DOMNode[], options)}</ol>;
       if (node.name === "li") return <li>{domToReact(node.children as DOMNode[], options)}</li>;
       if (ALLOWED_INLINE_TAGS.has(node.name)) return undefined;
 
@@ -50,7 +99,7 @@ export function renderMessageBody(content: string, contentType: ContentType): Re
     },
   };
 
-  return parse(content, options);
+  return parse(html, options);
 }
 
 export function messagePlainText(content: string, contentType: ContentType): string {

@@ -51,7 +51,7 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
         >
           {shortTime}
         </span>
-        <div className="whitespace-pre-wrap break-words text-[15px] leading-[1.46668] text-[#d1d2d3]">
+        <div className="message-body break-words text-[15px] leading-[1.46668] text-[#d1d2d3]">
           {renderMessageBody(message.body.content, message.body.contentType)}
         </div>
         <Attachments attachments={message.attachments} />
@@ -93,7 +93,7 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
             {formatMessageTime(message.createdDateTime)}
           </span>
         </div>
-        <div className="whitespace-pre-wrap break-words text-[15px] leading-[1.46668] text-[#d1d2d3]">
+        <div className="message-body break-words text-[15px] leading-[1.46668] text-[#d1d2d3]">
           {renderMessageBody(message.body.content, message.body.contentType)}
         </div>
         <Attachments attachments={message.attachments} />
