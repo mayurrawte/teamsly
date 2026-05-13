@@ -31,6 +31,17 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
   const [draft, setDraft] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  useEffect(() => {
+    if (isEditing) {
+      requestAnimationFrame(() => {
+        const ta = textareaRef.current;
+        if (!ta) return;
+        ta.focus();
+        ta.setSelectionRange(ta.value.length, ta.value.length);
+      });
+    }
+  }, [isEditing]);
+
   if (message.deletedDateTime) return null;
 
   const author = message.from?.user?.displayName ?? "Unknown";
@@ -82,18 +93,6 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
       saveEdit();
     }
   }
-
-  // Focus textarea when editing starts
-  useEffect(() => {
-    if (isEditing) {
-      requestAnimationFrame(() => {
-        const ta = textareaRef.current;
-        if (!ta) return;
-        ta.focus();
-        ta.setSelectionRange(ta.value.length, ta.value.length);
-      });
-    }
-  }, [isEditing]);
 
   const editingArea = (
     <div className="mt-1">

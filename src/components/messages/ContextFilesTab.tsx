@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ExternalLink, FileX, RefreshCw } from "lucide-react";
-import { getFileIcon } from "@/app/app/files/page";
+import { getFileIcon } from "@/lib/utils/file-icon";
 
 // ---------------------------------------------------------------------------
 // Mode discriminant
