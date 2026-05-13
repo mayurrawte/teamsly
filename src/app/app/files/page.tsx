@@ -23,7 +23,7 @@ import type { LucideIcon } from "lucide-react";
 // Icon mapping
 // ---------------------------------------------------------------------------
 
-function getFileIcon(mimeType?: string, isFolder?: boolean): LucideIcon {
+export function getFileIcon(mimeType?: string, isFolder?: boolean): LucideIcon {
   if (isFolder) return Folder;
   if (!mimeType) return File;
   if (mimeType === "application/pdf") return FileText;

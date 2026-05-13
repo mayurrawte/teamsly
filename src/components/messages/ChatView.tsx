@@ -7,6 +7,7 @@ import { MessageInput } from "./MessageInput";
 import { ThreadPanel } from "./ThreadPanel";
 import { DmMessageHeader, type Tab } from "./MessageHeader";
 import { DmIntroCard } from "./IntroCard";
+import { ContextFilesTab } from "./ContextFilesTab";
 import { reactionEmoji, type ReactionType } from "@/lib/utils/reactions";
 import { textToHtml } from "@/lib/utils/render-message";
 import { useToastStore } from "@/store/toasts";
@@ -216,7 +217,9 @@ export function ChatView({ chatId }: { chatId: string }) {
           onVideoCall: () => openTeamsCall(callEmails, { withVideo: true }),
         })}
       />
-      {activeTab === "messages" ? (
+      {activeTab === "files" ? (
+        <ContextFilesTab mode={{ kind: "chat", chatId }} />
+      ) : activeTab === "messages" ? (
         <>
           <MessageFeed
             messages={messages}
@@ -236,7 +239,7 @@ export function ChatView({ chatId }: { chatId: string }) {
           />
         </>
       ) : (
-        <ComingSoonPanel label={activeTab === "files" ? "Files" : "About"} />
+        <ComingSoonPanel label="About" />
       )}
       <ThreadPanel
         open={Boolean(threadMessage)}
