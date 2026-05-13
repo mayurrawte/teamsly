@@ -4,6 +4,26 @@ interface MSTeam {
   description?: string;
 }
 
+interface MSCalendarEvent {
+  id: string;
+  subject?: string;
+  bodyPreview?: string;
+  start: { dateTime: string; timeZone: string };
+  end: { dateTime: string; timeZone: string };
+  location?: { displayName?: string };
+  isAllDay?: boolean;
+  isCancelled?: boolean;
+  isOnlineMeeting?: boolean;
+  onlineMeeting?: { joinUrl?: string } | null;
+  organizer?: { emailAddress?: { name?: string; address?: string } };
+  attendees?: Array<{
+    emailAddress?: { name?: string; address?: string };
+    status?: { response?: string; time?: string };
+    type?: "required" | "optional" | "resource";
+  }>;
+  webLink?: string;
+}
+
 interface MSChannel {
   id: string;
   displayName: string;

@@ -7,6 +7,7 @@ import {
   Home,
   MessageSquare,
   Bell,
+  Calendar,
   FolderOpen,
   Clock,
   MoreHorizontal,
@@ -30,6 +31,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Home", href: "/app", icon: Home, matchPrefix: "/app/t" },
   { label: "DMs", href: "/app/dm", icon: MessageSquare, matchPrefix: "/app/dm" },
   { label: "Activity", href: "/app/activity", icon: Bell, matchPrefix: "/app/activity" },
+  { label: "Calendar", href: "/app/meetings", icon: Calendar, matchPrefix: "/app/meetings" },
   { label: "Files", href: "/app/files", icon: FolderOpen, matchPrefix: "/app/files" },
   { label: "Later", href: "/app/later", icon: Clock, matchPrefix: "/app/later" },
 ];
