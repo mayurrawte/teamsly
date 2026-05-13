@@ -86,6 +86,7 @@ export async function getChats(
         .api("/me/chats")
         .expand("members")
         .select("id,chatType,topic,lastUpdatedDateTime")
+        .orderby("lastMessagePreview/createdDateTime desc")
         .top(pageSize)
         .get();
 

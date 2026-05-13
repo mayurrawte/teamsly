@@ -38,6 +38,14 @@ interface WorkspaceState {
 
 const UNREAD_STORAGE_KEY = "teamsly:unread-counts";
 
+function sortChatsByActivity(chats: MSChat[]): MSChat[] {
+  return [...chats].sort((a, b) => {
+    const aTime = a.lastUpdatedDateTime ? new Date(a.lastUpdatedDateTime).getTime() : 0;
+    const bTime = b.lastUpdatedDateTime ? new Date(b.lastUpdatedDateTime).getTime() : 0;
+    return bTime - aTime;
+  });
+}
+
 export const useWorkspaceStore = create<WorkspaceState>()(
   persist(
     (set) => ({
@@ -61,12 +69,16 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       setChannels: (teamId, channels) =>
         set((s) => ({ channels: { ...s.channels, [teamId]: channels } })),
       setActiveChannel: (id) => set({ activeChannelId: id, activeChatId: null, messages: [] }),
-      setChats: (chats, nextLink = null) => set({ chats, chatsNextLink: nextLink }),
+      setChats: (chats, nextLink = null) =>
+        set({ chats: sortChatsByActivity(chats), chatsNextLink: nextLink }),
       appendChats: (incoming, nextLink) =>
         set((s) => {
           const existingIds = new Set(s.chats.map((c) => c.id));
           const deduped = incoming.filter((c) => !existingIds.has(c.id));
-          return { chats: [...s.chats, ...deduped], chatsNextLink: nextLink };
+          return {
+            chats: sortChatsByActivity([...s.chats, ...deduped]),
+            chatsNextLink: nextLink,
+          };
         }),
       setActiveChat: (id) => set({ activeChatId: id, activeChannelId: null, messages: [] }),
       setMessages: (messages) => set({ messages }),

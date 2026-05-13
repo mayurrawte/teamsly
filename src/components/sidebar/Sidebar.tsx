@@ -90,18 +90,36 @@ export function Sidebar() {
   const totalStarred = starredChannelItems.length + starredChatItems.length;
 
   useEffect(() => {
+    let cancelled = false;
+    let toastShown = false;
+
     async function loadChats() {
       try {
         const response = await fetch("/api/chats");
         if (!response.ok) throw new Error("Failed to load chats");
+        if (cancelled) return;
         const data = (await response.json()) as { chats: MSChat[]; nextLink: string | null };
         setChats(data.chats, data.nextLink);
       } catch {
-        showToast({ title: "Could not load direct messages", tone: "error" });
+        if (!cancelled && !toastShown) {
+          toastShown = true;
+          showToast({ title: "Could not load direct messages", tone: "error" });
+        }
       }
     }
 
     loadChats();
+    const interval = window.setInterval(loadChats, 60_000);
+    function onFocus() {
+      loadChats();
+    }
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
   }, [setChats, showToast]);
 
   async function loadMoreChats() {
