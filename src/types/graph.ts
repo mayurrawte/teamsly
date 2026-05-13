@@ -57,6 +57,14 @@ interface MSChatMember {
   email?: string;
 }
 
+interface MSChannelMember {
+  id: string;
+  displayName: string;
+  email?: string;
+  userId?: string;
+  roles?: string[];
+}
+
 interface MSPresence {
   id: string;
   availability: "Available" | "Away" | "BeRightBack" | "Busy" | "DoNotDisturb" | "Offline" | "PresenceUnknown";

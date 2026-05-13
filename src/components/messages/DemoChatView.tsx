@@ -8,11 +8,9 @@ import { MessageInput } from "./MessageInput";
 import { ThreadPanel } from "./ThreadPanel";
 import { DmMessageHeader, type Tab } from "./MessageHeader";
 import { DmIntroCard } from "./IntroCard";
-import { useMemberPanelStore } from "@/store/memberPanel";
 
 export function DemoChatView({ chatId }: { chatId: string }) {
   const { chats, messages, setMessages, appendMessage, toggleReaction } = useWorkspaceStore();
-  const openChannelMembers = useMemberPanelStore((s) => s.openChannelMembers);
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
   const chat = chats.find((c) => c.id === chatId);
@@ -55,7 +53,7 @@ export function DemoChatView({ chatId }: { chatId: string }) {
         currentUserId={currentUserId}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onOpenMembers={openChannelMembers}
+        onOpenMembers={undefined}
       />
       {activeTab === "messages" ? (
         <>

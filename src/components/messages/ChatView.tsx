@@ -9,7 +9,6 @@ import { DmMessageHeader, type Tab } from "./MessageHeader";
 import { DmIntroCard } from "./IntroCard";
 import { reactionEmoji, type ReactionType } from "@/lib/utils/reactions";
 import { useToastStore } from "@/store/toasts";
-import { useMemberPanelStore } from "@/store/memberPanel";
 
 export function ChatView({ chatId }: { chatId: string }) {
   const { chats, messages, isLoadingMessages, currentUserId, setMessages, appendMessage, setLoadingMessages, toggleReaction } =
@@ -17,7 +16,6 @@ export function ChatView({ chatId }: { chatId: string }) {
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
   const showToast = useToastStore((state) => state.showToast);
-  const openChannelMembers = useMemberPanelStore((s) => s.openChannelMembers);
 
   const chat = chats.find((c) => c.id === chatId);
   const label = getChatLabel(chat, currentUserId);
@@ -128,7 +126,7 @@ export function ChatView({ chatId }: { chatId: string }) {
         currentUserId={currentUserId}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onOpenMembers={openChannelMembers}
+        onOpenMembers={undefined}
       />
       {activeTab === "messages" ? (
         <>

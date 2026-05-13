@@ -21,6 +21,19 @@ export async function getChannels(accessToken: string, teamId: string) {
   return res.value as MSChannel[];
 }
 
+export async function getChannelMembers(
+  accessToken: string,
+  teamId: string,
+  channelId: string
+) {
+  const client = getGraphClient(accessToken);
+  const res = await client
+    .api(`/teams/${teamId}/channels/${channelId}/members`)
+    .select("id,displayName,email,userId,roles")
+    .get();
+  return res.value as MSChannelMember[];
+}
+
 export async function getMessages(accessToken: string, teamId: string, channelId: string) {
   const client = getGraphClient(accessToken);
   const res = await client

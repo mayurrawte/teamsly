@@ -13,6 +13,7 @@ import { useMemberPanelStore } from "@/store/memberPanel";
 export function DemoChannelView({ channelId }: { channelId: string }) {
   const { activeTeamId, channels, messages, setMessages, appendMessage, toggleReaction } = useWorkspaceStore();
   const openChannelMembers = useMemberPanelStore((s) => s.openChannelMembers);
+  const handleOpenMembers = () => openChannelMembers("demo", channelId);
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
   const teamChannels = activeTeamId ? (channels[activeTeamId] ?? []) : [];
@@ -49,7 +50,7 @@ export function DemoChannelView({ channelId }: { channelId: string }) {
         description={channel?.description}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onOpenMembers={openChannelMembers}
+        onOpenMembers={handleOpenMembers}
       />
       {activeTab === "messages" ? (
         <>

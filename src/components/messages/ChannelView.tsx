@@ -18,6 +18,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
   const [activeTab, setActiveTab] = useState<Tab>("messages");
   const showToast = useToastStore((state) => state.showToast);
   const openChannelMembers = useMemberPanelStore((s) => s.openChannelMembers);
+  const handleOpenMembers = () => openChannelMembers(teamId, channelId);
 
   const team = teams.find((t) => t.id === teamId);
   const channel = channels[teamId]?.find((c) => c.id === channelId);
@@ -120,7 +121,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
         description={channel?.description}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onOpenMembers={openChannelMembers}
+        onOpenMembers={handleOpenMembers}
       />
       {activeTab === "messages" ? (
         <>
