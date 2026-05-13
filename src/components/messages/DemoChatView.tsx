@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useWorkspaceStore } from "@/store/workspace";
 import { mockChatMessages } from "@/lib/mock/data";
 import { openTeamsCall } from "@/lib/utils/teams-deeplink";
+import { textToHtml } from "@/lib/utils/render-message";
 import { MessageFeed } from "./MessageFeed";
 import { MessageInput } from "./MessageInput";
 import { ThreadPanel } from "./ThreadPanel";
@@ -11,7 +12,7 @@ import { DmMessageHeader, type Tab } from "./MessageHeader";
 import { DmIntroCard } from "./IntroCard";
 
 export function DemoChatView({ chatId }: { chatId: string }) {
-  const { chats, messages, setMessages, appendMessage, toggleReaction, deleteMessage } = useWorkspaceStore();
+  const { chats, messages, setMessages, appendMessage, toggleReaction, deleteMessage, editMessage } = useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
   const chat = chats.find((c) => c.id === chatId);
@@ -27,6 +28,10 @@ export function DemoChatView({ chatId }: { chatId: string }) {
   function handleDelete(messageId: string) {
     if (!window.confirm("Delete this message? This cannot be undone.")) return;
     deleteMessage(messageId);
+  }
+
+  function handleEdit(messageId: string, newContent: string) {
+    editMessage(messageId, textToHtml(newContent));
   }
 
   async function handleSend(content: string) {
@@ -77,6 +82,7 @@ export function DemoChatView({ chatId }: { chatId: string }) {
             onReplyInThread={setThreadMessage}
             onToggleReaction={toggleReaction}
             onDelete={handleDelete}
+            onEdit={handleEdit}
           />
           <MessageInput placeholder={`Message ${label}`} onSend={handleSend} />
         </>
