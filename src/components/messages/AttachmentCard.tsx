@@ -8,6 +8,14 @@ interface AttachmentCardProps {
 }
 
 export function AttachmentCard({ attachment }: AttachmentCardProps) {
+  // Quoted-reply path — Graph returns the referenced message as an attachment
+  // with contentType "messageReference". Caller is expected to filter these
+  // out before passing to AttachmentCard (they render above the body), but
+  // guard here too so we never fall through to the generic file row.
+  if (isMessageReference(attachment.contentType)) {
+    return <MessageReferenceCard attachment={attachment} />;
+  }
+
   // Adaptive Card path
   if (attachment.contentType === "application/vnd.microsoft.card.adaptive") {
     return <AdaptiveCardAttachment attachment={attachment} />;
@@ -50,7 +58,7 @@ export function AttachmentCard({ attachment }: AttachmentCardProps) {
   );
 }
 
-function safeAttachmentHref(url?: string): string | null {
+function safeAttachmentHref(url?: string | null): string | null {
   if (!url) return null;
   if (/^https:\/\//i.test(url)) return url;
   return null;
@@ -98,4 +106,52 @@ function AdaptiveCardAttachment({ attachment }: { attachment: MSAttachment }) {
   }
 
   return <AdaptiveCard data={parsed} />;
+}
+
+// ---------------------------------------------------------------------------
+// Message reference (quoted reply) renderer
+// ---------------------------------------------------------------------------
+
+export function isMessageReference(contentType?: string | null): boolean {
+  return typeof contentType === "string" && contentType.toLowerCase() === "messagereference";
+}
+
+interface MessageReferenceShape {
+  messageId?: string;
+  messagePreview?: string;
+  messageSender?: {
+    user?: { id?: string; displayName?: string };
+  };
+}
+
+function parseMessageReference(content: MSAttachment["content"]): MessageReferenceShape | null {
+  try {
+    if (typeof content === "string" && content.trim().startsWith("{")) {
+      return JSON.parse(content) as MessageReferenceShape;
+    }
+    if (typeof content === "object" && content !== null && !Array.isArray(content)) {
+      return content as MessageReferenceShape;
+    }
+  } catch {
+    // fall through
+  }
+  return null;
+}
+
+export function MessageReferenceCard({ attachment }: { attachment: MSAttachment }) {
+  const parsed = parseMessageReference(attachment.content);
+
+  const senderName = parsed?.messageSender?.user?.displayName ?? "Unknown";
+  const preview = parsed?.messagePreview?.trim() ?? "";
+
+  return (
+    <div className="mb-1 max-w-[640px] overflow-hidden rounded-md border-l-[3px] border-[var(--accent)] bg-[var(--surface)] py-1.5 pl-3 pr-3">
+      <div className="text-[12px] font-semibold text-[var(--text-secondary)]">{senderName}</div>
+      {preview && (
+        <div className="mt-0.5 line-clamp-2 whitespace-pre-wrap break-words text-[13px] text-[var(--text-secondary)]">
+          {preview}
+        </div>
+      )}
+    </div>
+  );
 }

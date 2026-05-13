@@ -10,6 +10,16 @@ const ALLOWED_INLINE_TAGS = new Set(["b", "strong", "i", "em", "s", "u", "span"]
 // Matches one or more consecutive <br> tags (with optional whitespace/attributes)
 const MULTI_BR_RE = /(<br\s*\/?>(\s*<br\s*\/?>)+)/gi;
 
+// Matches a run of leading whitespace / non-breaking spaces (literal or entity)
+// at the start of a block tag's content. Teams' composer often preserves these
+// from copy/paste or from accidental space-before-Enter, which renders as a
+// visible left indent on the second paragraph.
+const LEADING_NBSP_RE = /(<(?:p|div|li)(?:\s[^>]*)?>)(?:&nbsp;|&#160;| |[ \t])+/gi;
+
+// Matches paragraphs whose only content is &nbsp; / &#160; / U+00A0 runs.
+// CSS `p:empty` and `p:has(> br:only-child)` don't catch these.
+const NBSP_ONLY_P_RE = /<p(?:\s[^>]*)?>(?:&nbsp;|&#160;| |\s|<br\s*\/?>)*<\/p>/gi;
+
 // Matches a block of consecutive lines starting with "- " or "* " that are NOT
 // already inside a <ul> or <ol>. Used only on text segments outside existing list tags.
 const MARKDOWN_LIST_BLOCK_RE = /(?:^|\n)((?:[ \t]*[-*] .+(?:\n|$))+)/g;
@@ -18,8 +28,13 @@ const MARKDOWN_LIST_BLOCK_RE = /(?:^|\n)((?:[ \t]*[-*] .+(?:\n|$))+)/g;
 const EMOJI_ONLY_RE = /^[\p{Emoji}\u{FE0F}\u{20E3}\u{200D}\s]+$/u;
 
 function preprocessHtml(html: string): string {
-  // Collapse runs of 2+ <br> down to a single <br>
-  return html.replace(MULTI_BR_RE, "<br>");
+  return html
+    // Collapse runs of 2+ <br> down to a single <br>
+    .replace(MULTI_BR_RE, "<br>")
+    // Drop paragraphs that only contain &nbsp; / whitespace / <br>
+    .replace(NBSP_ONLY_P_RE, "")
+    // Strip leading &nbsp; / U+00A0 runs after <p>/<div>/<li> openers
+    .replace(LEADING_NBSP_RE, "$1");
 }
 
 function convertMarkdownLists(text: string): string {
@@ -56,6 +71,11 @@ function renderHtml(html: string): React.ReactNode {
       if (!(node instanceof Element)) return undefined;
 
       if (node.name === "script" || node.name === "style") return <></>;
+      // Teams emits <attachment id="..."> placeholders inside the body where a
+      // quoted reply / card was anchored. The actual content lives in
+      // message.attachments and is rendered separately, so suppress the
+      // placeholder to avoid an empty fragment introducing vertical space.
+      if (node.name === "attachment") return <></>;
       if (node.name === "at") return <Mention name={getText(node)} />;
       if (node.name === "a") {
         const href = safeHref(node.attribs.href);

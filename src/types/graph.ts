@@ -34,9 +34,10 @@ interface MSMessage {
   attachments?: Array<{
     id: string;
     contentType: string;
-    name: string;
-    contentUrl?: string;
-    /** Adaptive Card JSON — may be a string or pre-parsed object from the Graph SDK */
+    /** Graph may return `null` for attachments that aren't user-named (e.g. messageReference) */
+    name?: string | null;
+    contentUrl?: string | null;
+    /** Adaptive Card JSON / messageReference JSON — may be a string or pre-parsed object from the Graph SDK */
     content?: string | Record<string, unknown> | null;
   }>;
   replies?: MSMessage[];

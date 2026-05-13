@@ -3,7 +3,7 @@
 import { format } from "date-fns";
 import { Avatar } from "@/components/ui/Avatar";
 import { UserProfilePopover } from "@/components/profile/UserProfilePopover";
-import { AttachmentCard } from "./AttachmentCard";
+import { AttachmentCard, MessageReferenceCard, isMessageReference } from "./AttachmentCard";
 import { MessageHoverToolbar } from "./MessageHoverToolbar";
 import { AddReactionPill, ReactionPill } from "./ReactionPill";
 import { formatMessageTime, formatFullTimestamp } from "@/lib/utils/dates";
@@ -29,7 +29,13 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
   const userId = message.from?.user?.id ?? author;
   const content = messagePlainText(message.body.content, message.body.contentType);
 
-  if (!content.trim()) return null;
+  const allAttachments = message.attachments ?? [];
+  const referenceAttachments = allAttachments.filter((a) => isMessageReference(a.contentType));
+  const otherAttachments = allAttachments.filter((a) => !isMessageReference(a.contentType));
+  const hasBody = content.trim().length > 0;
+
+  // Drop rows with no body, no reply quote, and no other attachments to render
+  if (!hasBody && referenceAttachments.length === 0 && otherAttachments.length === 0) return null;
 
   if (!isGroupHead) {
     const shortTime = format(new Date(message.createdDateTime), "h:mm");
@@ -51,10 +57,13 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
         >
           {shortTime}
         </span>
-        <div className="message-body break-words text-[14px] leading-[1.5] text-[var(--text-primary)]">
-          {renderMessageBody(message.body.content, message.body.contentType)}
-        </div>
-        <Attachments attachments={message.attachments} />
+        <MessageReferences attachments={referenceAttachments} />
+        {hasBody && (
+          <div className="message-body break-words text-[14px] leading-[1.5] text-[var(--text-primary)]">
+            {renderMessageBody(message.body.content, message.body.contentType)}
+          </div>
+        )}
+        <Attachments attachments={otherAttachments} />
         <ReactionsRow
           messageId={message.id}
           reactions={message.reactions ?? []}
@@ -93,16 +102,34 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
             {formatMessageTime(message.createdDateTime)}
           </span>
         </div>
-        <div className="message-body break-words text-[14px] leading-[1.5] text-[var(--text-primary)]">
-          {renderMessageBody(message.body.content, message.body.contentType)}
-        </div>
-        <Attachments attachments={message.attachments} />
+        <MessageReferences attachments={referenceAttachments} />
+        {hasBody && (
+          <div className="message-body break-words text-[14px] leading-[1.5] text-[var(--text-primary)]">
+            {renderMessageBody(message.body.content, message.body.contentType)}
+          </div>
+        )}
+        <Attachments attachments={otherAttachments} />
         <ReactionsRow
           messageId={message.id}
           reactions={message.reactions ?? []}
           onToggleReaction={onToggleReaction}
         />
       </div>
+    </div>
+  );
+}
+
+function MessageReferences({
+  attachments,
+}: {
+  attachments: NonNullable<MSMessage["attachments"]>;
+}) {
+  if (attachments.length === 0) return null;
+  return (
+    <div className="mb-1 flex flex-col">
+      {attachments.map((attachment) => (
+        <MessageReferenceCard key={attachment.id} attachment={attachment} />
+      ))}
     </div>
   );
 }
