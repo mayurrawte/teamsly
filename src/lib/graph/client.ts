@@ -84,7 +84,7 @@ export async function getChats(
     ? await client.api(nextLink).get()
     : await client
         .api("/me/chats")
-        .expand("members")
+        .expand("members,lastMessagePreview")
         .select("id,chatType,topic,lastUpdatedDateTime")
         .orderby("lastMessagePreview/createdDateTime desc")
         .top(pageSize)

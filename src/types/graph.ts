@@ -46,7 +46,12 @@ interface MSChat {
   id: string;
   chatType: "oneOnOne" | "group" | "meeting";
   topic?: string;
+  // Only changes when the chat is renamed or members change — NOT on new messages.
+  // For "most recent activity" use lastMessagePreview.createdDateTime instead.
   lastUpdatedDateTime: string;
+  lastMessagePreview?: {
+    createdDateTime?: string;
+  };
   members?: MSChatMember[];
 }
 

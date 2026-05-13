@@ -12,13 +12,10 @@ export async function GET(request: NextRequest) {
 
   try {
     const page = await getChats(session.accessToken, { nextLink });
-    // Sort by most recent activity first; entries without a date go to the end.
-    const sorted = [...page.chats].sort((a, b) => {
-      const aTime = a.lastUpdatedDateTime ? new Date(a.lastUpdatedDateTime).getTime() : 0;
-      const bTime = b.lastUpdatedDateTime ? new Date(b.lastUpdatedDateTime).getTime() : 0;
-      return bTime - aTime;
-    });
-    return NextResponse.json({ chats: sorted, nextLink: page.nextLink });
+    // Graph already orders by `lastMessagePreview/createdDateTime desc`. Re-sorting
+    // by `lastUpdatedDateTime` (which only changes on rename / membership edits)
+    // was undoing that order, so we trust the server response as-is.
+    return NextResponse.json({ chats: page.chats, nextLink: page.nextLink });
   } catch (err) {
     console.error("[graph] chats failed:", err);
     return NextResponse.json({ error: "Graph chats failed" }, { status: 502 });

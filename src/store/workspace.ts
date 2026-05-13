@@ -38,12 +38,19 @@ interface WorkspaceState {
 
 const UNREAD_STORAGE_KEY = "teamsly:unread-counts";
 
+// Graph's `chat.lastUpdatedDateTime` only changes on rename / membership changes,
+// not on new messages. The reliable "most recent activity" field is
+// `lastMessagePreview.createdDateTime`. Fall back to `lastUpdatedDateTime`
+// only when the preview is missing (older persisted state, edge cases).
+function chatActivityTime(chat: MSChat): number {
+  const previewTime = chat.lastMessagePreview?.createdDateTime;
+  if (previewTime) return new Date(previewTime).getTime();
+  if (chat.lastUpdatedDateTime) return new Date(chat.lastUpdatedDateTime).getTime();
+  return 0;
+}
+
 function sortChatsByActivity(chats: MSChat[]): MSChat[] {
-  return [...chats].sort((a, b) => {
-    const aTime = a.lastUpdatedDateTime ? new Date(a.lastUpdatedDateTime).getTime() : 0;
-    const bTime = b.lastUpdatedDateTime ? new Date(b.lastUpdatedDateTime).getTime() : 0;
-    return bTime - aTime;
-  });
+  return [...chats].sort((a, b) => chatActivityTime(b) - chatActivityTime(a));
 }
 
 export const useWorkspaceStore = create<WorkspaceState>()(
