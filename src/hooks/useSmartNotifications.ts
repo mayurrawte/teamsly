@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePreferencesStore } from "@/store/preferences";
 import { messagePlainText } from "@/lib/utils/render-message";
+import { playNotificationSound } from "@/lib/utils/notification-sound";
 
 interface UseSmartNotificationsOptions {
   messages: MSMessage[];
@@ -11,6 +12,7 @@ interface UseSmartNotificationsOptions {
 
 export function useSmartNotifications({ messages, contextName = "Teamsly" }: UseSmartNotificationsOptions) {
   const desktopNotifications = usePreferencesStore((state) => state.desktopNotifications);
+  const notificationSound = usePreferencesStore((state) => state.notificationSound);
   const mentionsOnly = usePreferencesStore((state) => state.mentionsOnly);
   const notificationKeywords = usePreferencesStore((state) => state.notificationKeywords);
   const lastMessageId = useRef<string | null>(null);
@@ -26,13 +28,22 @@ export function useSmartNotifications({ messages, contextName = "Teamsly" }: Use
     if (lastMessageId.current === latest.id) return;
     lastMessageId.current = latest.id;
 
-    if (process.env.NEXT_PUBLIC_PRO !== "true") return;
-    if (!desktopNotifications || typeof window === "undefined" || !("Notification" in window)) return;
+    // Ignore messages sent by the current user.
     if (latest.from?.user?.id === "you") return;
 
     const author = latest.from?.user?.displayName ?? "Unknown";
     const text = messagePlainText(latest.body.content, latest.body.contentType);
+
     if (!shouldNotify(text, mentionsOnly, notificationKeywords)) return;
+
+    // Sound is a basic preference — not gated by Pro.
+    if (notificationSound) {
+      playNotificationSound();
+    }
+
+    // Desktop OS notifications are a Pro feature.
+    if (process.env.NEXT_PUBLIC_PRO !== "true") return;
+    if (!desktopNotifications || typeof window === "undefined" || !("Notification" in window)) return;
 
     if (Notification.permission === "granted") {
       new Notification(`${author} in ${contextName}`, { body: text.slice(0, 160) });
@@ -43,7 +54,7 @@ export function useSmartNotifications({ messages, contextName = "Teamsly" }: Use
         }
       });
     }
-  }, [contextName, desktopNotifications, mentionsOnly, messages, notificationKeywords]);
+  }, [contextName, desktopNotifications, mentionsOnly, messages, notificationKeywords, notificationSound]);
 }
 
 function shouldNotify(text: string, mentionsOnly: boolean, notificationKeywords: string): boolean {

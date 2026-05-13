@@ -176,7 +176,7 @@ function NotificationsPanel() {
         />
       </FieldGroup>
       <p className="mt-2 text-[12px] text-[#6c6f75]">
-        Smart notifications use the Browser Notification API when Pro is enabled.
+        Notification sound works for all users. Desktop OS notifications require Pro.
       </p>
     </div>
   );
