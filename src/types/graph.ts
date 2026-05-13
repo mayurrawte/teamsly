@@ -71,6 +71,27 @@ interface MSChannelMember {
   roles?: string[];
 }
 
+interface MSDriveItem {
+  id: string;
+  name: string;
+  size?: number;
+  lastModifiedDateTime: string;
+  webUrl?: string;
+  file?: { mimeType?: string };
+  folder?: { childCount?: number };
+  parentReference?: { path?: string; name?: string };
+  remoteItem?: {
+    id: string;
+    name?: string;
+    webUrl?: string;
+    file?: { mimeType?: string };
+    folder?: { childCount?: number };
+    parentReference?: { path?: string; name?: string };
+    lastModifiedDateTime?: string;
+    size?: number;
+  };
+}
+
 interface MSPresence {
   id: string;
   availability: "Available" | "Away" | "BeRightBack" | "Busy" | "DoNotDisturb" | "Offline" | "PresenceUnknown";
