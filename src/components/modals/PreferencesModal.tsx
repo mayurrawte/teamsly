@@ -67,14 +67,14 @@ export function PreferencesModal({ open, onOpenChange }: Props) {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out" />
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 z-[70] flex h-[580px] w-[780px] max-w-[94vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl border border-[#3f4144] bg-[#1a1d21] text-[#d1d2d3] shadow-[0_16px_64px_rgba(0,0,0,0.6)] focus:outline-none"
+          className="fixed left-1/2 top-1/2 z-[70] flex h-[580px] w-[780px] max-w-[94vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--modal-bg)] text-[var(--text-primary)] shadow-[0_16px_64px_rgba(0,0,0,0.6)] focus:outline-none"
           aria-describedby={undefined}
         >
           <Dialog.Title className="sr-only">Preferences</Dialog.Title>
 
           {/* Left nav */}
-          <nav className="flex w-[220px] flex-shrink-0 flex-col gap-[2px] border-r border-[#3f4144] bg-[#19171d] p-3">
-            <p className="px-2 pb-2 pt-1 text-[11px] font-bold uppercase tracking-wider text-[#6c6f75]">
+          <nav className="flex w-[220px] flex-shrink-0 flex-col gap-[2px] border-r border-[var(--border)] bg-[var(--sidebar-bg)] p-3">
+            <p className="px-2 pb-2 pt-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
               Preferences
             </p>
             {NAV_ITEMS.map((item) => {
@@ -85,10 +85,10 @@ export function PreferencesModal({ open, onOpenChange }: Props) {
                   key={item.key}
                   type="button"
                   onClick={() => setSection(item.key)}
-                  className={`flex items-center justify-between gap-2 rounded-md px-2 py-[7px] text-left text-[13px] transition-colors duration-100 ${
+                  className={`flex items-center justify-between gap-2 rounded-md px-2 py-[6px] text-left text-[13px] transition-colors duration-100 focus-ring ${
                     active
                       ? "bg-[var(--accent)] text-white"
-                      : "text-[#ababad] hover:bg-[#27242c] hover:text-white"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-white"
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -103,13 +103,13 @@ export function PreferencesModal({ open, onOpenChange }: Props) {
 
           {/* Right pane */}
           <section className="flex flex-1 flex-col overflow-hidden">
-            <header className="flex h-[49px] flex-shrink-0 items-center justify-between border-b border-[#3f4144] px-5">
-              <h2 className="text-[15px] font-black text-white">
+            <header className="flex h-[49px] flex-shrink-0 items-center justify-between border-b border-[var(--border)] px-5">
+              <h2 className="text-[15px] font-bold text-white">
                 {NAV_ITEMS.find((i) => i.key === section)?.label ?? "Preferences"}
               </h2>
               <Dialog.Close
                 aria-label="Close"
-                className="flex h-7 w-7 items-center justify-center rounded text-[#ababad] hover:bg-[#27292d] hover:text-white"
+                className="flex h-7 w-7 items-center justify-center rounded text-[var(--text-secondary)] hover:bg-[var(--surface-raised)] hover:text-white focus-ring"
               >
                 <X size={16} />
               </Dialog.Close>
@@ -146,7 +146,7 @@ function AppearancePanel() {
         label="Font"
         hint="Interface typeface. More options coming soon."
       >
-        <div className="flex h-9 w-64 items-center justify-between rounded-md border border-[#3f4144] bg-[#222529] px-3 text-[13px] text-[#d1d2d3] opacity-70 cursor-not-allowed select-none">
+        <div className="flex h-9 w-64 items-center justify-between rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-[13px] text-[var(--text-primary)] opacity-70 cursor-not-allowed select-none">
           <span>Plex Sans (Default)</span>
           <ChevronRight size={13} className="text-[#6c6f75] rotate-90" />
         </div>
@@ -194,7 +194,7 @@ function AppearancePanel() {
                 aria-label={label}
                 aria-pressed={accent === key}
                 onClick={() => setAccent(key)}
-                className="group flex flex-col items-center gap-[6px]"
+                className="group flex flex-col items-center gap-[6px] focus-ring rounded"
               >
                 <span
                   className={`flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 ${
@@ -319,10 +319,10 @@ function ModeButton({
       type="button"
       aria-pressed={active}
       onClick={() => onSelect(mode)}
-      className={`flex w-[90px] flex-col items-center gap-2 rounded-lg border py-3 text-[12px] font-semibold transition-colors duration-150 ${
+      className={`flex w-[90px] flex-col items-center gap-2 rounded-lg border py-3 text-[12px] font-semibold transition-colors duration-150 focus-ring ${
         active
-          ? "border-[var(--accent)] bg-[rgba(var(--accent-rgb,15,90,143),0.15)] text-white"
-          : "border-[#3f4144] bg-[#222529] text-[#ababad] hover:border-[#565856] hover:text-white"
+          ? "border-[var(--accent)] bg-[var(--accent-light)] text-white"
+          : "border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:border-[var(--border-input)] hover:text-white"
       }`}
     >
       <Icon

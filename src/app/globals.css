@@ -18,6 +18,14 @@
   --modal-bg: #1a1d21;
   --modal-overlay: rgba(0, 0, 0, 0.7);
 
+  /* Semantic shorthand aliases — preferred for new component work */
+  --bg: var(--content-bg);
+  --surface: var(--message-bg);
+  --surface-raised: #2b2d31;
+  --surface-hover: var(--message-hover-bg);
+  --text: var(--text-primary);
+  --text-subtle: var(--text-secondary);
+
   /* Text */
   --text-primary: #d1d2d3;
   --text-secondary: #ababad;
@@ -55,8 +63,6 @@
 }
 
 /* ─── Light mode ────────────────────────────────────────────────────────── */
-/* TODO: Full light-mode token audit. These are minimal stubs — UI will still
-   render in dark colours on many components until each is migrated. */
 [data-color-mode="light"] {
   --sidebar-bg: #f8f9fa;
   --sidebar-hover: #e8eaed;
@@ -68,6 +74,14 @@
   --input-border: #c7c9cc;
   --modal-bg: #ffffff;
   --modal-overlay: rgba(0, 0, 0, 0.5);
+
+  /* Semantic shorthand aliases (light overrides) */
+  --bg: #ffffff;
+  --surface: #f4f5f7;
+  --surface-raised: #eaebee;
+  --surface-hover: #e0e2e5;
+  --text: #1d1c1d;
+  --text-subtle: #454245;
 
   --text-primary: #1d1c1d;
   --text-secondary: #454245;
@@ -102,15 +116,27 @@ body {
   background: var(--content-bg);
   color: var(--text-primary);
   font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 15px;
-  line-height: 1.46668;
+  /* 14px base matches Tailwind v4 text-sm; messages use explicit text-[14px]/text-[15px] */
+  font-size: 14px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ─── Focus ring utility ────────────────────────────────────────────────── */
+/* Applied to any interactive element that needs a keyboard focus indicator.
+   Use via className="focus-ring" or "focus-visible:focus-ring" on buttons/links. */
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -118,12 +144,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #4a4c52;
+  background: var(--border);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #5e6166;
+  background: var(--text-muted);
 }
 
 @keyframes skeleton-shimmer {

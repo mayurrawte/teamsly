@@ -6,14 +6,14 @@ interface Props {
 
 export function DateDivider({ date }: Props) {
   return (
-    <div role="separator" className="flex items-center px-4 my-4 select-none">
-      <div className="h-px flex-1 bg-[#3f4144]" />
+    <div role="separator" className="flex items-center px-4 my-3 select-none">
+      <div className="h-px flex-1 bg-[var(--border)]" />
       <div
-        className="mx-3 rounded-full border border-[#3f4144] bg-[#222529] px-3 py-1 text-[13px] font-bold text-[#6c6f75]"
+        className="mx-3 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-0.5 text-[11px] font-bold text-[var(--text-muted)]"
       >
         {formatDateDivider(date)}
       </div>
-      <div className="h-px flex-1 bg-[#3f4144]" />
+      <div className="h-px flex-1 bg-[var(--border)]" />
     </div>
   );
 }

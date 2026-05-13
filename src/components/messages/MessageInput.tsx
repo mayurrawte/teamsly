@@ -264,15 +264,15 @@ export function MessageInput({ placeholder, onSend }: Props) {
 
   return (
     <div className="px-4 pb-4">
-      <div className="rounded-lg border border-[#565856] bg-[#222529] transition-colors duration-150 focus-within:border-white">
+      <div className="rounded-lg border border-[var(--border-input)] bg-[var(--surface)] transition-colors duration-150 focus-within:border-[var(--text-secondary)]">
         {/* Formatting toolbar */}
-        <div className="flex items-center gap-0.5 border-b border-[#3f4144] px-2 py-1">
+        <div className="flex items-center gap-0.5 border-b border-[var(--border)] px-2 py-1">
           {toolbarButtons.map((item, idx) => {
             if (item === "divider") {
               return (
                 <span
                   key={`divider-${idx}`}
-                  className="mx-1 h-4 w-px flex-shrink-0 bg-[#3f4144]"
+                  className="mx-1 h-4 w-px flex-shrink-0 bg-[var(--border)]"
                   aria-hidden="true"
                 />
               );
@@ -288,7 +288,7 @@ export function MessageInput({ placeholder, onSend }: Props) {
                   e.preventDefault();
                   applyFormat(item.action);
                 }}
-                className="flex h-6 w-6 items-center justify-center rounded text-[#ababad] transition-colors duration-100 hover:bg-[#27292d] hover:text-white active:bg-[#0F5A8F] active:text-white"
+                className="flex h-6 w-6 items-center justify-center rounded text-[var(--text-secondary)] transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-white active:bg-[var(--accent)] active:text-white focus-ring"
               >
                 {item.icon}
               </button>
@@ -301,7 +301,7 @@ export function MessageInput({ placeholder, onSend }: Props) {
           <button
             type="button"
             aria-label="Attach file"
-            className="flex-shrink-0 rounded p-1 text-[#ababad] transition-colors duration-150 hover:bg-[#27292d] hover:text-white"
+            className="flex-shrink-0 rounded p-1 text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-white focus-ring"
           >
             <Paperclip className="h-4 w-4" />
           </button>
@@ -313,13 +313,13 @@ export function MessageInput({ placeholder, onSend }: Props) {
             placeholder={placeholder}
             maxRows={8}
             disabled={sending}
-            className="flex-1 resize-none bg-transparent text-[15px] text-[#d1d2d3] placeholder-[#6c6f75] outline-none disabled:opacity-50"
+            className="flex-1 resize-none bg-transparent text-[14px] text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none disabled:opacity-50"
           />
           <div className="flex flex-shrink-0 items-center gap-1">
             <button
               type="button"
               aria-label="Insert emoji"
-              className="rounded p-1 text-[#ababad] transition-colors duration-150 hover:bg-[#27292d] hover:text-white"
+              className="rounded p-1 text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-white focus-ring"
             >
               <Smile className="h-4 w-4" />
             </button>
@@ -329,10 +329,10 @@ export function MessageInput({ placeholder, onSend }: Props) {
               onClick={submit}
               disabled={!value.trim() || sending}
               className={cn(
-                "flex h-8 w-8 items-center justify-center rounded transition-[background,color] duration-150 ease-out",
+                "flex h-8 w-8 items-center justify-center rounded transition-[background,color] duration-150 ease-out focus-ring",
                 value.trim() && !sending
                   ? "bg-[#007a5a] text-white hover:bg-[#148567]"
-                  : "text-[#6c6f75]"
+                  : "text-[var(--text-muted)]"
               )}
             >
               <Send className="h-4 w-4" />
@@ -340,9 +340,9 @@ export function MessageInput({ placeholder, onSend }: Props) {
           </div>
         </div>
       </div>
-      <p className="mt-1 text-center text-[11px] text-[#6c6f75]">
-        <kbd className="rounded bg-[#3f4144] px-1 py-0.5 text-[10px]">Enter</kbd> to send ·{" "}
-        <kbd className="rounded bg-[#3f4144] px-1 py-0.5 text-[10px]">Shift+Enter</kbd> for new line
+      <p className="mt-1 text-center text-[11px] text-[var(--text-muted)]">
+        <kbd className="rounded bg-[var(--border)] px-1 py-0.5 text-[10px]">Enter</kbd> to send ·{" "}
+        <kbd className="rounded bg-[var(--border)] px-1 py-0.5 text-[10px]">Shift+Enter</kbd> for new line
       </p>
     </div>
   );

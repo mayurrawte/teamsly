@@ -20,17 +20,17 @@ export function UserFooter() {
 
   return (
     <>
-      <div className="flex items-center justify-between border-t border-[#3f4144] px-3 py-2">
+      <div className="flex items-center justify-between border-t border-[var(--border)] px-3 py-2">
         <div className="flex min-w-0 items-center gap-2 overflow-hidden">
           <UserProfilePopover userId={currentUserId || "me"} displayName={name} email={email} availability={presence}>
-            <button type="button" className="relative flex h-9 w-9 flex-shrink-0">
+            <button type="button" className="relative flex h-9 w-9 flex-shrink-0 focus-ring rounded">
               <Avatar userId={currentUserId || "me"} displayName={name} size={36} />
               <PresenceDot availability={presence} />
             </button>
           </UserProfilePopover>
           <div className="min-w-0 overflow-hidden">
             <p className="truncate text-[13px] font-semibold text-white">{name}</p>
-            <p className="text-[11px] text-[#2bac76]">● Active</p>
+            <p className="text-[11px] text-[var(--status-online)]">Active</p>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -39,7 +39,7 @@ export function UserFooter() {
             title="Settings"
             aria-label="Open settings"
             onClick={() => setOpen(true)}
-            className="rounded p-1 text-[#ababad] hover:bg-[#27292d] hover:text-white"
+            className="rounded p-1 text-[var(--text-secondary)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-white focus-ring"
           >
             <Settings className="h-4 w-4" />
           </button>
@@ -48,7 +48,7 @@ export function UserFooter() {
             title="Sign out"
             aria-label="Sign out"
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="rounded p-1 text-[#ababad] hover:bg-[#27292d] hover:text-white"
+            className="rounded p-1 text-[var(--text-secondary)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-white focus-ring"
           >
             <LogOut className="h-4 w-4" />
           </button>

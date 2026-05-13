@@ -183,18 +183,18 @@ export function Sidebar() {
   }
 
   return (
-    <div className="flex w-[260px] flex-shrink-0 flex-col overflow-hidden bg-[#19171d]">
+    <div className="flex w-[260px] flex-shrink-0 flex-col overflow-hidden bg-[var(--sidebar-bg)]">
       {/* Team name header — dropdown trigger */}
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
           <button
             type="button"
-            className="flex h-[49px] w-full items-center justify-between border-b border-[#3f4144] px-4 transition-colors duration-[80ms] ease-out hover:bg-[#27242c] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]"
+            className="flex h-[49px] w-full items-center justify-between border-b border-[var(--border)] px-4 transition-colors duration-[80ms] ease-out hover:bg-[var(--sidebar-hover)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
           >
             <span className="truncate text-[15px] font-black text-white">
               {activeTeam?.displayName ?? "Teamsly"}
             </span>
-            <ChevronDown className="h-4 w-4 flex-shrink-0 text-[#ababad]" />
+            <ChevronDown className="h-4 w-4 flex-shrink-0 text-[var(--text-secondary)]" />
           </button>
         </DropdownMenu.Trigger>
 
@@ -202,11 +202,11 @@ export function Sidebar() {
           <DropdownMenu.Content
             sideOffset={4}
             align="start"
-            className="z-50 min-w-[220px] overflow-hidden rounded-lg border border-[#3f4144] bg-[#1a1d21] py-1 shadow-[0_8px_32px_rgba(0,0,0,0.55)] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
+            className="z-50 min-w-[220px] overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--modal-bg)] py-1 shadow-[0_8px_32px_rgba(0,0,0,0.55)] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
           >
             <DropdownMenu.Item
               onSelect={() => setSettingsOpen(true)}
-              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[#d1d2d3] outline-none transition-colors duration-75 data-[highlighted]:bg-[#0F5A8F] data-[highlighted]:text-white"
+              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-75 data-[highlighted]:bg-[var(--accent)] data-[highlighted]:text-white"
             >
               <Settings className="h-4 w-4 flex-shrink-0" />
               Preferences
@@ -216,7 +216,7 @@ export function Sidebar() {
               onSelect={() => {
                 // TODO: open invite people flow
               }}
-              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[#d1d2d3] outline-none transition-colors duration-75 data-[highlighted]:bg-[#0F5A8F] data-[highlighted]:text-white"
+              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-75 data-[highlighted]:bg-[var(--accent)] data-[highlighted]:text-white"
             >
               <UserPlus className="h-4 w-4 flex-shrink-0" />
               Invite people
@@ -226,17 +226,17 @@ export function Sidebar() {
               onSelect={() => {
                 // TODO: set away / presence toggle
               }}
-              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[#d1d2d3] outline-none transition-colors duration-75 data-[highlighted]:bg-[#0F5A8F] data-[highlighted]:text-white"
+              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-75 data-[highlighted]:bg-[var(--accent)] data-[highlighted]:text-white"
             >
               <Moon className="h-4 w-4 flex-shrink-0" />
               Set away
             </DropdownMenu.Item>
 
-            <DropdownMenu.Separator className="my-1 h-px bg-[#3f4144]" />
+            <DropdownMenu.Separator className="my-1 h-px bg-[var(--border)]" />
 
             <DropdownMenu.Item
               onSelect={() => signOut({ callbackUrl: "/" })}
-              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[#d1d2d3] outline-none transition-colors duration-75 data-[highlighted]:bg-[#cd2553] data-[highlighted]:text-white"
+              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-75 data-[highlighted]:bg-[#cd2553] data-[highlighted]:text-white"
             >
               <LogOut className="h-4 w-4 flex-shrink-0" />
               Sign out
@@ -248,7 +248,7 @@ export function Sidebar() {
       <button
         type="button"
         onClick={() => setSearchOpen(true)}
-        className="mx-3 my-2 flex h-7 items-center gap-2 rounded-md border border-[#565856] bg-[#2c2d30] px-2 text-left text-[13px] text-[#ababad] [transition:border-color_150ms_ease,background_150ms_ease] hover:border-white hover:bg-[#1a1d21] focus:border-white focus:bg-[#1a1d21] focus:outline-none"
+        className="mx-3 my-2 flex h-7 items-center gap-2 rounded-md border border-[var(--border-input)] bg-[var(--reaction-bg)] px-2 text-left text-[13px] text-[var(--text-secondary)] [transition:border-color_150ms_ease,background_150ms_ease] hover:border-white/50 hover:bg-[var(--sidebar-hover)] focus:border-white/50 focus:bg-[var(--sidebar-hover)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
       >
         <Search className="h-3.5 w-3.5 flex-shrink-0" />
         <span className="truncate">Search...</span>
@@ -293,7 +293,7 @@ export function Sidebar() {
                 />
               ))}
               {totalUnreads === 0 && (
-                <p className="px-4 py-1 text-[12px] text-[#6c6f75]">All caught up</p>
+                <p className="px-4 py-1 text-[12px] text-[var(--text-muted)]">All caught up</p>
               )}
             </>
           )}
@@ -309,7 +309,7 @@ export function Sidebar() {
             onToggle={toggleThreads}
           />
           {threadsOpen && (
-            <p className="px-4 py-1 text-[12px] text-[#6c6f75]">Coming soon</p>
+            <p className="px-4 py-1 text-[12px] text-[var(--text-muted)]">Coming soon</p>
           )}
         </div>
 
@@ -351,7 +351,7 @@ export function Sidebar() {
                 />
               ))}
               {totalStarred === 0 && (
-                <p className="px-4 py-1 text-[12px] text-[#6c6f75]">
+                <p className="px-4 py-1 text-[12px] text-[var(--text-muted)]">
                   Star channels and DMs to find them faster
                 </p>
               )}
@@ -363,18 +363,18 @@ export function Sidebar() {
         <div className="mb-1">
           <button
             onClick={() => setChannelsOpen((v) => !v)}
-            className="group/section flex w-full items-center justify-between px-4 py-1 text-[13px] font-bold text-[#ababad] transition-colors duration-[80ms] ease-out hover:text-white"
+            className="group/section flex w-full items-center justify-between px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] transition-colors duration-[80ms] ease-out hover:text-[var(--text-secondary)] focus:outline-none"
           >
             <span className="flex min-w-0 items-center gap-1">
               <ChevronRight
                 className={cn(
-                  "h-3 w-3 transition-transform duration-200 ease-out",
+                  "h-2.5 w-2.5 transition-transform duration-200 ease-out",
                   channelsOpen && "rotate-90"
                 )}
               />
               <span className="truncate">Channels</span>
             </span>
-            <Plus className="h-3.5 w-3.5 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
+            <Plus className="h-3 w-3 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
           </button>
 
           {channelsOpen &&
@@ -400,18 +400,18 @@ export function Sidebar() {
         <div className="mt-3">
           <button
             onClick={() => setDmsOpen((v) => !v)}
-            className="group/section flex w-full items-center justify-between px-4 py-1 text-[13px] font-bold text-[#ababad] transition-colors duration-[80ms] ease-out hover:text-white"
+            className="group/section flex w-full items-center justify-between px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] transition-colors duration-[80ms] ease-out hover:text-[var(--text-secondary)] focus:outline-none"
           >
             <span className="flex min-w-0 items-center gap-1">
               <ChevronRight
                 className={cn(
-                  "h-3 w-3 transition-transform duration-200 ease-out",
+                  "h-2.5 w-2.5 transition-transform duration-200 ease-out",
                   dmsOpen && "rotate-90"
                 )}
               />
               <span className="truncate">Direct Messages</span>
             </span>
-            <Plus className="h-3.5 w-3.5 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
+            <Plus className="h-3 w-3 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
           </button>
 
           {dmsOpen &&
@@ -431,7 +431,7 @@ export function Sidebar() {
               type="button"
               disabled={loadingMoreChats}
               onClick={loadMoreChats}
-              className="mx-2 mt-0.5 flex h-7 w-[calc(100%-16px)] items-center gap-1.5 rounded-md px-2 text-[13px] text-[#6c6f75] transition-colors duration-[80ms] ease-out hover:bg-[#27292d] hover:text-[#ababad] disabled:cursor-not-allowed disabled:opacity-50"
+              className="mx-2 mt-0.5 flex h-7 w-[calc(100%-16px)] items-center gap-1.5 rounded-md px-2 text-[13px] text-[var(--text-muted)] transition-colors duration-[80ms] ease-out hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
             >
               <ChevronDown className="h-3 w-3 flex-shrink-0" />
               <span>{loadingMoreChats ? "Loading..." : "Show older chats"}</span>
@@ -478,18 +478,18 @@ function SectionHeader({
     <button
       type="button"
       onClick={onToggle}
-      className="group/section flex w-full items-center gap-1.5 px-4 py-1 text-[13px] font-bold text-[#ababad] transition-colors duration-[80ms] ease-out hover:text-white"
+      className="group/section flex w-full items-center gap-1.5 px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] transition-colors duration-[80ms] ease-out hover:text-[var(--text-secondary)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
     >
       <ChevronRight
         className={cn(
-          "h-3 w-3 flex-shrink-0 transition-transform duration-200 ease-out",
+          "h-2.5 w-2.5 flex-shrink-0 transition-transform duration-200 ease-out",
           open && "rotate-90"
         )}
       />
       <span className="flex-shrink-0 opacity-70">{icon}</span>
       <span className="truncate">{label}</span>
       {count > 0 && (
-        <span className="ml-auto flex h-[16px] min-w-[16px] flex-shrink-0 items-center justify-center rounded-full bg-[#cd2553] px-[4px] text-[10px] font-bold text-white">
+        <span className="ml-auto flex h-[15px] min-w-[15px] flex-shrink-0 items-center justify-center rounded-full bg-[#cd2553] px-[4px] text-[10px] font-bold text-white">
           {count > 99 ? "99+" : count}
         </span>
       )}
@@ -516,16 +516,16 @@ function SidebarItem({
     <button
       onClick={onClick}
       className={cn(
-        "mx-2 flex h-7 w-[calc(100%-16px)] items-center gap-2 rounded-md px-2 text-[15px] transition-colors duration-[80ms] ease-out",
+        "mx-2 flex h-[28px] w-[calc(100%-16px)] items-center gap-2 rounded-md px-2 text-[13px] transition-colors duration-[80ms] ease-out focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
         active
-          ? "bg-[#0F5A8F] text-white"
-          : "text-[#ababad] hover:bg-[#27292d] hover:text-white"
+          ? "bg-[var(--accent)] text-white"
+          : "text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-white"
       )}
     >
       <span className="flex-shrink-0 opacity-70">{icon}</span>
-      <span className={cn("truncate", unread && "font-black text-white")}>{label}</span>
+      <span className={cn("truncate", unread && "font-bold text-white")}>{label}</span>
       {unread && (
-        <span className="ml-auto flex h-[18px] min-w-[18px] flex-shrink-0 scale-100 items-center justify-center rounded-full bg-[#cd2553] px-[5px] text-[11px] font-bold text-white transition-transform duration-150">
+        <span className="ml-auto flex h-[16px] min-w-[16px] flex-shrink-0 scale-100 items-center justify-center rounded-full bg-[#cd2553] px-[4px] text-[10px] font-bold text-white transition-transform duration-150">
           {unreadCount > 99 ? "99+" : unreadCount}
         </span>
       )}

@@ -18,7 +18,7 @@ export function MemberPanel() {
   return (
     <aside
       aria-label="Members panel"
-      className="flex w-[300px] flex-shrink-0 flex-col border-l border-[#3f4144] bg-[#1a1d21]"
+      className="flex w-[300px] flex-shrink-0 flex-col border-l border-[var(--border)] bg-[var(--content-bg)]"
     >
       {view === "channel-members" ? (
         <ChannelMembersView onClose={close} />
@@ -40,16 +40,16 @@ export function MemberPanel() {
 function ChannelMembersView({ onClose }: { onClose: () => void }) {
   return (
     <>
-      <div className="flex h-[49px] flex-shrink-0 items-center justify-between border-b border-[#3f4144] px-4">
+      <div className="flex h-[49px] flex-shrink-0 items-center justify-between border-b border-[var(--border)] px-4">
         <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-[#ababad]" />
-          <span className="text-sm font-bold text-white">Members</span>
+          <Users className="h-4 w-4 text-[var(--text-secondary)]" />
+          <span className="text-[13px] font-bold text-white">Members</span>
         </div>
         <button
           type="button"
           aria-label="Close members panel"
           onClick={onClose}
-          className="flex h-7 w-7 items-center justify-center rounded-md text-[#ababad] transition-colors hover:bg-[#2b2d31] hover:text-white"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-raised)] hover:text-white focus-ring"
         >
           <X className="h-4 w-4" />
         </button>
@@ -57,7 +57,7 @@ function ChannelMembersView({ onClose }: { onClose: () => void }) {
 
       <div className="flex-1 overflow-y-auto px-3 py-4">
         {/* Stub — real members will be loaded from /teams/{teamId}/channels/{channelId}/members */}
-        <p className="text-center text-sm text-[#6c6f75]">Loading members&hellip;</p>
+        <p className="text-center text-[13px] text-[var(--text-muted)]">Loading members&hellip;</p>
       </div>
     </>
   );
@@ -76,13 +76,13 @@ function MemberProfileView({
 
   return (
     <>
-      <div className="flex h-[49px] flex-shrink-0 items-center justify-between border-b border-[#3f4144] px-4">
-        <span className="text-sm font-bold text-white">Profile</span>
+      <div className="flex h-[49px] flex-shrink-0 items-center justify-between border-b border-[var(--border)] px-4">
+        <span className="text-[13px] font-bold text-white">Profile</span>
         <button
           type="button"
           aria-label="Close profile panel"
           onClick={onClose}
-          className="flex h-7 w-7 items-center justify-center rounded-md text-[#ababad] transition-colors hover:bg-[#2b2d31] hover:text-white"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-raised)] hover:text-white focus-ring"
         >
           <X className="h-4 w-4" />
         </button>
@@ -95,11 +95,11 @@ function MemberProfileView({
         </div>
 
         <div className="w-full text-center">
-          <h3 className="truncate text-lg font-black text-white">{member.displayName}</h3>
+          <h3 className="truncate text-[16px] font-bold text-white">{member.displayName}</h3>
           {member.email && (
-            <p className="truncate text-sm text-[#ababad]">{member.email}</p>
+            <p className="truncate text-[13px] text-[var(--text-secondary)]">{member.email}</p>
           )}
-          <p className="mt-1 text-xs text-[#2bac76]">{presenceLabel(availability)}</p>
+          <p className="mt-1 text-[12px] text-[var(--status-online)]">{presenceLabel(availability)}</p>
         </div>
       </div>
     </>

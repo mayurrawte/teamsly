@@ -36,7 +36,7 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
     return (
       <div
         className={cn(
-          "group relative px-4 pl-[72px] transition-colors duration-[80ms] ease-out hover:bg-[#27292d]",
+          "group relative px-4 pl-[72px] transition-colors duration-[80ms] ease-out hover:bg-[var(--message-hover-bg)]",
           density === "compact" ? "py-0" : "py-[2px]"
         )}
       >
@@ -46,12 +46,12 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
           onReplyInThread={() => onReplyInThread?.(message)}
         />
         <span
-          className="pointer-events-none absolute left-4 top-[3px] w-9 select-none text-right text-[11px] leading-[18px] text-[#6c6f75] opacity-0 transition-opacity duration-100 group-hover:opacity-100"
+          className="pointer-events-none absolute left-4 top-[3px] w-9 select-none text-right text-xs leading-[18px] text-[var(--text-muted)] opacity-0 transition-opacity duration-100 group-hover:opacity-100"
           title={formatFullTimestamp(message.createdDateTime)}
         >
           {shortTime}
         </span>
-        <div className="message-body break-words text-[15px] leading-[1.46668] text-[#d1d2d3]">
+        <div className="message-body break-words text-[14px] leading-[1.5] text-[var(--text-primary)]">
           {renderMessageBody(message.body.content, message.body.contentType)}
         </div>
         <Attachments attachments={message.attachments} />
@@ -67,7 +67,7 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
   return (
     <div
       className={cn(
-        "group relative flex gap-2 px-4 transition-colors duration-[80ms] ease-out hover:bg-[#27292d]",
+        "group relative flex gap-2 px-4 transition-colors duration-[80ms] ease-out hover:bg-[var(--message-hover-bg)]",
         density === "compact" ? "pb-0 pt-1" : "pb-[2px] pt-2"
       )}
     >
@@ -77,23 +77,23 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
         onReplyInThread={() => onReplyInThread?.(message)}
       />
       <UserProfilePopover userId={userId} displayName={author}>
-        <button type="button" className="h-9 w-9 flex-shrink-0 text-left">
+        <button type="button" className="h-9 w-9 flex-shrink-0 rounded text-left focus-ring">
           <Avatar userId={userId} displayName={author} size={36} />
         </button>
       </UserProfilePopover>
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
-          <span className="cursor-pointer text-[15px] font-black text-[#d1d2d3] hover:underline">
+          <span className="cursor-pointer text-[14px] font-bold text-[var(--text-primary)] hover:underline">
             {author}
           </span>
           <span
-            className="text-[12px] text-[#6c6f75]"
+            className="text-xs text-[var(--text-muted)]"
             title={formatFullTimestamp(message.createdDateTime)}
           >
             {formatMessageTime(message.createdDateTime)}
           </span>
         </div>
-        <div className="message-body break-words text-[15px] leading-[1.46668] text-[#d1d2d3]">
+        <div className="message-body break-words text-[14px] leading-[1.5] text-[var(--text-primary)]">
           {renderMessageBody(message.body.content, message.body.contentType)}
         </div>
         <Attachments attachments={message.attachments} />

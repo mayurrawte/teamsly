@@ -44,10 +44,10 @@ function TabRow({
           key={id}
           type="button"
           onClick={() => onTabChange(id)}
-          className={`px-3 py-1 text-sm font-medium transition-colors focus:outline-none ${
+          className={`px-3 py-1 text-[13px] font-medium transition-colors focus-ring ${
             activeTab === id
               ? "border-b-2 border-white text-white"
-              : "text-[#ababad] hover:text-[#d1d2d3]"
+              : "text-[var(--text-secondary)] hover:text-white"
           }`}
         >
           {label}
@@ -65,26 +65,26 @@ function IconCluster({
   onOpenMembers?: () => void;
 }) {
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-0.5">
       <button
         type="button"
         onClick={onSearchClick}
         title="Search"
-        className="rounded p-1.5 text-[#ababad] transition-colors hover:bg-[#2b2d31] hover:text-[#d1d2d3] focus:outline-none"
+        className="rounded p-1.5 text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-raised)] hover:text-[var(--text-primary)] focus-ring"
       >
         <Search className="h-4 w-4" />
       </button>
       <button
         type="button"
         title="Call"
-        className="rounded p-1.5 text-[#ababad] transition-colors hover:bg-[#2b2d31] hover:text-[#d1d2d3] focus:outline-none"
+        className="rounded p-1.5 text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-raised)] hover:text-[var(--text-primary)] focus-ring"
       >
         <Phone className="h-4 w-4" />
       </button>
       <button
         type="button"
         title="Notifications"
-        className="rounded p-1.5 text-[#ababad] transition-colors hover:bg-[#2b2d31] hover:text-[#d1d2d3] focus:outline-none"
+        className="rounded p-1.5 text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-raised)] hover:text-[var(--text-primary)] focus-ring"
       >
         <Bell className="h-4 w-4" />
       </button>
@@ -92,7 +92,7 @@ function IconCluster({
         type="button"
         title="Members"
         onClick={onOpenMembers}
-        className="rounded p-1.5 text-[#ababad] transition-colors hover:bg-[#2b2d31] hover:text-[#d1d2d3] focus:outline-none"
+        className="rounded p-1.5 text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-raised)] hover:text-[var(--text-primary)] focus-ring"
       >
         <MoreVertical className="h-4 w-4" />
       </button>
@@ -116,11 +116,11 @@ function MemberAvatarStack({
       type="button"
       onClick={onOpenMembers}
       title="View members"
-      className="flex items-center rounded p-0.5 transition-colors hover:bg-[#2b2d31] focus:outline-none"
+      className="flex items-center rounded p-0.5 transition-colors hover:bg-[var(--surface-raised)] focus-ring"
     >
       <div className="flex -space-x-1.5">
         {shown.map((m) => (
-          <div key={m.id} className="ring-2 ring-[#1a1d21]" style={{ borderRadius: 4 }}>
+          <div key={m.id} className="ring-2 ring-[var(--content-bg)]" style={{ borderRadius: 4 }}>
             <Avatar
               userId={m.userId ?? m.id}
               displayName={m.displayName}
@@ -130,7 +130,7 @@ function MemberAvatarStack({
         ))}
       </div>
       {overflow > 0 && (
-        <span className="ml-1.5 text-xs text-[#ababad]">+{overflow}</span>
+        <span className="ml-1.5 text-xs text-[var(--text-secondary)]">+{overflow}</span>
       )}
     </button>
   );
@@ -145,22 +145,22 @@ export function ChannelMessageHeader({
   onOpenMembers,
 }: ChannelHeaderProps & { onSearchClick?: () => void }) {
   return (
-    <div className="flex flex-col border-b border-[#3f4144] bg-[#1a1d21] px-4 shadow-sm">
+    <div className="flex flex-col border-b border-[var(--border)] bg-[var(--content-bg)] px-4 shadow-sm">
       {/* Top row */}
       <div className="flex h-[49px] items-center justify-between gap-4">
         {/* Left: icon + name + description */}
         <div className="flex min-w-0 items-center gap-2">
-          <Hash className="h-4 w-4 flex-shrink-0 text-[#ababad]" />
-          <span className="truncate font-bold text-white">{name}</span>
+          <Hash className="h-4 w-4 flex-shrink-0 text-[var(--text-secondary)]" />
+          <span className="truncate text-[17px] font-bold text-white">{name}</span>
           {description && (
             <>
-              <span className="text-[#3f4144]">|</span>
-              <span className="truncate text-sm text-[#6c6f75]">{description}</span>
+              <span className="text-[var(--border)]">|</span>
+              <span className="truncate text-[13px] text-[var(--text-muted)]">{description}</span>
             </>
           )}
         </div>
         {/* Right: icon cluster */}
-        <div className="flex flex-shrink-0 items-center gap-2">
+        <div className="flex flex-shrink-0 items-center">
           <IconCluster onSearchClick={onSearchClick} onOpenMembers={onOpenMembers} />
         </div>
       </div>
@@ -185,7 +185,7 @@ export function DmMessageHeader({
   const displayMembers = otherMembers.length > 0 ? otherMembers : members;
 
   return (
-    <div className="flex flex-col border-b border-[#3f4144] bg-[#1a1d21] px-4 shadow-sm">
+    <div className="flex flex-col border-b border-[var(--border)] bg-[var(--content-bg)] px-4 shadow-sm">
       {/* Top row */}
       <div className="flex h-[49px] items-center justify-between gap-4">
         {/* Left: avatars + name */}
@@ -197,10 +197,10 @@ export function DmMessageHeader({
               onOpenMembers={onOpenMembers}
             />
           ) : null}
-          <span className="truncate font-bold text-white">{label}</span>
+          <span className="truncate text-[17px] font-bold text-white">{label}</span>
         </div>
         {/* Right: icon cluster */}
-        <div className="flex flex-shrink-0 items-center gap-2">
+        <div className="flex flex-shrink-0 items-center">
           <IconCluster onSearchClick={onSearchClick} onOpenMembers={onOpenMembers} />
         </div>
       </div>
