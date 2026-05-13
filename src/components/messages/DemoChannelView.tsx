@@ -52,7 +52,11 @@ export function DemoChannelView({ channelId }: { channelId: string }) {
         onTabChange={setActiveTab}
         onOpenMembers={handleOpenMembers}
       />
-      {activeTab === "messages" ? (
+      {activeTab === "files" ? (
+        <div className="flex flex-1 items-center justify-center text-[13px] text-[#6c6f75]">
+          Files preview is available with a connected Microsoft account.
+        </div>
+      ) : activeTab === "messages" ? (
         <>
           <MessageFeed
             messages={messages}
@@ -69,7 +73,7 @@ export function DemoChannelView({ channelId }: { channelId: string }) {
         </>
       ) : (
         <div className="flex flex-1 items-center justify-center text-sm text-[#6c6f75]">
-          {activeTab === "files" ? "Files" : "About"} — coming soon
+          About — coming soon
         </div>
       )}
       <ThreadPanel

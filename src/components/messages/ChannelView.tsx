@@ -7,6 +7,7 @@ import { MessageInput } from "./MessageInput";
 import { ThreadPanel } from "./ThreadPanel";
 import { ChannelMessageHeader, type Tab } from "./MessageHeader";
 import { ChannelIntroCard } from "./IntroCard";
+import { ContextFilesTab } from "./ContextFilesTab";
 import { reactionEmoji, type ReactionType } from "@/lib/utils/reactions";
 import { useToastStore } from "@/store/toasts";
 import { useMemberPanelStore } from "@/store/memberPanel";
@@ -123,7 +124,9 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
         onTabChange={setActiveTab}
         onOpenMembers={handleOpenMembers}
       />
-      {activeTab === "messages" ? (
+      {activeTab === "files" ? (
+        <ContextFilesTab mode={{ kind: "channel", teamId, channelId }} />
+      ) : activeTab === "messages" ? (
         <>
           <MessageFeed
             messages={messages}
@@ -139,7 +142,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
           />
         </>
       ) : (
-        <ComingSoonPanel label={activeTab === "files" ? "Files" : "About"} />
+        <ComingSoonPanel label="About" />
       )}
       <ThreadPanel
         open={Boolean(threadMessage)}

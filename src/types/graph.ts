@@ -128,3 +128,11 @@ interface MSUser {
   mail?: string;
   userPrincipalName: string;
 }
+
+interface MSChatFileAttachment {
+  id: string;
+  name: string;
+  contentUrl: string;
+  sharedBy?: { displayName?: string };
+  sharedDateTime: string;
+}
