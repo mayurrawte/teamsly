@@ -102,15 +102,27 @@ export async function getChatMessages(accessToken: string, chatId: string) {
   return res.value as MSMessage[];
 }
 
+export interface ChatAttachment {
+  id: string;
+  contentType: "reference";
+  contentUrl: string;
+  name: string;
+}
+
 export async function sendChatMessage(
   accessToken: string,
   chatId: string,
-  content: string
+  content: string,
+  attachments?: ChatAttachment[]
 ) {
   const client = getGraphClient(accessToken);
-  return client.api(`/me/chats/${chatId}/messages`).post({
+  const payload: Record<string, unknown> = {
     body: { content, contentType: "html" },
-  });
+  };
+  if (attachments?.length) {
+    payload.attachments = attachments;
+  }
+  return client.api(`/me/chats/${chatId}/messages`).post(payload);
 }
 
 export async function replyToChatMessage(

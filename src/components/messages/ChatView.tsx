@@ -17,6 +17,7 @@ export function ChatView({ chatId }: { chatId: string }) {
     useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
+  const [uploading, setUploading] = useState(false);
   const showToast = useToastStore((state) => state.showToast);
 
   const chat = chats.find((c) => c.id === chatId);
@@ -79,6 +80,58 @@ export function ChatView({ chatId }: { chatId: string }) {
       showToast({ title: "Could not send message", tone: "error" });
       throw new Error("Failed to send message");
     }
+  }
+
+  async function handleAttachAndSend(content: string, file: File) {
+    setUploading(true);
+
+    // Step 1: upload file to OneDrive via /me/drive/root:/Apps/Teamsly/{name}
+    let driveItem: { id: string; name: string; webUrl: string };
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const uploadRes = await fetch("/api/files/upload", { method: "POST", body: form });
+      if (!uploadRes.ok) {
+        const err = (await uploadRes.json()) as { error?: string };
+        throw new Error(err.error ?? "Upload failed");
+      }
+      driveItem = (await uploadRes.json()) as { id: string; name: string; webUrl: string };
+    } catch (err) {
+      showToast({ title: err instanceof Error ? err.message : "Upload failed", tone: "error" });
+      setUploading(false);
+      throw err;
+    }
+
+    // Step 2: send chat message with attachment reference
+    const attachmentId = crypto.randomUUID();
+    // Anchor tag lets Teams' renderer render the file card inline
+    const htmlBody = `${content}<attachment id="${attachmentId}"></attachment>`.trim();
+    try {
+      const res = await fetch(`/api/chats/${chatId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: htmlBody,
+          attachments: [
+            {
+              id: attachmentId,
+              contentType: "reference",
+              contentUrl: driveItem.webUrl,
+              name: driveItem.name,
+            },
+          ],
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to send message with attachment");
+      const msg = (await res.json()) as MSMessage;
+      appendMessage(msg);
+    } catch (err) {
+      showToast({ title: "Could not send message", tone: "error" });
+      setUploading(false);
+      throw err;
+    }
+
+    setUploading(false);
   }
 
   async function handleThreadReply(messageId: string, content: string) {
@@ -175,7 +228,12 @@ export function ChatView({ chatId }: { chatId: string }) {
             onDelete={handleDelete}
             onEdit={handleEdit}
           />
-          <MessageInput placeholder={`Message ${label}`} onSend={handleSend} />
+          <MessageInput
+            placeholder={`Message ${label}`}
+            onSend={handleSend}
+            onAttachAndSend={handleAttachAndSend}
+            uploading={uploading}
+          />
         </>
       ) : (
         <ComingSoonPanel label={activeTab === "files" ? "Files" : "About"} />
