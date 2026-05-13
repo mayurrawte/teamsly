@@ -20,10 +20,11 @@ interface Props {
   onReplyInThread?: (message: MSMessage) => void;
   onToggleReaction?: (messageId: string, reactionType: ReactionType) => void;
   onDelete?: (messageId: string) => void;
+  onEdit?: (messageId: string, newContent: string) => Promise<void> | void;
   onSendOwn?: (callback: () => void) => void;
 }
 
-export function MessageFeed({ messages, loading, contextName, introCard, onReplyInThread, onToggleReaction, onDelete }: Props) {
+export function MessageFeed({ messages, loading, contextName, introCard, onReplyInThread, onToggleReaction, onDelete, onEdit }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
@@ -123,6 +124,7 @@ export function MessageFeed({ messages, loading, contextName, introCard, onReply
               onReplyInThread={onReplyInThread}
               onToggleReaction={onToggleReaction}
               onDelete={onDelete}
+              onEdit={onEdit}
             />
           </Fragment>
         ))}

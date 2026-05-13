@@ -8,11 +8,12 @@ import { ThreadPanel } from "./ThreadPanel";
 import { DmMessageHeader, type Tab } from "./MessageHeader";
 import { DmIntroCard } from "./IntroCard";
 import { reactionEmoji, type ReactionType } from "@/lib/utils/reactions";
+import { textToHtml } from "@/lib/utils/render-message";
 import { useToastStore } from "@/store/toasts";
 import { openTeamsCall } from "@/lib/utils/teams-deeplink";
 
 export function ChatView({ chatId }: { chatId: string }) {
-  const { chats, messages, isLoadingMessages, currentUserId, setMessages, appendMessage, setLoadingMessages, toggleReaction, deleteMessage, restoreMessage } =
+  const { chats, messages, isLoadingMessages, currentUserId, setMessages, appendMessage, setLoadingMessages, toggleReaction, deleteMessage, restoreMessage, editMessage, revertMessageEdit } =
     useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
@@ -102,6 +103,21 @@ export function ChatView({ chatId }: { chatId: string }) {
     }
   }
 
+  async function handleEdit(messageId: string, newContent: string) {
+    const snapshot = editMessage(messageId, textToHtml(newContent));
+    try {
+      const res = await fetch(`/api/chats/${chatId}/messages/${messageId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newContent }),
+      });
+      if (!res.ok) throw new Error("Graph patch failed");
+    } catch {
+      if (snapshot) revertMessageEdit(messageId, snapshot.previousContent, snapshot.previousContentType);
+      showToast({ title: "Could not edit message", tone: "error" });
+    }
+  }
+
   async function handleToggleReaction(messageId: string, reactionType: ReactionType) {
     const action = hasReacted(messages, messageId, reactionType, currentUserId) ? "unset" : "set";
     toggleReaction(messageId, reactionType);
@@ -157,6 +173,7 @@ export function ChatView({ chatId }: { chatId: string }) {
             onReplyInThread={setThreadMessage}
             onToggleReaction={handleToggleReaction}
             onDelete={handleDelete}
+            onEdit={handleEdit}
           />
           <MessageInput placeholder={`Message ${label}`} onSend={handleSend} />
         </>

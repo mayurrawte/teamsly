@@ -127,6 +127,16 @@ export function messagePlainText(content: string, contentType: ContentType): str
   return content.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
 
+// Escapes plain text for Graph's contentType:"html" payload — newlines become
+// <br> and the three HTML special characters are entity-encoded.
+export function textToHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br>");
+}
+
 function Mention({ name }: { name: string }) {
   return (
     <span className="rounded-[3px] bg-[rgba(205,37,83,0.15)] px-[2px] text-[#cd2553]">

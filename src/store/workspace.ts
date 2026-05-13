@@ -30,6 +30,8 @@ interface WorkspaceState {
   toggleReaction: (messageId: string, reactionType: string) => void;
   deleteMessage: (messageId: string) => { message: MSMessage; index: number } | null;
   restoreMessage: (message: MSMessage, index: number) => void;
+  editMessage: (messageId: string, newContent: string) => { previousContent: string; previousContentType: MSMessage["body"]["contentType"]; index: number } | null;
+  revertMessageEdit: (messageId: string, previousContent: string, previousContentType: MSMessage["body"]["contentType"]) => void;
   setLoadingMessages: (v: boolean) => void;
   setPresenceMap: (presenceMap: Record<string, MSPresence["availability"]>) => void;
   setStatusMessage: (userId: string, statusMessage: MSPresence["statusMessage"]) => void;
@@ -132,6 +134,27 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set((s) => {
           const next = [...s.messages];
           next.splice(index, 0, message);
+          return { messages: next };
+        }),
+      editMessage: (messageId, newContent) => {
+        let result: { previousContent: string; previousContentType: MSMessage["body"]["contentType"]; index: number } | null = null;
+        set((s) => {
+          const index = s.messages.findIndex((m) => m.id === messageId);
+          if (index === -1) return s;
+          const msg = s.messages[index];
+          result = { previousContent: msg.body.content, previousContentType: msg.body.contentType, index };
+          const next = [...s.messages];
+          next[index] = { ...msg, body: { contentType: "html", content: newContent } };
+          return { messages: next };
+        });
+        return result;
+      },
+      revertMessageEdit: (messageId, previousContent, previousContentType) =>
+        set((s) => {
+          const index = s.messages.findIndex((m) => m.id === messageId);
+          if (index === -1) return s;
+          const next = [...s.messages];
+          next[index] = { ...next[index], body: { contentType: previousContentType, content: previousContent } };
           return { messages: next };
         }),
       setLoadingMessages: (v) => set({ isLoadingMessages: v }),
