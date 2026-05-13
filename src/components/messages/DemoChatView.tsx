@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useWorkspaceStore } from "@/store/workspace";
 import { mockChatMessages } from "@/lib/mock/data";
+import { openTeamsCall } from "@/lib/utils/teams-deeplink";
 import { MessageFeed } from "./MessageFeed";
 import { MessageInput } from "./MessageInput";
 import { ThreadPanel } from "./ThreadPanel";
@@ -36,6 +37,8 @@ export function DemoChatView({ chatId }: { chatId: string }) {
   const otherMembers = members.filter((m) => (m.userId ?? m.id) !== currentUserId);
   const isSelfDm = otherMembers.length === 0;
 
+  const callEmails = otherMembers.map((m) => m.email ?? "").filter(Boolean);
+
   const introCard = (
     <DmIntroCard
       label={label}
@@ -54,6 +57,10 @@ export function DemoChatView({ chatId }: { chatId: string }) {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onOpenMembers={undefined}
+        {...(callEmails.length > 0 && {
+          onCall: () => openTeamsCall(callEmails),
+          onVideoCall: () => openTeamsCall(callEmails, { withVideo: true }),
+        })}
       />
       {activeTab === "messages" ? (
         <>

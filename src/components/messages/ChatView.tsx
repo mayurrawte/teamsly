@@ -9,6 +9,7 @@ import { DmMessageHeader, type Tab } from "./MessageHeader";
 import { DmIntroCard } from "./IntroCard";
 import { reactionEmoji, type ReactionType } from "@/lib/utils/reactions";
 import { useToastStore } from "@/store/toasts";
+import { openTeamsCall } from "@/lib/utils/teams-deeplink";
 
 export function ChatView({ chatId }: { chatId: string }) {
   const { chats, messages, isLoadingMessages, currentUserId, setMessages, appendMessage, setLoadingMessages, toggleReaction } =
@@ -109,6 +110,8 @@ export function ChatView({ chatId }: { chatId: string }) {
   const otherMembers = members.filter((m) => (m.userId ?? m.id) !== currentUserId);
   const isSelfDm = otherMembers.length === 0;
 
+  const callEmails = otherMembers.map((m) => m.email ?? "").filter(Boolean);
+
   const introCard = (
     <DmIntroCard
       label={label}
@@ -127,6 +130,10 @@ export function ChatView({ chatId }: { chatId: string }) {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onOpenMembers={undefined}
+        {...(callEmails.length > 0 && {
+          onCall: () => openTeamsCall(callEmails),
+          onVideoCall: () => openTeamsCall(callEmails, { withVideo: true }),
+        })}
       />
       {activeTab === "messages" ? (
         <>

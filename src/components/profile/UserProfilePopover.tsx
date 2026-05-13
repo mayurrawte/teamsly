@@ -1,7 +1,8 @@
 "use client";
 
 import * as Popover from "@radix-ui/react-popover";
-import { MessageSquare, X } from "lucide-react";
+import { MessageSquare, Phone, Video, X } from "lucide-react";
+import { openTeamsCall } from "@/lib/utils/teams-deeplink";
 import { Avatar } from "@/components/ui/Avatar";
 import { PresenceDot } from "@/components/ui/PresenceDot";
 
@@ -50,14 +51,36 @@ export function UserProfilePopover({
             {email && <p className="truncate text-[13px] text-[#ababad]">{email}</p>}
             <p className="mt-1 text-[12px] text-[#2bac76]">{presenceLabel(availability)}</p>
 
-            <button
-              type="button"
-              onClick={onSendDm}
-              className="mt-4 inline-flex h-8 items-center gap-2 rounded-md bg-[#0F5A8F] px-3 text-[13px] font-bold text-white transition-colors duration-150 hover:bg-[#0A4571]"
-            >
-              <MessageSquare size={14} />
-              Send DM
-            </button>
+            <div className="mt-4 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onSendDm}
+                className="inline-flex h-8 items-center gap-2 rounded-md bg-[#0F5A8F] px-3 text-[13px] font-bold text-white transition-colors duration-150 hover:bg-[#0A4571]"
+              >
+                <MessageSquare size={14} />
+                Send DM
+              </button>
+              {email && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => openTeamsCall([email])}
+                    title="Call"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#3f4144] bg-transparent text-[#ababad] transition-colors duration-150 hover:bg-[#27292d] hover:text-white"
+                  >
+                    <Phone size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openTeamsCall([email], { withVideo: true })}
+                    title="Video call"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#3f4144] bg-transparent text-[#ababad] transition-colors duration-150 hover:bg-[#27292d] hover:text-white"
+                  >
+                    <Video size={14} />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </Popover.Content>
       </Popover.Portal>

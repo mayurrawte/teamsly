@@ -1,6 +1,6 @@
 "use client";
 
-import { Hash, Phone, Bell, Search, MoreVertical } from "lucide-react";
+import { Hash, Phone, Video, Bell, Search, MoreVertical } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 
 type Tab = "messages" | "files" | "about";
@@ -22,6 +22,8 @@ interface DmHeaderProps {
   onTabChange: (tab: Tab) => void;
   onSearchClick?: () => void;
   onOpenMembers?: () => void;
+  onCall?: () => void;
+  onVideoCall?: () => void;
 }
 
 const TAB_LABELS: { id: Tab; label: string }[] = [
@@ -60,9 +62,13 @@ function TabRow({
 function IconCluster({
   onSearchClick,
   onOpenMembers,
+  onCall,
+  onVideoCall,
 }: {
   onSearchClick?: () => void;
   onOpenMembers?: () => void;
+  onCall?: () => void;
+  onVideoCall?: () => void;
 }) {
   return (
     <div className="flex items-center gap-0.5">
@@ -74,13 +80,26 @@ function IconCluster({
       >
         <Search className="h-4 w-4" />
       </button>
-      <button
-        type="button"
-        title="Call"
-        className="rounded p-1.5 text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-raised)] hover:text-[var(--text-primary)] focus-ring"
-      >
-        <Phone className="h-4 w-4" />
-      </button>
+      {(onCall ?? onVideoCall) && (
+        <>
+          <button
+            type="button"
+            onClick={onCall}
+            title="Call"
+            className="rounded p-1.5 text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-raised)] hover:text-[var(--text-primary)] focus-ring"
+          >
+            <Phone className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={onVideoCall}
+            title="Video call"
+            className="rounded p-1.5 text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-raised)] hover:text-[var(--text-primary)] focus-ring"
+          >
+            <Video className="h-4 w-4" />
+          </button>
+        </>
+      )}
       <button
         type="button"
         title="Notifications"
@@ -178,6 +197,8 @@ export function DmMessageHeader({
   onTabChange,
   onSearchClick,
   onOpenMembers,
+  onCall,
+  onVideoCall,
 }: DmHeaderProps) {
   const otherMembers = members.filter(
     (m) => (m.userId ?? m.id) !== currentUserId
@@ -201,7 +222,12 @@ export function DmMessageHeader({
         </div>
         {/* Right: icon cluster */}
         <div className="flex flex-shrink-0 items-center">
-          <IconCluster onSearchClick={onSearchClick} onOpenMembers={onOpenMembers} />
+          <IconCluster
+            onSearchClick={onSearchClick}
+            onOpenMembers={onOpenMembers}
+            onCall={onCall}
+            onVideoCall={onVideoCall}
+          />
         </div>
       </div>
       {/* Tab row */}
