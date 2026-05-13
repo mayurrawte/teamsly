@@ -15,6 +15,7 @@ import {
   List,
   Code,
   Code2,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { markdownToHtml } from "@/lib/utils/markdown-to-html";
@@ -22,6 +23,10 @@ import { markdownToHtml } from "@/lib/utils/markdown-to-html";
 interface Props {
   placeholder: string;
   onSend: (content: string) => Promise<void>;
+  /** Called instead of onSend when a file is pending. Only rendered when provided. */
+  onAttachAndSend?: (content: string, file: File) => Promise<void>;
+  /** Set to true by the parent while the upload+send is in flight */
+  uploading?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -50,14 +55,38 @@ interface ToolbarButton {
 // Main component
 // ---------------------------------------------------------------------------
 
-export function MessageInput({ placeholder, onSend }: Props) {
+export function MessageInput({ placeholder, onSend, onAttachAndSend, uploading }: Props) {
   const [value, setValue] = useState("");
   const [sending, setSending] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isBusy = sending || Boolean(uploading);
 
   async function submit() {
     const trimmed = value.trim();
-    if (!trimmed || sending) return;
+    // Allow send when there's a pending file even with no text
+    if ((!trimmed && !pendingFile) || isBusy) return;
+
+    if (pendingFile && onAttachAndSend) {
+      // File send path: delegate entirely to parent
+      const fileToSend = pendingFile;
+      setSending(true);
+      setValue("");
+      setPendingFile(null);
+      try {
+        await onAttachAndSend(markdownToHtml(trimmed), fileToSend);
+      } catch {
+        setValue(trimmed);
+        setPendingFile(fileToSend);
+      } finally {
+        setSending(false);
+      }
+      return;
+    }
+
+    if (!trimmed) return;
     setSending(true);
     setValue("");
     try {
@@ -259,11 +288,41 @@ export function MessageInput({ placeholder, onSend }: Props) {
   ];
 
   // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+
+  function formatBytes(bytes: number): string {
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    setPendingFile(file);
+    // Reset input so picking the same file again fires onChange
+    e.target.value = "";
+  }
+
+  const canSend = (value.trim() || Boolean(pendingFile)) && !isBusy;
+
+  // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
 
   return (
     <div className="px-4 pb-4">
+      {/* Hidden file picker — only mounted when upload is available */}
+      {onAttachAndSend && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          onChange={handleFileChange}
+          aria-hidden="true"
+          tabIndex={-1}
+        />
+      )}
+
       <div className="rounded-lg border border-[var(--border-input)] bg-[var(--surface)] transition-colors duration-150 focus-within:border-[var(--text-secondary)]">
         {/* Formatting toolbar */}
         <div className="flex items-center gap-0.5 border-b border-[var(--border)] px-2 py-1">
@@ -298,13 +357,18 @@ export function MessageInput({ placeholder, onSend }: Props) {
 
         {/* Textarea row */}
         <div className="flex items-end gap-2 px-3 py-2">
-          <button
-            type="button"
-            aria-label="Attach file"
-            className="flex-shrink-0 rounded p-1 text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-white focus-ring"
-          >
-            <Paperclip className="h-4 w-4" />
-          </button>
+          {/* Paperclip only rendered when parent supports file upload */}
+          {onAttachAndSend && (
+            <button
+              type="button"
+              aria-label="Attach file"
+              disabled={isBusy}
+              onClick={() => fileInputRef.current?.click()}
+              className="flex-shrink-0 rounded p-1 text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-white focus-ring disabled:opacity-40"
+            >
+              <Paperclip className="h-4 w-4" />
+            </button>
+          )}
           <TextareaAutosize
             ref={textareaRef}
             value={value}
@@ -312,7 +376,7 @@ export function MessageInput({ placeholder, onSend }: Props) {
             onKeyDown={onKeyDown}
             placeholder={placeholder}
             maxRows={8}
-            disabled={sending}
+            disabled={isBusy}
             className="flex-1 resize-none bg-transparent text-[14px] text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none disabled:opacity-50"
           />
           <div className="flex flex-shrink-0 items-center gap-1">
@@ -327,10 +391,10 @@ export function MessageInput({ placeholder, onSend }: Props) {
               type="button"
               aria-label="Send message"
               onClick={submit}
-              disabled={!value.trim() || sending}
+              disabled={!canSend}
               className={cn(
                 "flex h-8 w-8 items-center justify-center rounded transition-[background,color] duration-150 ease-out focus-ring",
-                value.trim() && !sending
+                canSend
                   ? "bg-[#007a5a] text-white hover:bg-[#148567]"
                   : "text-[var(--text-muted)]"
               )}
@@ -339,6 +403,27 @@ export function MessageInput({ placeholder, onSend }: Props) {
             </button>
           </div>
         </div>
+
+        {/* Pending attachment chip — sits between textarea and bottom hint */}
+        {pendingFile && (
+          <div className="flex items-center gap-2 border-t border-[var(--border)] px-3 py-1.5">
+            <Paperclip className="h-3.5 w-3.5 flex-shrink-0 text-[var(--text-secondary)]" aria-hidden="true" />
+            <span className="flex-1 truncate text-[12px] text-[var(--text-primary)]">
+              {pendingFile.name}
+            </span>
+            <span className="flex-shrink-0 text-[11px] text-[var(--text-muted)]">
+              {formatBytes(pendingFile.size)}
+            </span>
+            <button
+              type="button"
+              aria-label={`Remove attachment ${pendingFile.name}`}
+              onClick={() => setPendingFile(null)}
+              className="flex-shrink-0 rounded p-0.5 text-[var(--text-secondary)] transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-white focus-ring"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
       </div>
       <p className="mt-1 text-center text-[11px] text-[var(--text-muted)]">
         <kbd className="rounded bg-[var(--border)] px-1 py-0.5 text-[10px]">Enter</kbd> to send ·{" "}
