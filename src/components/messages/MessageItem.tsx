@@ -18,15 +18,19 @@ interface Props {
   isGroupHead?: boolean;
   onReplyInThread?: (message: MSMessage) => void;
   onToggleReaction?: (messageId: string, reactionType: ReactionType) => void;
+  onDelete?: (messageId: string) => void;
 }
 
-export function MessageItem({ message, isGroupHead = true, onReplyInThread, onToggleReaction }: Props) {
+export function MessageItem({ message, isGroupHead = true, onReplyInThread, onToggleReaction, onDelete }: Props) {
   const density = usePreferencesStore((state) => state.density);
+  const currentUserId = useWorkspaceStore((state) => state.currentUserId);
 
   if (message.deletedDateTime) return null;
 
   const author = message.from?.user?.displayName ?? "Unknown";
   const userId = message.from?.user?.id ?? author;
+  // Only expose delete callback for the current user's own messages.
+  const deleteHandler = message.from?.user?.id === currentUserId ? onDelete : undefined;
   const content = messagePlainText(message.body.content, message.body.contentType);
 
   const allAttachments = message.attachments ?? [];
@@ -50,6 +54,7 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
           messageId={message.id}
           onReact={onToggleReaction}
           onReplyInThread={() => onReplyInThread?.(message)}
+          onDelete={deleteHandler}
         />
         <span
           className="pointer-events-none absolute left-4 top-[3px] w-9 select-none text-right text-xs leading-[18px] text-[var(--text-muted)] opacity-0 transition-opacity duration-100 group-hover:opacity-100"

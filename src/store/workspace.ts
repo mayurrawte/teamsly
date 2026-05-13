@@ -27,6 +27,8 @@ interface WorkspaceState {
   setMessages: (messages: MSMessage[]) => void;
   appendMessage: (message: MSMessage) => void;
   toggleReaction: (messageId: string, reactionType: string) => void;
+  deleteMessage: (messageId: string) => { message: MSMessage; index: number } | null;
+  restoreMessage: (message: MSMessage, index: number) => void;
   setLoadingMessages: (v: boolean) => void;
   setPresenceMap: (presenceMap: Record<string, MSPresence["availability"]>) => void;
   setCurrentUser: (user: { id: string; displayName: string }) => void;
@@ -111,6 +113,24 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             };
           }),
         })),
+      deleteMessage: (messageId) => {
+        let result: { message: MSMessage; index: number } | null = null;
+        set((s) => {
+          const index = s.messages.findIndex((m) => m.id === messageId);
+          if (index === -1) return s;
+          result = { message: s.messages[index], index };
+          const next = [...s.messages];
+          next.splice(index, 1);
+          return { messages: next };
+        });
+        return result;
+      },
+      restoreMessage: (message, index) =>
+        set((s) => {
+          const next = [...s.messages];
+          next.splice(index, 0, message);
+          return { messages: next };
+        }),
       setLoadingMessages: (v) => set({ isLoadingMessages: v }),
       setPresenceMap: (presenceMap) => set({ presenceMap }),
       setCurrentUser: (user) => set({ currentUserId: user.id, currentUserName: user.displayName }),
