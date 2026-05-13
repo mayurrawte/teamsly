@@ -14,6 +14,9 @@ export function UserFooter() {
   const [open, setOpen] = useState(false);
   const currentUserId = useWorkspaceStore((state) => state.currentUserId);
   const presence = useWorkspaceStore((state) => state.presenceMap[currentUserId] ?? "Available");
+  const statusText = useWorkspaceStore(
+    (state) => state.statusMessageMap[state.currentUserId]?.message?.content ?? ""
+  );
 
   const name = session?.user?.name ?? "User";
   const email = session?.user?.email ?? undefined;
@@ -30,7 +33,11 @@ export function UserFooter() {
           </UserProfilePopover>
           <div className="min-w-0 overflow-hidden">
             <p className="truncate text-[13px] font-semibold text-white">{name}</p>
-            <p className="text-[11px] text-[var(--status-online)]">Active</p>
+            {statusText ? (
+              <p className="truncate text-[11px] italic text-[var(--text-muted)]">{statusText}</p>
+            ) : (
+              <p className="text-[11px] text-[var(--status-online)]">Active</p>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-1">

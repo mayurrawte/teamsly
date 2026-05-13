@@ -2,7 +2,7 @@
 
 import { useWorkspaceStore } from "@/store/workspace";
 import { useRouter, useParams } from "next/navigation";
-import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search, Settings, UserPlus, Moon, LogOut, Inbox, GitBranch, Star, Check, Circle, CircleDot, BellOff, Clock, CircleOff } from "lucide-react";
+import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search, Settings, UserPlus, Moon, LogOut, Inbox, GitBranch, Star, Check, Circle, CircleDot, BellOff, Clock, CircleOff, Smile } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { signOut } from "next-auth/react";
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { UserFooter } from "./UserFooter";
 import { SearchModal } from "@/components/modals/SearchModal";
 import { PreferencesModal } from "@/components/modals/PreferencesModal";
+import { StatusMessageModal } from "@/components/modals/StatusMessageModal";
 import { Avatar } from "@/components/ui/Avatar";
 import { PresenceDot } from "@/components/ui/PresenceDot";
 import { useToastStore } from "@/store/toasts";
@@ -57,6 +58,7 @@ export function Sidebar() {
   const [dmsOpen, setDmsOpen] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [loadingMoreChats, setLoadingMoreChats] = useState(false);
   const presenceErrorShownRef = useRef(false);
   const showToast = useToastStore((state) => state.showToast);
@@ -376,6 +378,14 @@ export function Sidebar() {
               </DropdownMenu.Portal>
             </DropdownMenu.Sub>
 
+            <DropdownMenu.Item
+              onSelect={() => setStatusModalOpen(true)}
+              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-75 data-[highlighted]:bg-[var(--accent)] data-[highlighted]:text-white"
+            >
+              <Smile className="h-4 w-4 flex-shrink-0" />
+              Set a status...
+            </DropdownMenu.Item>
+
             <DropdownMenu.Separator className="my-1 h-px bg-[var(--border)]" />
 
             <DropdownMenu.Item
@@ -601,6 +611,7 @@ export function Sidebar() {
         }}
       />
       <PreferencesModal open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <StatusMessageModal open={statusModalOpen} onOpenChange={setStatusModalOpen} />
     </div>
   );
 }
