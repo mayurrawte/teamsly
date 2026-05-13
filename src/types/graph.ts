@@ -116,6 +116,10 @@ interface MSPresence {
   id: string;
   availability: "Available" | "Away" | "BeRightBack" | "Busy" | "DoNotDisturb" | "Offline" | "PresenceUnknown";
   activity: string;
+  statusMessage?: {
+    message?: { content: string; contentType?: "text" | "html" } | null;
+    expiryDateTime?: { dateTime: string; timeZone: string } | null;
+  } | null;
 }
 
 interface MSUser {

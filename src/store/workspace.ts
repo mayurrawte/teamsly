@@ -12,6 +12,7 @@ interface WorkspaceState {
   messages: MSMessage[];
   isLoadingMessages: boolean;
   presenceMap: Record<string, MSPresence["availability"]>;
+  statusMessageMap: Record<string, MSPresence["statusMessage"]>;
   unreadCounts: Record<string, number>;
   currentUserId: string;
   currentUserName: string;
@@ -31,6 +32,7 @@ interface WorkspaceState {
   restoreMessage: (message: MSMessage, index: number) => void;
   setLoadingMessages: (v: boolean) => void;
   setPresenceMap: (presenceMap: Record<string, MSPresence["availability"]>) => void;
+  setStatusMessage: (userId: string, statusMessage: MSPresence["statusMessage"]) => void;
   setCurrentUser: (user: { id: string; displayName: string }) => void;
   initUnreadCounts: (counts: Record<string, number>) => void;
   setUnreadCount: (id: string, count: number) => void;
@@ -68,6 +70,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       messages: [],
       isLoadingMessages: false,
       presenceMap: {},
+      statusMessageMap: {},
       unreadCounts: {},
       currentUserId: "you",
       currentUserName: "You",
@@ -133,6 +136,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }),
       setLoadingMessages: (v) => set({ isLoadingMessages: v }),
       setPresenceMap: (presenceMap) => set({ presenceMap }),
+      setStatusMessage: (userId, statusMessage) =>
+        set((s) => ({ statusMessageMap: { ...s.statusMessageMap, [userId]: statusMessage } })),
       setCurrentUser: (user) => set({ currentUserId: user.id, currentUserName: user.displayName }),
       initUnreadCounts: (counts) => {
         const stored = readUnreadCounts();
