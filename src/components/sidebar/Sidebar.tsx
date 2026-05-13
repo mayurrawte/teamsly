@@ -203,10 +203,12 @@ export function Sidebar() {
   function switchTeam(teamId: string) {
     if (teamId === activeTeamId) return;
     setActiveTeam(teamId);
-    // If channels for the team are already cached, navigate to the first one;
-    // otherwise AppShell will load them and the user can pick from the list.
+    // If channels for the team are already cached, navigate to the first one.
+    // setActiveChannel must be called so activeChannelId stays in sync with the
+    // URL (e.g. search modal context label reads it from the store).
     const cached = channels[teamId];
     if (cached && cached.length > 0) {
+      setActiveChannel(cached[0].id);
       router.push(`/app/t/${teamId}/${cached[0].id}`);
     } else {
       router.push(`/app`);
