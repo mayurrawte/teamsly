@@ -15,6 +15,7 @@ const SCOPE = [
   "Presence.Read.All",
   "Presence.ReadWrite",
   "Files.Read.All",
+  "Calendars.Read",
 ].join(" ");
 
 async function refreshAccessToken(refreshToken: string) {
