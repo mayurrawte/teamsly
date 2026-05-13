@@ -13,6 +13,7 @@ const SCOPE = [
   "ChannelMessage.Send",
   "Chat.ReadWrite",
   "Presence.Read.All",
+  "Presence.ReadWrite",
   "Files.Read.All",
 ].join(" ");
 

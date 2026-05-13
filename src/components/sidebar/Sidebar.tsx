@@ -2,7 +2,7 @@
 
 import { useWorkspaceStore } from "@/store/workspace";
 import { useRouter, useParams } from "next/navigation";
-import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search, Settings, UserPlus, Moon, LogOut, Inbox, GitBranch, Star, Check } from "lucide-react";
+import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search, Settings, UserPlus, Moon, LogOut, Inbox, GitBranch, Star, Check, Circle, CircleDot, BellOff, Clock, CircleOff } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { signOut } from "next-auth/react";
@@ -217,6 +217,35 @@ export function Sidebar() {
 
   const sortedTeams = [...teams].sort((a, b) => a.displayName.localeCompare(b.displayName));
 
+  async function setPresence(availability: MSPresence["availability"], activity: string) {
+    const res = await fetch("/api/presence/setUserPreferredPresence", {
+      method: "POST",
+      body: JSON.stringify({ availability, activity }),
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) {
+      showToast({ title: "Could not update status", tone: "error" });
+    } else {
+      setPresenceMap({ ...presenceMap, [currentUserId]: availability });
+      showToast({ title: `Status set to ${availability}` });
+    }
+  }
+
+  async function resetPresence() {
+    const res = await fetch("/api/presence/setUserPreferredPresence", {
+      method: "POST",
+      body: JSON.stringify({ clear: true }),
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) {
+      showToast({ title: "Could not reset status", tone: "error" });
+    } else {
+      showToast({ title: "Status reset" });
+    }
+  }
+
+  const currentAvailability = presenceMap[currentUserId];
+
   return (
     <div className="flex w-[260px] flex-shrink-0 flex-col overflow-hidden bg-[var(--sidebar-bg)]">
       {/* Team name header — dropdown trigger */}
@@ -283,15 +312,69 @@ export function Sidebar() {
               Invite people
             </DropdownMenu.Item>
 
-            <DropdownMenu.Item
-              onSelect={() => {
-                // TODO: set away / presence toggle
-              }}
-              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-75 data-[highlighted]:bg-[var(--accent)] data-[highlighted]:text-white"
-            >
-              <Moon className="h-4 w-4 flex-shrink-0" />
-              Set away
-            </DropdownMenu.Item>
+            <DropdownMenu.Sub>
+              <DropdownMenu.SubTrigger className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-75 data-[highlighted]:bg-[var(--accent)] data-[highlighted]:text-white data-[state=open]:bg-[var(--accent)] data-[state=open]:text-white">
+                <Moon className="h-4 w-4 flex-shrink-0" />
+                {currentAvailability ? `Status: ${currentAvailability}` : "Set status"}
+                <ChevronRight className="ml-auto h-3.5 w-3.5 flex-shrink-0" />
+              </DropdownMenu.SubTrigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.SubContent
+                  sideOffset={4}
+                  className="z-50 min-w-[200px] overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--modal-bg)] py-1 shadow-[0_8px_32px_rgba(0,0,0,0.55)] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
+                >
+                  <DropdownMenu.Item
+                    onSelect={() => setPresence("Available", "Available")}
+                    className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-75 data-[highlighted]:bg-[var(--accent)] data-[highlighted]:text-white"
+                  >
+                    <Circle className="h-4 w-4 flex-shrink-0 text-green-500" />
+                    Available
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onSelect={() => setPresence("Busy", "Busy")}
+                    className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-75 data-[highlighted]:bg-[var(--accent)] data-[highlighted]:text-white"
+                  >
+                    <CircleDot className="h-4 w-4 flex-shrink-0 text-red-500" />
+                    Busy
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onSelect={() => setPresence("DoNotDisturb", "DoNotDisturb")}
+                    className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-75 data-[highlighted]:bg-[var(--accent)] data-[highlighted]:text-white"
+                  >
+                    <BellOff className="h-4 w-4 flex-shrink-0 text-red-600" />
+                    Do not disturb
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onSelect={() => setPresence("BeRightBack", "BeRightBack")}
+                    className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-75 data-[highlighted]:bg-[var(--accent)] data-[highlighted]:text-white"
+                  >
+                    <Clock className="h-4 w-4 flex-shrink-0 text-yellow-500" />
+                    Be right back
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onSelect={() => setPresence("Away", "Away")}
+                    className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-75 data-[highlighted]:bg-[var(--accent)] data-[highlighted]:text-white"
+                  >
+                    <Moon className="h-4 w-4 flex-shrink-0 text-yellow-400" />
+                    Away
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onSelect={() => setPresence("Offline", "OffWork")}
+                    className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-75 data-[highlighted]:bg-[var(--accent)] data-[highlighted]:text-white"
+                  >
+                    <CircleOff className="h-4 w-4 flex-shrink-0 text-[var(--text-muted)]" />
+                    Offline
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Separator className="my-1 h-px bg-[var(--border)]" />
+                  <DropdownMenu.Item
+                    onSelect={resetPresence}
+                    className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-75 data-[highlighted]:bg-[var(--accent)] data-[highlighted]:text-white"
+                  >
+                    Reset to default
+                  </DropdownMenu.Item>
+                </DropdownMenu.SubContent>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Sub>
 
             <DropdownMenu.Separator className="my-1 h-px bg-[var(--border)]" />
 
