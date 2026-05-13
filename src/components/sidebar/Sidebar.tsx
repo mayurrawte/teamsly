@@ -2,7 +2,7 @@
 
 import { useWorkspaceStore } from "@/store/workspace";
 import { useRouter, useParams } from "next/navigation";
-import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search, Settings, UserPlus, Moon, LogOut, Inbox, GitBranch, Star } from "lucide-react";
+import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search, Settings, UserPlus, Moon, LogOut, Inbox, GitBranch, Star, Check } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { signOut } from "next-auth/react";
@@ -49,7 +49,7 @@ function useCollapsible(storageKey: string, defaultOpen = true): [boolean, () =>
 }
 
 export function Sidebar() {
-  const { teams, activeTeamId, activeChannelId, activeChatId, channels, chats, chatsNextLink, messages, presenceMap, unreadCounts, starredIds, currentUserId, setChats, appendChats, setActiveChannel, setActiveChat, markRead, setPresenceMap } =
+  const { teams, activeTeamId, activeChannelId, activeChatId, channels, chats, chatsNextLink, messages, presenceMap, unreadCounts, starredIds, currentUserId, setChats, appendChats, setActiveTeam, setActiveChannel, setActiveChat, markRead, setPresenceMap } =
     useWorkspaceStore();
   const router = useRouter();
   const params = useParams();
@@ -200,6 +200,21 @@ export function Sidebar() {
     router.push(`/app/dm/${chatId}`);
   }
 
+  function switchTeam(teamId: string) {
+    if (teamId === activeTeamId) return;
+    setActiveTeam(teamId);
+    // If channels for the team are already cached, navigate to the first one;
+    // otherwise AppShell will load them and the user can pick from the list.
+    const cached = channels[teamId];
+    if (cached && cached.length > 0) {
+      router.push(`/app/t/${teamId}/${cached[0].id}`);
+    } else {
+      router.push(`/app`);
+    }
+  }
+
+  const sortedTeams = [...teams].sort((a, b) => a.displayName.localeCompare(b.displayName));
+
   return (
     <div className="flex w-[260px] flex-shrink-0 flex-col overflow-hidden bg-[var(--sidebar-bg)]">
       {/* Team name header — dropdown trigger */}
@@ -220,8 +235,34 @@ export function Sidebar() {
           <DropdownMenu.Content
             sideOffset={4}
             align="start"
-            className="z-50 min-w-[220px] overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--modal-bg)] py-1 shadow-[0_8px_32px_rgba(0,0,0,0.55)] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
+            className="z-50 min-w-[240px] overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--modal-bg)] py-1 shadow-[0_8px_32px_rgba(0,0,0,0.55)] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
           >
+            {sortedTeams.length > 0 && (
+              <>
+                <DropdownMenu.Label className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  Switch team
+                </DropdownMenu.Label>
+                <div className="max-h-[280px] overflow-y-auto">
+                  {sortedTeams.map((team) => {
+                    const isActive = team.id === activeTeamId;
+                    return (
+                      <DropdownMenu.Item
+                        key={team.id}
+                        onSelect={() => switchTeam(team.id)}
+                        className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-75 data-[highlighted]:bg-[var(--accent)] data-[highlighted]:text-white"
+                      >
+                        <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
+                          {isActive ? <Check className="h-3.5 w-3.5" /> : null}
+                        </span>
+                        <span className="truncate">{team.displayName}</span>
+                      </DropdownMenu.Item>
+                    );
+                  })}
+                </div>
+                <DropdownMenu.Separator className="my-1 h-px bg-[var(--border)]" />
+              </>
+            )}
+
             <DropdownMenu.Item
               onSelect={() => setSettingsOpen(true)}
               className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-75 data-[highlighted]:bg-[var(--accent)] data-[highlighted]:text-white"

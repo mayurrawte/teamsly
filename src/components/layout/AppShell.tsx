@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, HelpCircle } from "lucide-react";
 import { Sidebar } from "@/components/sidebar/Sidebar";
-import { WorkspaceBar } from "@/components/sidebar/WorkspaceBar";
 import { LeftRail } from "@/components/layout/LeftRail";
 import { MemberPanel } from "@/components/layout/MemberPanel";
 import { JumpToSwitcher, type JumpToItem } from "@/components/modals/JumpToSwitcher";
@@ -16,7 +15,7 @@ import { useToastStore } from "@/store/toasts";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { teams, activeTeamId, channels, chats, messages, setActiveChannel, setActiveChat, markRead, setCurrentUser } = useWorkspaceStore();
+  const { teams, activeTeamId, channels, chats, messages, setTeams, setActiveTeam, setChannels, setActiveChannel, setActiveChat, markRead, setCurrentUser } = useWorkspaceStore();
   const showToast = useToastStore((state) => state.showToast);
   const [jumpToOpen, setJumpToOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -45,6 +44,43 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         showToast({ title: "Could not load your profile", tone: "error" });
       });
   }, [setCurrentUser, showToast]);
+
+  // Load joined teams (previously done by WorkspaceBar). Auto-select the first
+  // team only if no team is currently active in the persisted store.
+  useEffect(() => {
+    async function loadTeams() {
+      try {
+        const response = await fetch("/api/teams");
+        if (!response.ok) throw new Error("Failed to load teams");
+        const data = (await response.json()) as MSTeam[];
+        const sorted = [...data].sort((a, b) => a.displayName.localeCompare(b.displayName));
+        setTeams(sorted);
+        if (sorted.length > 0 && !useWorkspaceStore.getState().activeTeamId) {
+          setActiveTeam(sorted[0].id);
+        }
+      } catch {
+        showToast({ title: "Could not load teams", tone: "error" });
+      }
+    }
+    loadTeams();
+  }, [setActiveTeam, setTeams, showToast]);
+
+  // Load channels whenever the active team changes.
+  useEffect(() => {
+    if (!activeTeamId) return;
+    const teamId = activeTeamId;
+    async function loadChannels() {
+      try {
+        const response = await fetch(`/api/channels/${teamId}`);
+        if (!response.ok) throw new Error("Failed to load channels");
+        const data = (await response.json()) as MSChannel[];
+        setChannels(teamId, data);
+      } catch {
+        showToast({ title: "Could not load channels", tone: "error" });
+      }
+    }
+    loadChannels();
+  }, [activeTeamId, setChannels, showToast]);
 
   const items = useMemo<JumpToItem[]>(() => {
     const teamName = teams.find((team) => team.id === activeTeamId)?.displayName ?? "Teamsly";
@@ -130,7 +166,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Main shell row */}
       <div className="flex flex-1 overflow-hidden">
         <LeftRail />
-        <WorkspaceBar />
         <Sidebar />
         <main className="flex flex-1 flex-col overflow-hidden bg-[var(--message-bg)]">
           {children}
