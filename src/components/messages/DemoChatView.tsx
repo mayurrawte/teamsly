@@ -11,7 +11,7 @@ import { DmMessageHeader, type Tab } from "./MessageHeader";
 import { DmIntroCard } from "./IntroCard";
 
 export function DemoChatView({ chatId }: { chatId: string }) {
-  const { chats, messages, setMessages, appendMessage, toggleReaction } = useWorkspaceStore();
+  const { chats, messages, setMessages, appendMessage, toggleReaction, deleteMessage } = useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
   const chat = chats.find((c) => c.id === chatId);
@@ -23,6 +23,11 @@ export function DemoChatView({ chatId }: { chatId: string }) {
     setMessages(mockChatMessages[chatId] ?? []);
     setActiveTab("messages");
   }, [chatId]);
+
+  function handleDelete(messageId: string) {
+    if (!window.confirm("Delete this message? This cannot be undone.")) return;
+    deleteMessage(messageId);
+  }
 
   async function handleSend(content: string) {
     appendMessage({
@@ -71,6 +76,7 @@ export function DemoChatView({ chatId }: { chatId: string }) {
             introCard={introCard}
             onReplyInThread={setThreadMessage}
             onToggleReaction={toggleReaction}
+            onDelete={handleDelete}
           />
           <MessageInput placeholder={`Message ${label}`} onSend={handleSend} />
         </>

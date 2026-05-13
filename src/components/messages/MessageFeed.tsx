@@ -19,10 +19,11 @@ interface Props {
   introCard?: ReactNode;
   onReplyInThread?: (message: MSMessage) => void;
   onToggleReaction?: (messageId: string, reactionType: ReactionType) => void;
+  onDelete?: (messageId: string) => void;
   onSendOwn?: (callback: () => void) => void;
 }
 
-export function MessageFeed({ messages, loading, contextName, introCard, onReplyInThread, onToggleReaction }: Props) {
+export function MessageFeed({ messages, loading, contextName, introCard, onReplyInThread, onToggleReaction, onDelete }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
@@ -121,6 +122,7 @@ export function MessageFeed({ messages, loading, contextName, introCard, onReply
               isGroupHead={meta[idx].isGroupHead}
               onReplyInThread={onReplyInThread}
               onToggleReaction={onToggleReaction}
+              onDelete={onDelete}
             />
           </Fragment>
         ))}

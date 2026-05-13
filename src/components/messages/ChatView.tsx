@@ -12,7 +12,7 @@ import { useToastStore } from "@/store/toasts";
 import { openTeamsCall } from "@/lib/utils/teams-deeplink";
 
 export function ChatView({ chatId }: { chatId: string }) {
-  const { chats, messages, isLoadingMessages, currentUserId, setMessages, appendMessage, setLoadingMessages, toggleReaction } =
+  const { chats, messages, isLoadingMessages, currentUserId, setMessages, appendMessage, setLoadingMessages, toggleReaction, deleteMessage, restoreMessage } =
     useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
@@ -90,6 +90,18 @@ export function ChatView({ chatId }: { chatId: string }) {
     return (await res.json()) as MSMessage;
   }
 
+  async function handleDelete(messageId: string) {
+    if (!window.confirm("Delete this message? This cannot be undone.")) return;
+    const snapshot = deleteMessage(messageId);
+    try {
+      const res = await fetch(`/api/chats/${chatId}/messages/${messageId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Graph delete failed");
+    } catch {
+      if (snapshot) restoreMessage(snapshot.message, snapshot.index);
+      showToast({ title: "Could not delete message", tone: "error" });
+    }
+  }
+
   async function handleToggleReaction(messageId: string, reactionType: ReactionType) {
     const action = hasReacted(messages, messageId, reactionType, currentUserId) ? "unset" : "set";
     toggleReaction(messageId, reactionType);
@@ -144,6 +156,7 @@ export function ChatView({ chatId }: { chatId: string }) {
             introCard={introCard}
             onReplyInThread={setThreadMessage}
             onToggleReaction={handleToggleReaction}
+            onDelete={handleDelete}
           />
           <MessageInput placeholder={`Message ${label}`} onSend={handleSend} />
         </>
