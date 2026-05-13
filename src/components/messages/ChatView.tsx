@@ -9,12 +9,12 @@ import { DmMessageHeader, type Tab } from "./MessageHeader";
 import { DmIntroCard } from "./IntroCard";
 import { ContextFilesTab } from "./ContextFilesTab";
 import { reactionEmoji, type ReactionType } from "@/lib/utils/reactions";
-import { textToHtml } from "@/lib/utils/render-message";
+import { textToHtml, messagePlainText } from "@/lib/utils/render-message";
 import { useToastStore } from "@/store/toasts";
 import { openTeamsCall } from "@/lib/utils/teams-deeplink";
 
 export function ChatView({ chatId }: { chatId: string }) {
-  const { chats, messages, isLoadingMessages, currentUserId, setMessages, appendMessage, setLoadingMessages, toggleReaction, deleteMessage, restoreMessage, editMessage, revertMessageEdit } =
+  const { chats, messages, isLoadingMessages, currentUserId, currentUserName, setMessages, appendPendingMessage, replaceMessage, markMessageFailed, removeMessage, setLoadingMessages, toggleReaction, deleteMessage, restoreMessage, editMessage, revertMessageEdit } =
     useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
@@ -68,6 +68,20 @@ export function ChatView({ chatId }: { chatId: string }) {
   }, [chatId, setLoadingMessages, setMessages, showToast]);
 
   async function handleSend(content: string) {
+    const tempId = `temp-${crypto.randomUUID()}`;
+    const now = new Date().toISOString();
+    const optimistic: MSMessage = {
+      id: tempId,
+      createdDateTime: now,
+      body: { contentType: "html", content: textToHtml(content) },
+      from: { user: { id: currentUserId, displayName: currentUserName } },
+      reactions: [],
+      attachments: [],
+      __pending: true,
+      __originalText: content,
+    };
+    appendPendingMessage(optimistic);
+
     try {
       const res = await fetch(`/api/chats/${chatId}/messages`, {
         method: "POST",
@@ -75,11 +89,11 @@ export function ChatView({ chatId }: { chatId: string }) {
         body: JSON.stringify({ content }),
       });
       if (!res.ok) throw new Error("Failed to send chat message");
-      const msg = (await res.json()) as MSMessage;
-      appendMessage(msg);
+      const serverMsg = (await res.json()) as MSMessage;
+      replaceMessage(tempId, serverMsg);
     } catch {
+      markMessageFailed(tempId);
       showToast({ title: "Could not send message", tone: "error" });
-      throw new Error("Failed to send message");
     }
   }
 
@@ -103,10 +117,32 @@ export function ChatView({ chatId }: { chatId: string }) {
       throw err;
     }
 
-    // Step 2: send chat message with attachment reference
+    // Step 2: send chat message with attachment reference — show optimistically
     const attachmentId = crypto.randomUUID();
     // Anchor tag lets Teams' renderer render the file card inline
     const htmlBody = `${content}<attachment id="${attachmentId}"></attachment>`.trim();
+    const tempId = `temp-${crypto.randomUUID()}`;
+    const now = new Date().toISOString();
+    const optimistic: MSMessage = {
+      id: tempId,
+      createdDateTime: now,
+      body: { contentType: "html", content: htmlBody },
+      from: { user: { id: currentUserId, displayName: currentUserName } },
+      reactions: [],
+      attachments: [
+        {
+          id: attachmentId,
+          contentType: "reference",
+          contentUrl: driveItem.webUrl,
+          name: driveItem.name,
+        },
+      ],
+      __pending: true,
+      // Attachment messages: retry is discard-only; upload is already done.
+    };
+    appendPendingMessage(optimistic);
+    setUploading(false);
+
     try {
       const res = await fetch(`/api/chats/${chatId}/messages`, {
         method: "POST",
@@ -124,15 +160,14 @@ export function ChatView({ chatId }: { chatId: string }) {
         }),
       });
       if (!res.ok) throw new Error("Failed to send message with attachment");
-      const msg = (await res.json()) as MSMessage;
-      appendMessage(msg);
-    } catch (err) {
+      const serverMsg = (await res.json()) as MSMessage;
+      replaceMessage(tempId, serverMsg);
+    } catch {
+      // File is already uploaded; mark failed — discard-only (no retry button
+      // since we'd need to re-POST the same driveItem URL which is already there).
+      markMessageFailed(tempId);
       showToast({ title: "Could not send message", tone: "error" });
-      setUploading(false);
-      throw err;
     }
-
-    setUploading(false);
   }
 
   async function handleThreadReply(messageId: string, content: string) {
@@ -170,6 +205,18 @@ export function ChatView({ chatId }: { chatId: string }) {
       if (snapshot) revertMessageEdit(messageId, snapshot.previousContent, snapshot.previousContentType);
       showToast({ title: "Could not edit message", tone: "error" });
     }
+  }
+
+  function handleRetry(originalText: string) {
+    // Drop the failed message then re-fire the send with the original text.
+    // handleSend will create a fresh optimistic entry.
+    const failedMsg = messages.find((m) => m.__failed && (m.__originalText === originalText || messagePlainText(m.body.content, m.body.contentType) === originalText));
+    if (failedMsg) removeMessage(failedMsg.id);
+    void handleSend(originalText);
+  }
+
+  function handleDiscard(messageId: string) {
+    removeMessage(messageId);
   }
 
   async function handleToggleReaction(messageId: string, reactionType: ReactionType) {
@@ -230,6 +277,8 @@ export function ChatView({ chatId }: { chatId: string }) {
             onToggleReaction={handleToggleReaction}
             onDelete={handleDelete}
             onEdit={handleEdit}
+            onRetry={handleRetry}
+            onDiscard={handleDiscard}
           />
           <MessageInput
             placeholder={`Message ${label}`}

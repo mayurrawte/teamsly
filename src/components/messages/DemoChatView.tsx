@@ -12,7 +12,7 @@ import { DmMessageHeader, type Tab } from "./MessageHeader";
 import { DmIntroCard } from "./IntroCard";
 
 export function DemoChatView({ chatId }: { chatId: string }) {
-  const { chats, messages, setMessages, appendMessage, toggleReaction, deleteMessage, editMessage } = useWorkspaceStore();
+  const { chats, messages, setMessages, appendPendingMessage, replaceMessage, toggleReaction, deleteMessage, editMessage } = useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
   const chat = chats.find((c) => c.id === chatId);
@@ -35,13 +35,25 @@ export function DemoChatView({ chatId }: { chatId: string }) {
   }
 
   async function handleSend(content: string) {
-    appendMessage({
-      id: `demo-dm-${Date.now()}`,
-      createdDateTime: new Date().toISOString(),
+    const tempId = `temp-${crypto.randomUUID()}`;
+    const now = new Date().toISOString();
+    appendPendingMessage({
+      id: tempId,
+      createdDateTime: now,
       body: { contentType: "text", content },
       from: { user: { id: "you", displayName: "You" } },
       reactions: [],
     });
+    // Simulate server round-trip with a small delay so the pending state is visible.
+    window.setTimeout(() => {
+      replaceMessage(tempId, {
+        id: `demo-dm-${Date.now()}`,
+        createdDateTime: now,
+        body: { contentType: "text", content },
+        from: { user: { id: "you", displayName: "You" } },
+        reactions: [],
+      });
+    }, 400);
   }
 
   const otherMembers = members.filter((m) => (m.userId ?? m.id) !== currentUserId);

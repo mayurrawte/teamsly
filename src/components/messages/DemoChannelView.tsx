@@ -11,7 +11,7 @@ import { ChannelIntroCard } from "./IntroCard";
 import { useMemberPanelStore } from "@/store/memberPanel";
 
 export function DemoChannelView({ channelId }: { channelId: string }) {
-  const { activeTeamId, channels, messages, setMessages, appendMessage, toggleReaction } = useWorkspaceStore();
+  const { activeTeamId, channels, messages, setMessages, appendPendingMessage, replaceMessage, toggleReaction } = useWorkspaceStore();
   const openChannelMembers = useMemberPanelStore((s) => s.openChannelMembers);
   const handleOpenMembers = () => openChannelMembers("demo", channelId);
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
@@ -26,14 +26,25 @@ export function DemoChannelView({ channelId }: { channelId: string }) {
   }, [channelId]);
 
   async function handleSend(content: string) {
-    const newMsg: MSMessage = {
-      id: `demo-${Date.now()}`,
-      createdDateTime: new Date().toISOString(),
+    const tempId = `temp-${crypto.randomUUID()}`;
+    const now = new Date().toISOString();
+    appendPendingMessage({
+      id: tempId,
+      createdDateTime: now,
       body: { contentType: "text", content },
       from: { user: { id: "you", displayName: "You" } },
       reactions: [],
-    };
-    appendMessage(newMsg);
+    });
+    // Simulate server round-trip with a small delay so the pending state is visible.
+    window.setTimeout(() => {
+      replaceMessage(tempId, {
+        id: `demo-${Date.now()}`,
+        createdDateTime: now,
+        body: { contentType: "text", content },
+        from: { user: { id: "you", displayName: "You" } },
+        reactions: [],
+      });
+    }, 400);
   }
 
   const introCard = channel ? (

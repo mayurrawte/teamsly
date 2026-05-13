@@ -22,9 +22,11 @@ interface Props {
   onToggleReaction?: (messageId: string, reactionType: ReactionType) => void;
   onDelete?: (messageId: string) => void;
   onEdit?: (messageId: string, newContent: string) => Promise<void> | void;
+  onRetry?: (originalText: string) => void;
+  onDiscard?: (messageId: string) => void;
 }
 
-export function MessageItem({ message, isGroupHead = true, onReplyInThread, onToggleReaction, onDelete, onEdit }: Props) {
+export function MessageItem({ message, isGroupHead = true, onReplyInThread, onToggleReaction, onDelete, onEdit, onRetry, onDiscard }: Props) {
   const density = usePreferencesStore((state) => state.density);
   const currentUserId = useWorkspaceStore((state) => state.currentUserId);
   const [isEditing, setIsEditing] = useState(false);
@@ -46,10 +48,12 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
 
   const author = message.from?.user?.displayName ?? "Unknown";
   const userId = message.from?.user?.id ?? author;
+  // Pending/failed messages are always the current user's own (authored locally).
   const isOwn = message.from?.user?.id === currentUserId;
   // Only expose delete/edit callbacks for the current user's own messages.
-  const deleteHandler = isOwn ? onDelete : undefined;
-  const editHandler = isOwn ? onEdit : undefined;
+  // Pending/failed messages suppress the full toolbar — retry/discard shown instead.
+  const deleteHandler = isOwn && !message.__pending && !message.__failed ? onDelete : undefined;
+  const editHandler = isOwn && !message.__pending && !message.__failed ? onEdit : undefined;
   const content = messagePlainText(message.body.content, message.body.contentType);
 
   const allAttachments = message.attachments ?? [];
@@ -59,6 +63,31 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
 
   // Drop rows with no body, no reply quote, and no other attachments to render
   if (!hasBody && referenceAttachments.length === 0 && otherAttachments.length === 0) return null;
+
+  // Inline retry/discard row for failed optimistic messages.
+  const failedBanner = message.__failed ? (
+    <div className="mt-1 flex items-center gap-3">
+      <span className="text-[12px] text-red-400">Failed to send</span>
+      {onRetry && (message.__originalText ?? content) && (
+        <button
+          type="button"
+          onClick={() => onRetry(message.__originalText ?? content)}
+          className="text-[12px] font-medium text-[var(--accent)] hover:underline"
+        >
+          Retry
+        </button>
+      )}
+      {onDiscard && (
+        <button
+          type="button"
+          onClick={() => onDiscard(message.id)}
+          className="text-[12px] font-medium text-[var(--text-muted)] hover:underline"
+        >
+          Discard
+        </button>
+      )}
+    </div>
+  ) : null;
 
   function startEditing() {
     setDraft(messagePlainText(message.body.content, message.body.contentType));
@@ -132,10 +161,12 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
       <div
         className={cn(
           "group relative px-4 pl-[72px] transition-colors duration-[80ms] ease-out hover:bg-[var(--message-hover-bg)]",
-          density === "compact" ? "py-0" : "py-[2px]"
+          density === "compact" ? "py-0" : "py-[2px]",
+          message.__pending && "opacity-60",
+          message.__failed && "border-l-2 border-red-500/60 pl-2"
         )}
       >
-        {!isEditing && (
+        {!isEditing && !message.__pending && !message.__failed && (
           <MessageHoverToolbar
             messageId={message.id}
             onReact={onToggleReaction}
@@ -161,11 +192,14 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
           )
         )}
         <Attachments attachments={otherAttachments} />
-        <ReactionsRow
-          messageId={message.id}
-          reactions={message.reactions ?? []}
-          onToggleReaction={onToggleReaction}
-        />
+        {!message.__pending && !message.__failed && (
+          <ReactionsRow
+            messageId={message.id}
+            reactions={message.reactions ?? []}
+            onToggleReaction={onToggleReaction}
+          />
+        )}
+        {failedBanner}
       </div>
     );
   }
@@ -174,10 +208,12 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
     <div
       className={cn(
         "group relative flex gap-2 px-4 transition-colors duration-[80ms] ease-out hover:bg-[var(--message-hover-bg)]",
-        density === "compact" ? "pb-0 pt-1" : "pb-[2px] pt-2"
+        density === "compact" ? "pb-0 pt-1" : "pb-[2px] pt-2",
+        message.__pending && "opacity-60",
+        message.__failed && "border-l-2 border-red-500/60 pl-2"
       )}
     >
-      {!isEditing && (
+      {!isEditing && !message.__pending && !message.__failed && (
         <MessageHoverToolbar
           messageId={message.id}
           onReact={onToggleReaction}
@@ -214,11 +250,14 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
           )
         )}
         <Attachments attachments={otherAttachments} />
-        <ReactionsRow
-          messageId={message.id}
-          reactions={message.reactions ?? []}
-          onToggleReaction={onToggleReaction}
-        />
+        {!message.__pending && !message.__failed && (
+          <ReactionsRow
+            messageId={message.id}
+            reactions={message.reactions ?? []}
+            onToggleReaction={onToggleReaction}
+          />
+        )}
+        {failedBanner}
       </div>
     </div>
   );

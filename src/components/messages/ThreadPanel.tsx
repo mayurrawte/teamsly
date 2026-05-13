@@ -38,12 +38,15 @@ export function ThreadPanel({ message, open, onClose, onSendReply }: ThreadPanel
   async function handleReply(content: string) {
     if (!message) return;
 
+    const tempId = `thread-reply-${Date.now()}`;
     const optimisticReply: MSMessage = {
-      id: `thread-reply-${Date.now()}`,
+      id: tempId,
       createdDateTime: new Date().toISOString(),
       body: { contentType: "text", content },
       from: { user: { id: currentUserId, displayName: currentUserName } },
       reactions: [],
+      __pending: true,
+      __originalText: content,
     };
 
     setLocalReplies((replies) => [...replies, optimisticReply]);
@@ -52,13 +55,25 @@ export function ThreadPanel({ message, open, onClose, onSendReply }: ThreadPanel
     try {
       const savedReply = await onSendReply(message.id, content);
       setLocalReplies((replies) =>
-        replies.map((reply) => (reply.id === optimisticReply.id ? savedReply : reply))
+        replies.map((reply) => (reply.id === tempId ? { ...savedReply, __pending: undefined, __failed: undefined } : reply))
       );
     } catch {
-      setLocalReplies((replies) => replies.filter((reply) => reply.id !== optimisticReply.id));
+      setLocalReplies((replies) =>
+        replies.map((reply) =>
+          reply.id === tempId ? { ...reply, __pending: undefined, __failed: true } : reply
+        )
+      );
       showToast({ title: "Could not send reply", tone: "error" });
-      throw new Error("Failed to send reply");
     }
+  }
+
+  function handleRetryReply(originalText: string) {
+    setLocalReplies((replies) => replies.filter((r) => r.__failed && (r.__originalText === originalText || r.body.content === originalText) ? false : true));
+    void handleReply(originalText);
+  }
+
+  function handleDiscardReply(replyId: string) {
+    setLocalReplies((replies) => replies.filter((r) => r.id !== replyId));
   }
 
   if (!message) return null;
@@ -96,7 +111,13 @@ export function ThreadPanel({ message, open, onClose, onSendReply }: ThreadPanel
           </div>
         )}
         {localReplies.map((reply) => (
-          <MessageItem key={reply.id} message={reply} isGroupHead />
+          <MessageItem
+            key={reply.id}
+            message={reply}
+            isGroupHead
+            onRetry={handleRetryReply}
+            onDiscard={handleDiscardReply}
+          />
         ))}
       </div>
 

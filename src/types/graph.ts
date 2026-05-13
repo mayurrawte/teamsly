@@ -61,6 +61,10 @@ interface MSMessage {
     content?: string | Record<string, unknown> | null;
   }>;
   replies?: MSMessage[];
+  // Local-only optimistic-UI flags; never sent to Graph or persisted.
+  __pending?: boolean;
+  __failed?: boolean;
+  __originalText?: string;
 }
 
 interface MSChat {

@@ -10,10 +10,11 @@ import { ChannelIntroCard } from "./IntroCard";
 import { ContextFilesTab } from "./ContextFilesTab";
 import { reactionEmoji, type ReactionType } from "@/lib/utils/reactions";
 import { useToastStore } from "@/store/toasts";
+import { textToHtml, messagePlainText } from "@/lib/utils/render-message";
 import { useMemberPanelStore } from "@/store/memberPanel";
 
 export function ChannelView({ teamId, channelId }: { teamId: string; channelId: string }) {
-  const { teams, channels, messages, isLoadingMessages, currentUserId, setMessages, appendMessage, setLoadingMessages, toggleReaction } =
+  const { teams, channels, messages, isLoadingMessages, currentUserId, currentUserName, setMessages, appendPendingMessage, replaceMessage, markMessageFailed, removeMessage, setLoadingMessages, toggleReaction } =
     useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
@@ -67,6 +68,20 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
   }, [teamId, channelId, setLoadingMessages, setMessages, showToast]);
 
   async function handleSend(content: string) {
+    const tempId = `temp-${crypto.randomUUID()}`;
+    const now = new Date().toISOString();
+    const optimistic: MSMessage = {
+      id: tempId,
+      createdDateTime: now,
+      body: { contentType: "html", content: textToHtml(content) },
+      from: { user: { id: currentUserId, displayName: currentUserName } },
+      reactions: [],
+      attachments: [],
+      __pending: true,
+      __originalText: content,
+    };
+    appendPendingMessage(optimistic);
+
     try {
       const res = await fetch(`/api/messages/${teamId}/${channelId}`, {
         method: "POST",
@@ -74,12 +89,22 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
         body: JSON.stringify({ content }),
       });
       if (!res.ok) throw new Error("Failed to send message");
-      const msg = (await res.json()) as MSMessage;
-      appendMessage(msg);
+      const serverMsg = (await res.json()) as MSMessage;
+      replaceMessage(tempId, serverMsg);
     } catch {
+      markMessageFailed(tempId);
       showToast({ title: "Could not send message", tone: "error" });
-      throw new Error("Failed to send message");
     }
+  }
+
+  function handleRetry(originalText: string) {
+    const failedMsg = messages.find((m) => m.__failed && (m.__originalText === originalText || messagePlainText(m.body.content, m.body.contentType) === originalText));
+    if (failedMsg) removeMessage(failedMsg.id);
+    void handleSend(originalText);
+  }
+
+  function handleDiscard(messageId: string) {
+    removeMessage(messageId);
   }
 
   async function handleThreadReply(messageId: string, content: string) {
@@ -135,6 +160,8 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
             introCard={introCard}
             onReplyInThread={setThreadMessage}
             onToggleReaction={handleToggleReaction}
+            onRetry={handleRetry}
+            onDiscard={handleDiscard}
           />
           <MessageInput
             placeholder={`Message #${channel?.displayName ?? "channel"}`}

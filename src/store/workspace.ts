@@ -27,6 +27,11 @@ interface WorkspaceState {
   setActiveChat: (id: string | null) => void;
   setMessages: (messages: MSMessage[]) => void;
   appendMessage: (message: MSMessage) => void;
+  // Optimistic-send actions — operate on the local message list only.
+  appendPendingMessage: (message: MSMessage) => void;
+  replaceMessage: (tempId: string, serverMessage: MSMessage) => void;
+  markMessageFailed: (tempId: string) => void;
+  removeMessage: (messageId: string) => void;
   toggleReaction: (messageId: string, reactionType: string) => void;
   deleteMessage: (messageId: string) => { message: MSMessage; index: number } | null;
   restoreMessage: (message: MSMessage, index: number) => void;
@@ -97,6 +102,25 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       setActiveChat: (id) => set({ activeChatId: id, activeChannelId: null, messages: [] }),
       setMessages: (messages) => set({ messages }),
       appendMessage: (message) => set((s) => ({ messages: [...s.messages, message] })),
+      // Append an optimistic message that visually appears before server confirms it.
+      appendPendingMessage: (message) =>
+        set((s) => ({ messages: [...s.messages, { ...message, __pending: true }] })),
+      replaceMessage: (tempId, serverMessage) =>
+        set((s) => ({
+          messages: s.messages.map((m) =>
+            m.id === tempId
+              ? { ...serverMessage, __pending: undefined, __failed: undefined }
+              : m
+          ),
+        })),
+      markMessageFailed: (tempId) =>
+        set((s) => ({
+          messages: s.messages.map((m) =>
+            m.id === tempId ? { ...m, __pending: undefined, __failed: true } : m
+          ),
+        })),
+      removeMessage: (messageId) =>
+        set((s) => ({ messages: s.messages.filter((m) => m.id !== messageId) })),
       toggleReaction: (messageId, reactionType) =>
         set((s) => ({
           messages: s.messages.map((message) => {
