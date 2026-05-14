@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, HelpCircle } from "lucide-react";
+import { useSession, signIn } from "next-auth/react";
+import { Search, HelpCircle, RotateCw } from "lucide-react";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { LeftRail } from "@/components/layout/LeftRail";
 import { MemberPanel } from "@/components/layout/MemberPanel";
@@ -16,6 +17,14 @@ import { sendUnreadCount } from "@/lib/electron-bridge";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const session = useSession();
+  // After ~1h the access token expires. If refresh fails (usually because new
+  // scopes were added since last sign-in), useSession still reports
+  // authenticated but every Graph call 401s. Show a recovery banner instead
+  // of cascading "Could not load" toasts.
+  const sessionError =
+    (session.data as { error?: string } | null | undefined)?.error;
+  const needsReauth = sessionError === "RefreshAccessTokenError";
   const { teams, activeTeamId, channels, chats, setTeams, setActiveTeam, setChannels, setActiveChannel, setActiveChat, markRead, setCurrentUser } = useWorkspaceStore();
   const unreadCounts = useWorkspaceStore((s) => s.unreadCounts);
   const showToast = useToastStore((state) => state.showToast);
@@ -142,6 +151,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[var(--content-bg)]">
+      {needsReauth && (
+        <div className="flex flex-shrink-0 items-center justify-center gap-3 border-b border-amber-500/40 bg-amber-500/10 px-4 py-2 text-[13px] text-amber-200">
+          <RotateCw className="h-3.5 w-3.5" />
+          <span>Your session has expired. Reconnect to keep loading messages.</span>
+          <button
+            type="button"
+            onClick={() => signIn("microsoft-entra-id")}
+            className="rounded bg-amber-400 px-2.5 py-0.5 text-[12px] font-semibold text-[#1a1d21] transition-colors hover:bg-amber-300"
+          >
+            Reconnect
+          </button>
+        </div>
+      )}
       {/* Global top search bar */}
       <header className="flex h-[50px] flex-shrink-0 items-center gap-3 border-b border-[var(--border)] bg-[var(--sidebar-bg)] px-4">
         {/* Left: logomark */}
