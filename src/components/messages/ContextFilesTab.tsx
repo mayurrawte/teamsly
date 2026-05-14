@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ExternalLink, FileX, RefreshCw } from "lucide-react";
 import { getFileIcon } from "@/lib/utils/file-icon";
+import { useFilePreviewStore } from "@/store/filePreview";
 
 // ---------------------------------------------------------------------------
 // Mode discriminant
@@ -66,9 +67,32 @@ function ChannelFileRow({ item }: { item: MSDriveItem }) {
   const isFolder = !!item.folder;
   const Icon = getFileIcon(mimeType, isFolder);
   const href = safeHref(item.webUrl);
+  const openPreview = useFilePreviewStore((s) => s.openPreview);
+
+  // Folders still bounce to SharePoint — Teams doesn't expose a folder-listing
+  // view that the preview panel could host. Files of every other kind open
+  // inline.
+  const previewable = !!href && !isFolder;
+
+  function onRowClick() {
+    if (!previewable || !href) return;
+    openPreview({
+      name: item.name,
+      webUrl: href,
+      itemId: item.id,
+      mimeType,
+      size: item.size,
+    });
+  }
+
+  const RowEl: "button" | "div" = previewable ? "button" : "div";
 
   return (
-    <div className="group flex items-center gap-3 rounded-md px-3 py-2.5 transition-colors duration-[80ms] hover:bg-[#27292d]">
+    <RowEl
+      type={previewable ? "button" : undefined}
+      onClick={previewable ? onRowClick : undefined}
+      className="group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors duration-[80ms] hover:bg-[#27292d]"
+    >
       <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[#2c2d30] text-[#ababad]">
         <Icon size={18} />
       </span>
@@ -83,8 +107,8 @@ function ChannelFileRow({ item }: { item: MSDriveItem }) {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          title={`Open ${item.name}`}
-          aria-label={`Open ${item.name}`}
+          title={`Open ${item.name} in browser`}
+          aria-label={`Open ${item.name} in browser`}
           className="flex-shrink-0 text-[#ababad] opacity-0 transition-opacity duration-[80ms] group-hover:opacity-100 focus:opacity-100"
           onClick={(e) => e.stopPropagation()}
         >
@@ -93,7 +117,7 @@ function ChannelFileRow({ item }: { item: MSDriveItem }) {
       ) : (
         <span className="w-[15px] flex-shrink-0" />
       )}
-    </div>
+    </RowEl>
   );
 }
 
@@ -102,12 +126,24 @@ function ChannelFileRow({ item }: { item: MSDriveItem }) {
 // ---------------------------------------------------------------------------
 
 function ChatFileRow({ item }: { item: MSChatFileAttachment }) {
-  const Icon = getFileIcon(undefined, false);
+  const Icon = getFileIcon(undefined, false, item.name);
   const href = safeHref(item.contentUrl);
   const sharer = item.sharedBy?.displayName;
+  const openPreview = useFilePreviewStore((s) => s.openPreview);
+
+  function onRowClick() {
+    if (!href) return;
+    openPreview({ name: item.name, webUrl: href });
+  }
+
+  const RowEl: "button" | "div" = href ? "button" : "div";
 
   return (
-    <div className="group flex items-center gap-3 rounded-md px-3 py-2.5 transition-colors duration-[80ms] hover:bg-[#27292d]">
+    <RowEl
+      type={href ? "button" : undefined}
+      onClick={href ? onRowClick : undefined}
+      className="group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors duration-[80ms] hover:bg-[#27292d]"
+    >
       <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[#2c2d30] text-[#ababad]">
         <Icon size={18} />
       </span>
@@ -123,8 +159,8 @@ function ChatFileRow({ item }: { item: MSChatFileAttachment }) {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          title={`Open ${item.name}`}
-          aria-label={`Open ${item.name}`}
+          title={`Open ${item.name} in browser`}
+          aria-label={`Open ${item.name} in browser`}
           className="flex-shrink-0 text-[#ababad] opacity-0 transition-opacity duration-[80ms] group-hover:opacity-100 focus:opacity-100"
           onClick={(e) => e.stopPropagation()}
         >
@@ -133,7 +169,7 @@ function ChatFileRow({ item }: { item: MSChatFileAttachment }) {
       ) : (
         <span className="w-[15px] flex-shrink-0" />
       )}
-    </div>
+    </RowEl>
   );
 }
 
