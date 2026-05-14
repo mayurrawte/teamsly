@@ -1,4 +1,10 @@
-// Intentionally empty. The renderer runs sandboxed with no Node integration.
-// Add ipcRenderer bridges here when the renderer needs specific main-process
-// capabilities (window controls, native menus, file dialogs, deep links).
-export {};
+import { contextBridge, ipcRenderer } from 'electron';
+
+contextBridge.exposeInMainWorld('electron', {
+  /** Push the total unread count into the main process for tray tooltip / dock badge. */
+  setUnreadCount: (n: number): void => {
+    ipcRenderer.send('unread-count', n);
+  },
+  /** Renderer can call this to detect it's running inside Electron. */
+  isElectron: (): true => true,
+});

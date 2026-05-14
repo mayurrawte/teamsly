@@ -12,10 +12,12 @@ import { Logo } from "@/components/ui/Logo";
 import { useWorkspaceStore } from "@/store/workspace";
 import { ToastViewport } from "@/components/ui/ToastViewport";
 import { useToastStore } from "@/store/toasts";
+import { sendUnreadCount } from "@/lib/electron-bridge";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { teams, activeTeamId, channels, chats, messages, setTeams, setActiveTeam, setChannels, setActiveChannel, setActiveChat, markRead, setCurrentUser } = useWorkspaceStore();
+  const unreadCounts = useWorkspaceStore((s) => s.unreadCounts);
   const showToast = useToastStore((state) => state.showToast);
   const [jumpToOpen, setJumpToOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -81,6 +83,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
     loadChannels();
   }, [activeTeamId, setChannels, showToast]);
+
+  // Push total unread count into the Electron main process for tray tooltip
+  // and macOS dock badge. No-op in a plain browser.
+  useEffect(() => {
+    const total = Object.values(unreadCounts).reduce((sum, n) => sum + n, 0);
+    sendUnreadCount(total);
+    return () => {
+      sendUnreadCount(0);
+    };
+  }, [unreadCounts]);
 
   const items = useMemo<JumpToItem[]>(() => {
     const teamName = teams.find((team) => team.id === activeTeamId)?.displayName ?? "Teamsly";

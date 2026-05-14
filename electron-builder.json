@@ -8,6 +8,7 @@
   },
   "files": [
     "electron/dist/**/*",
+    "electron/build-resources/**/*",
     "package.json"
   ],
   "extraMetadata": {

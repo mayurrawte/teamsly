@@ -1,15 +1,148 @@
-import { app, BrowserWindow, shell } from 'electron';
+import { app, BrowserWindow, Menu, MenuItem, Tray, ipcMain, nativeImage, shell } from 'electron';
 import path from 'path';
 
 const isDev = !app.isPackaged;
 
 // Where the renderer loads from. In dev, point at the Next.js dev server.
 // In production, set TEAMSLY_URL to your hosted instance, or bundle a Next.js
-// standalone build and spawn it locally (TODO — see electron/README.md).
+// standalone build and spawn it locally (see electron/README.md).
 const TEAMSLY_URL =
-  process.env.TEAMSLY_URL || (isDev ? 'http://localhost:3000' : 'https://teamsly.app');
+  process.env.TEAMSLY_URL || (isDev ? 'http://localhost:3000' : 'https://teamsly.vercel.app');
+
+// Windows requires the App User Model ID to be set before the app is ready so
+// that renderer-side Notification shows the correct app name in Action Center.
+if (process.platform === 'win32') {
+  app.setAppUserModelId('co.shipthis.teamsly');
+}
+
+// Flag to distinguish user-requested quit (via tray menu) from window close.
+let isQuitting = false;
 
 let mainWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
+
+// ─── Unread indicators ────────────────────────────────────────────────────────
+
+function updateUnreadIndicators(n: number): void {
+  const label = n > 0 ? `Teamsly — ${n} unread` : 'Teamsly';
+  tray?.setToolTip(label);
+
+  if (process.platform === 'darwin') {
+    app.dock?.setBadge(n > 0 ? String(n) : '');
+  }
+  // Windows overlay icon (e.g. a red dot) is deferred to a future release
+  // because it requires an additional icon resource and signing infrastructure.
+}
+
+// ─── Tray ─────────────────────────────────────────────────────────────────────
+
+function buildTrayIcon(): Tray {
+  const resourcesDir = path.join(__dirname, '..', 'build-resources');
+
+  let icon: Electron.NativeImage;
+  if (process.platform === 'darwin') {
+    // Electron auto-discovers tray@2x.png for HiDPI when placed alongside tray.png.
+    icon = nativeImage.createFromPath(path.join(resourcesDir, 'tray.png'));
+    icon.setTemplateImage(true); // macOS auto-inverts on dark/light menu bar
+  } else {
+    icon = nativeImage.createFromPath(path.join(resourcesDir, 'tray-color.png'));
+  }
+
+  const t = new Tray(icon);
+  t.setToolTip('Teamsly');
+
+  const menu = Menu.buildFromTemplate([
+    {
+      label: 'Open Teamsly',
+      click: () => {
+        mainWindow?.show();
+        mainWindow?.focus();
+      },
+    },
+    { type: 'separator' },
+    {
+      label: 'Quit Teamsly',
+      click: () => {
+        isQuitting = true;
+        app.quit();
+      },
+    },
+  ]);
+
+  t.setContextMenu(menu);
+
+  // Left-click toggles window visibility on Windows / Linux.
+  // On macOS the OS shows the context menu on left-click, no-op here.
+  if (process.platform !== 'darwin') {
+    t.on('click', () => {
+      if (!mainWindow) return;
+      if (mainWindow.isVisible() && mainWindow.isFocused()) {
+        mainWindow.hide();
+      } else {
+        mainWindow.show();
+        mainWindow.focus();
+      }
+    });
+  }
+
+  return t;
+}
+
+// ─── App menu (macOS only) ────────────────────────────────────────────────────
+
+function buildAppMenu(): void {
+  if (process.platform !== 'darwin') {
+    Menu.setApplicationMenu(null);
+    return;
+  }
+
+  const viewSubmenu: Electron.MenuItemConstructorOptions[] = [
+    { role: 'reload', accelerator: 'CmdOrCtrl+R' },
+    { role: 'forceReload', accelerator: 'CmdOrCtrl+Shift+R' },
+  ];
+  if (isDev) {
+    viewSubmenu.push({ role: 'toggleDevTools', accelerator: 'CmdOrCtrl+Alt+I' });
+  }
+
+  const template: Electron.MenuItemConstructorOptions[] = [
+    {
+      label: 'Teamsly',
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        {
+          label: 'Quit Teamsly',
+          accelerator: 'Cmd+Q',
+          click: () => {
+            isQuitting = true;
+            app.quit();
+          },
+        },
+      ],
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'selectAll' },
+      ],
+    },
+    {
+      label: 'View',
+      submenu: viewSubmenu,
+    },
+  ];
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
+// ─── Main window ──────────────────────────────────────────────────────────────
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -34,17 +167,49 @@ function createWindow(): void {
     return { action: 'deny' };
   });
 
+  // Hide instead of quit on close — the tray is the way back.
+  mainWindow.on('close', (event) => {
+    if (!isQuitting) {
+      event.preventDefault();
+      mainWindow?.hide();
+    }
+  });
+
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 }
 
-void app.whenReady().then(createWindow);
+// ─── IPC ──────────────────────────────────────────────────────────────────────
 
+ipcMain.on('unread-count', (_event, n: number) => {
+  updateUnreadIndicators(n);
+});
+
+// ─── App lifecycle ────────────────────────────────────────────────────────────
+
+void app.whenReady().then(() => {
+  buildAppMenu();
+  tray = buildTrayIcon();
+  createWindow();
+});
+
+// Keep the process alive even when all windows are closed (they're just hidden).
+// The only exit path is the "Quit Teamsly" tray item (or Cmd+Q on macOS).
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+  // Intentionally empty — do not quit when the window is hidden.
 });
 
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  // macOS: re-show the window if the user clicks the dock icon.
+  if (mainWindow) {
+    mainWindow.show();
+    mainWindow.focus();
+  } else {
+    createWindow();
+  }
+});
+
+app.on('before-quit', () => {
+  isQuitting = true;
 });

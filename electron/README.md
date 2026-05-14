@@ -12,12 +12,42 @@ The wrapper loads its UI from `TEAMSLY_URL`:
 | Mode | Default | Override |
 |---|---|---|
 | Development | `http://localhost:3000` | `TEAMSLY_URL=...` |
-| Production | `https://teamsly.app` | `TEAMSLY_URL=...` |
+| Production | `https://teamsly.vercel.app` | `TEAMSLY_URL=...` |
 
 In production, set `TEAMSLY_URL` to your hosted instance (Vercel, self-hosted,
 etc.). For a single-binary self-hosted build that ships the Next.js server
 inside the app, see *Bundling the server* below — that path is not implemented
 yet.
+
+## Desktop features
+
+The wrapper provides these native capabilities on top of the web app:
+
+- **System tray** — a monochrome template icon on macOS (auto-inverts on
+  light/dark menu bar) and a colored icon on Windows/Linux. Left-click on
+  Windows/Linux toggles the window; right-click everywhere opens a context menu
+  with "Open Teamsly" and "Quit Teamsly".
+- **Tray tooltip with live unread count** — the renderer pushes the total
+  unread count via IPC (`unread-count` channel); the tooltip updates to
+  "Teamsly — N unread" when there are pending messages.
+- **macOS dock badge** — mirrors the tray tooltip unread count as a red badge
+  on the dock icon.
+- **Close-to-tray** — closing the window hides it rather than quitting; use the
+  tray "Quit" item (or Cmd+Q on macOS) to exit.
+- **App menu (macOS)** — standard shortcuts: Cmd+Q quits, Cmd+R reloads,
+  Cmd+Shift+R force-reloads, and Edit submenu provides cut/copy/paste/select-all
+  for text areas.
+- **Windows App User Model ID** — set to `co.shipthis.teamsly` so renderer-side
+  `Notification` shows the correct app name in Windows Action Center.
+
+### Not yet implemented (v0.1.0)
+
+- **Auto-update** — `electron-updater` is not wired. Unsigned builds on macOS
+  cannot auto-update reliably. Check GitHub Releases for new versions and
+  reinstall manually. Auto-update will be added once code signing is configured.
+- **Global shortcuts** — bring-to-front via a global hotkey is not implemented.
+- **Windows overlay icon** — a small red-dot overlay badge on the taskbar icon
+  requires an additional icon resource and is deferred.
 
 ## Develop
 
