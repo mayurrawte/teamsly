@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Hash, MessageSquare, Search, X } from "lucide-react";
 import { formatMessageTime } from "@/lib/utils/dates";
@@ -33,10 +33,19 @@ export function SearchModal({
   onSelectMessage,
 }: SearchModalProps) {
   const [query, setQuery] = useState("");
+  // Debounced copy of `query`. Filtering keys off this so each keystroke
+  // doesn't HTML-strip + lowercase every message in the current view — that
+  // was the source of typing lag.
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const currentUserId = useWorkspaceStore((s) => s.currentUserId);
 
-  const normalizedQuery = query.trim().toLowerCase();
+  useEffect(() => {
+    const handle = window.setTimeout(() => setDebouncedQuery(query), 120);
+    return () => window.clearTimeout(handle);
+  }, [query]);
+
+  const normalizedQuery = debouncedQuery.trim().toLowerCase();
   const results = useMemo(() => {
     if (!normalizedQuery) return { channels: channels.slice(0, 6), chats: chats.slice(0, 6), messageGroups: [] };
 
@@ -59,21 +68,26 @@ export function SearchModal({
     results.chats.length > 0 ||
     results.messageGroups.some((group) => group.messages.length > 0);
 
+  function resetQuery() {
+    setQuery("");
+    setDebouncedQuery("");
+  }
+
   function handleSelectChannel(channelId: string) {
     onOpenChange(false);
-    setQuery("");
+    resetQuery();
     onSelectChannel?.(channelId);
   }
 
   function handleSelectChat(chatId: string) {
     onOpenChange(false);
-    setQuery("");
+    resetQuery();
     onSelectChat?.(chatId);
   }
 
   function handleSelectMessage(message: MSMessage) {
     onOpenChange(false);
-    setQuery("");
+    resetQuery();
     onSelectMessage?.(message);
   }
 
@@ -82,7 +96,7 @@ export function SearchModal({
       open={open}
       onOpenChange={(nextOpen) => {
         onOpenChange(nextOpen);
-        if (!nextOpen) setQuery("");
+        if (!nextOpen) resetQuery();
       }}
     >
       <Dialog.Portal>
