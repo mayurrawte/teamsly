@@ -8,6 +8,7 @@ import { SearchModal } from "@/components/modals/SearchModal";
 import { Avatar } from "@/components/ui/Avatar";
 import { PresenceDot } from "@/components/ui/PresenceDot";
 import { DemoUserFooter } from "./DemoUserFooter";
+import { getChatLabel } from "@/lib/utils/chat-label";
 
 export function DemoSidebar() {
   const { teams, activeTeamId, channels, chats, presenceMap, unreadCounts, setActiveChannel, setActiveChat, activeChannelId, activeChatId, markRead } =
@@ -115,8 +116,7 @@ export function DemoSidebar() {
 
           {dmsOpen &&
             chats.map((chat) => {
-              const label =
-                chat.topic ?? chat.members?.map((m) => m.displayName).join(", ") ?? "DM";
+              const label = getChatLabel(chat, "you");
               return (
                 <SidebarItem
                   key={chat.id}

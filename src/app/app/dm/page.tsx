@@ -5,25 +5,8 @@ import { useWorkspaceStore } from "@/store/workspace";
 import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
 import { formatMessageTime } from "@/lib/utils/dates";
+import { getChatLabel, getFirstOtherMember } from "@/lib/utils/chat-label";
 import { MessageSquare } from "lucide-react";
-
-function getChatLabel(chat: MSChat, currentUserId: string): string {
-  if (chat.topic) return chat.topic;
-  const members = chat.members ?? [];
-  if (members.length === 0) return "Direct Message";
-  const others = members.filter((m) => (m.userId ?? m.id) !== currentUserId);
-  if (others.length === 0) return `${members[0]?.displayName ?? "You"} (you)`;
-  return others.map((m) => m.displayName).join(", ");
-}
-
-function getFirstOtherMember(
-  chat: MSChat,
-  currentUserId: string
-): MSChatMember | undefined {
-  const members = chat.members ?? [];
-  const others = members.filter((m) => (m.userId ?? m.id) !== currentUserId);
-  return others[0] ?? members[0];
-}
 
 export default function DirectMessagesIndexPage() {
   const router = useRouter();

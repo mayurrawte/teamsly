@@ -64,11 +64,15 @@ function IconCluster({
   onOpenMembers,
   onCall,
   onVideoCall,
+  callLabel = "Call",
+  videoCallLabel = "Video call",
 }: {
   onSearchClick?: () => void;
   onOpenMembers?: () => void;
   onCall?: () => void;
   onVideoCall?: () => void;
+  callLabel?: string;
+  videoCallLabel?: string;
 }) {
   return (
     <div className="flex items-center gap-0.5">
@@ -85,7 +89,7 @@ function IconCluster({
           <button
             type="button"
             onClick={onCall}
-            title="Call"
+            title={callLabel}
             className="rounded p-1.5 text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-raised)] hover:text-[var(--text-primary)] focus-ring"
           >
             <Phone className="h-4 w-4" />
@@ -93,7 +97,7 @@ function IconCluster({
           <button
             type="button"
             onClick={onVideoCall}
-            title="Video call"
+            title={videoCallLabel}
             className="rounded p-1.5 text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-raised)] hover:text-[var(--text-primary)] focus-ring"
           >
             <Video className="h-4 w-4" />
@@ -162,7 +166,13 @@ export function ChannelMessageHeader({
   onTabChange,
   onSearchClick,
   onOpenMembers,
-}: ChannelHeaderProps & { onSearchClick?: () => void }) {
+  onMeetNow,
+  onVideoMeetNow,
+}: ChannelHeaderProps & {
+  onSearchClick?: () => void;
+  onMeetNow?: () => void;
+  onVideoMeetNow?: () => void;
+}) {
   return (
     <div className="flex flex-col border-b border-[var(--border)] bg-[var(--content-bg)] px-4 shadow-sm">
       {/* Top row */}
@@ -180,7 +190,14 @@ export function ChannelMessageHeader({
         </div>
         {/* Right: icon cluster */}
         <div className="flex flex-shrink-0 items-center">
-          <IconCluster onSearchClick={onSearchClick} onOpenMembers={onOpenMembers} />
+          <IconCluster
+            onSearchClick={onSearchClick}
+            onOpenMembers={onOpenMembers}
+            onCall={onMeetNow}
+            onVideoCall={onVideoMeetNow}
+            callLabel="Meet now"
+            videoCallLabel="Meet now with video"
+          />
         </div>
       </div>
       {/* Tab row */}

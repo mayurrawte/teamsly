@@ -9,6 +9,7 @@ import { ThreadPanel } from "./ThreadPanel";
 import { ChannelMessageHeader, type Tab } from "./MessageHeader";
 import { ChannelIntroCard } from "./IntroCard";
 import { useMemberPanelStore } from "@/store/memberPanel";
+import { openTeamsChannelMeeting } from "@/lib/utils/teams-deeplink";
 
 export function DemoChannelView({ channelId }: { channelId: string }) {
   const { activeTeamId, channels, getMessages, setMessages, appendPendingMessage, replaceMessage, toggleReaction } = useWorkspaceStore();
@@ -66,6 +67,8 @@ export function DemoChannelView({ channelId }: { channelId: string }) {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onOpenMembers={handleOpenMembers}
+        onMeetNow={() => openTeamsChannelMeeting(channel?.displayName ?? "Channel meeting")}
+        onVideoMeetNow={() => openTeamsChannelMeeting(channel?.displayName ?? "Channel meeting")}
       />
       {activeTab === "files" ? (
         <div className="flex flex-1 items-center justify-center text-[13px] text-[#6c6f75]">

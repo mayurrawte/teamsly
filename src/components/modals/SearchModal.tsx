@@ -4,6 +4,8 @@ import { useMemo, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Hash, MessageSquare, Search, X } from "lucide-react";
 import { formatMessageTime } from "@/lib/utils/dates";
+import { getChatLabel } from "@/lib/utils/chat-label";
+import { useWorkspaceStore } from "@/store/workspace";
 
 interface SearchModalProps {
   open: boolean;
@@ -32,6 +34,7 @@ export function SearchModal({
 }: SearchModalProps) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const currentUserId = useWorkspaceStore((s) => s.currentUserId);
 
   const normalizedQuery = query.trim().toLowerCase();
   const results = useMemo(() => {
@@ -39,7 +42,7 @@ export function SearchModal({
 
     return {
       channels: channels.filter((channel) => channel.displayName.toLowerCase().includes(normalizedQuery)).slice(0, 8),
-      chats: chats.filter((chat) => chatLabel(chat).toLowerCase().includes(normalizedQuery)).slice(0, 8),
+      chats: chats.filter((chat) => getChatLabel(chat, currentUserId).toLowerCase().includes(normalizedQuery)).slice(0, 8),
       messageGroups: [
         {
           name: messageGroupName,
@@ -49,7 +52,7 @@ export function SearchModal({
         },
       ].filter((group) => group.messages.length > 0),
     };
-  }, [channels, chats, messageGroupName, messages, normalizedQuery]);
+  }, [channels, chats, currentUserId, messageGroupName, messages, normalizedQuery]);
 
   const hasResults =
     results.channels.length > 0 ||
@@ -152,7 +155,7 @@ export function SearchModal({
                       <EntityResult
                         key={chat.id}
                         icon={<MessageSquare size={14} />}
-                        title={chatLabel(chat)}
+                        title={getChatLabel(chat, currentUserId)}
                         subtitle={chat.chatType === "group" ? "Group DM" : "Direct message"}
                         query={normalizedQuery}
                         onSelect={() => handleSelectChat(chat.id)}
@@ -252,13 +255,6 @@ function highlight(value: string, query: string): React.ReactNode {
       {value.slice(index + query.length)}
     </>
   );
-}
-
-function chatLabel(chat: MSChat): string {
-  if (chat.topic) return chat.topic;
-  const members = chat.members ?? [];
-  if (members.length > 0) return members.map((member) => member.displayName).join(", ");
-  return "Direct Message";
 }
 
 function messageText(message: MSMessage): string {

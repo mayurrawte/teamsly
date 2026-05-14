@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useWorkspaceStore } from "@/store/workspace";
 import { mockChatMessages } from "@/lib/mock/data";
 import { openTeamsCall } from "@/lib/utils/teams-deeplink";
+import { getChatLabel } from "@/lib/utils/chat-label";
 import { textToHtml } from "@/lib/utils/render-message";
 import { MessageFeed } from "./MessageFeed";
 import { MessageInput } from "./MessageInput";
@@ -17,8 +18,8 @@ export function DemoChatView({ chatId }: { chatId: string }) {
   const [activeTab, setActiveTab] = useState<Tab>("messages");
   const chat = chats.find((c) => c.id === chatId);
   const members = chat?.members ?? [];
-  const label = chat?.topic ?? members.map((m) => m.displayName).join(", ") ?? "DM";
   const currentUserId = "you";
+  const label = getChatLabel(chat, currentUserId);
 
   const contextId = `demo:${chatId}`;
   const messages = getMessages(contextId);
@@ -70,7 +71,9 @@ export function DemoChatView({ chatId }: { chatId: string }) {
     email: m.email,
   }));
 
-  const callEmails = otherMembers.map((m) => m.email ?? "").filter(Boolean);
+  const callIdentifiers = otherMembers
+    .map((m) => m.email ?? m.userId ?? m.id ?? "")
+    .filter(Boolean);
 
   const introCard = (
     <DmIntroCard
@@ -90,9 +93,9 @@ export function DemoChatView({ chatId }: { chatId: string }) {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onOpenMembers={undefined}
-        {...(callEmails.length > 0 && {
-          onCall: () => openTeamsCall(callEmails),
-          onVideoCall: () => openTeamsCall(callEmails, { withVideo: true }),
+        {...(callIdentifiers.length > 0 && {
+          onCall: () => openTeamsCall(callIdentifiers),
+          onVideoCall: () => openTeamsCall(callIdentifiers, { withVideo: true }),
         })}
       />
       {activeTab === "files" ? (

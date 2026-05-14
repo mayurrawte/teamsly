@@ -17,6 +17,7 @@ import { PresenceDot } from "@/components/ui/PresenceDot";
 import { useToastStore } from "@/store/toasts";
 import { useSession } from "next-auth/react";
 import { avatarInitials } from "@/lib/utils/avatar";
+import { getChatLabel } from "@/lib/utils/chat-label";
 
 // localStorage keys for per-section collapsed state
 const COLLAPSE_KEYS = {
@@ -697,22 +698,6 @@ function SidebarItem({
       )}
     </button>
   );
-}
-
-function getChatLabel(chat: MSChat, currentUserId: string): string {
-  if (chat.topic) return chat.topic;
-
-  const members = chat.members ?? [];
-  if (members.length === 0) return "Direct Message";
-
-  const otherMembers = members.filter((m) => (m.userId ?? m.id) !== currentUserId);
-
-  if (otherMembers.length === 0) {
-    const currentUserName = members[0]?.displayName ?? "You";
-    return `${currentUserName} (you)`;
-  }
-
-  return otherMembers.map((m) => m.displayName).join(", ");
 }
 
 function ChatAvatar({

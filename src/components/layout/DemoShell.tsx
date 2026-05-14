@@ -13,6 +13,7 @@ import { DemoChatView } from "@/components/messages/DemoChatView";
 import { JumpToSwitcher, type JumpToItem } from "@/components/modals/JumpToSwitcher";
 import { Logo } from "@/components/ui/Logo";
 import { ToastViewport } from "@/components/ui/ToastViewport";
+import { getChatLabel } from "@/lib/utils/chat-label";
 import Link from "next/link";
 
 export function DemoShell() {
@@ -60,7 +61,7 @@ export function DemoShell() {
       ...chats.map((chat) => ({
         id: chat.id,
         type: "dm" as const,
-        label: chat.topic ?? chat.members?.map((member) => member.displayName).join(", ") ?? "DM",
+        label: getChatLabel(chat, "you"),
         subtitle: chat.chatType === "group" ? "Group DM" : "Direct message",
         onSelect: () => {
           markRead(chat.id);

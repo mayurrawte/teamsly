@@ -12,6 +12,7 @@ import { reactionEmoji, type ReactionType } from "@/lib/utils/reactions";
 import { textToHtml, messagePlainText } from "@/lib/utils/render-message";
 import { useToastStore } from "@/store/toasts";
 import { openTeamsCall } from "@/lib/utils/teams-deeplink";
+import { getChatLabel } from "@/lib/utils/chat-label";
 
 export function ChatView({ chatId }: { chatId: string }) {
   const {
@@ -261,7 +262,11 @@ export function ChatView({ chatId }: { chatId: string }) {
     .filter((m) => (m.userId ?? m.id) !== currentUserId)
     .map((m) => ({ id: m.userId ?? m.id, displayName: m.displayName, email: m.email }));
 
-  const callEmails = otherMembers.map((m) => m.email ?? "").filter(Boolean);
+  // Graph often omits `email` on chat members; fall back to userId so the
+  // deeplink still resolves. Teams' `users=` param accepts UPN/GUID/email.
+  const callIdentifiers = otherMembers
+    .map((m) => m.email ?? m.userId ?? m.id ?? "")
+    .filter(Boolean);
 
   const introCard = (
     <DmIntroCard
@@ -281,9 +286,9 @@ export function ChatView({ chatId }: { chatId: string }) {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onOpenMembers={undefined}
-        {...(callEmails.length > 0 && {
-          onCall: () => openTeamsCall(callEmails),
-          onVideoCall: () => openTeamsCall(callEmails, { withVideo: true }),
+        {...(callIdentifiers.length > 0 && {
+          onCall: () => openTeamsCall(callIdentifiers),
+          onVideoCall: () => openTeamsCall(callIdentifiers, { withVideo: true }),
         })}
       />
       {activeTab === "files" ? (
@@ -335,23 +340,6 @@ function sortByCreated(messages: MSMessage[]): MSMessage[] {
   return [...messages].sort(
     (a, b) => new Date(a.createdDateTime).getTime() - new Date(b.createdDateTime).getTime()
   );
-}
-
-function getChatLabel(chat: MSChat | undefined, currentUserId: string): string {
-  if (!chat) return "Direct Message";
-  if (chat.topic) return chat.topic;
-
-  const members = chat.members ?? [];
-  if (members.length === 0) return "Direct Message";
-
-  const otherMembers = members.filter((m) => (m.userId ?? m.id) !== currentUserId);
-
-  if (otherMembers.length === 0) {
-    const currentUserName = members[0]?.displayName ?? "You";
-    return `${currentUserName} (you)`;
-  }
-
-  return otherMembers.map((m) => m.displayName).join(", ");
 }
 
 function hasReacted(

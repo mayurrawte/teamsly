@@ -14,6 +14,7 @@ import { useWorkspaceStore } from "@/store/workspace";
 import { ToastViewport } from "@/components/ui/ToastViewport";
 import { useToastStore } from "@/store/toasts";
 import { sendUnreadCount } from "@/lib/electron-bridge";
+import { getChatLabel } from "@/lib/utils/chat-label";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -46,7 +47,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const sessionError =
     (session.data as { error?: string } | null | undefined)?.error;
   const needsReauth = sessionError === "RefreshAccessTokenError";
-  const { teams, activeTeamId, channels, chats, setTeams, setActiveTeam, setChannels, setActiveChannel, setActiveChat, markRead, setCurrentUser } = useWorkspaceStore();
+  const { teams, activeTeamId, channels, chats, currentUserId, setTeams, setActiveTeam, setChannels, setActiveChannel, setActiveChat, markRead, setCurrentUser } = useWorkspaceStore();
   const unreadCounts = useWorkspaceStore((s) => s.unreadCounts);
   const showToast = useToastStore((state) => state.showToast);
   const [jumpToOpen, setJumpToOpen] = useState(false);
@@ -143,7 +144,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const chatItems = chats.map((chat) => ({
       id: chat.id,
       type: "dm" as const,
-      label: chat.topic ?? chat.members?.map((member) => member.displayName).join(", ") ?? "Direct Message",
+      label: getChatLabel(chat, currentUserId),
       subtitle: chat.chatType === "group" ? "Group DM" : "Direct message",
       onSelect: () => {
         markRead(chat.id);
@@ -152,7 +153,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       },
     }));
     return [...channelItems, ...chatItems];
-  }, [activeTeamId, channels, chats, markRead, router, setActiveChannel, setActiveChat, teams]);
+  }, [activeTeamId, channels, chats, currentUserId, markRead, router, setActiveChannel, setActiveChat, teams]);
 
   const teamName = teams.find((t) => t.id === activeTeamId)?.displayName ?? "Teamsly";
   const teamChannels = activeTeamId ? (channels[activeTeamId] ?? []) : [];

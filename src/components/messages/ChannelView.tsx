@@ -12,6 +12,7 @@ import { reactionEmoji, type ReactionType } from "@/lib/utils/reactions";
 import { useToastStore } from "@/store/toasts";
 import { textToHtml, messagePlainText } from "@/lib/utils/render-message";
 import { useMemberPanelStore } from "@/store/memberPanel";
+import { openTeamsChannelMeeting } from "@/lib/utils/teams-deeplink";
 
 export function ChannelView({ teamId, channelId }: { teamId: string; channelId: string }) {
   const {
@@ -164,6 +165,20 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onOpenMembers={handleOpenMembers}
+        onMeetNow={() =>
+          openTeamsChannelMeeting(
+            channel?.displayName
+              ? `${team?.displayName ?? "Channel"} — ${channel.displayName}`
+              : team?.displayName ?? "Meeting"
+          )
+        }
+        onVideoMeetNow={() =>
+          openTeamsChannelMeeting(
+            channel?.displayName
+              ? `${team?.displayName ?? "Channel"} — ${channel.displayName}`
+              : team?.displayName ?? "Meeting"
+          )
+        }
       />
       {activeTab === "files" ? (
         <ContextFilesTab mode={{ kind: "channel", teamId, channelId }} />
