@@ -104,6 +104,14 @@ function mimeToExt(mimeType: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// Client-side file size cap — must match the server route's MAX_BYTES in
+// src/app/api/files/upload/route.ts. The route uses the chunked Graph
+// createUploadSession flow for anything >4 MiB and rejects beyond 250 MiB.
+// ---------------------------------------------------------------------------
+
+const MAX_FILE_BYTES = 250 * 1024 * 1024;
+
+// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
@@ -337,6 +345,11 @@ export function MessageInput({
             type: chosen.type,
           });
 
+    if (finalFile.size > MAX_FILE_BYTES) {
+      showToast({ title: "File is too large (250 MB max)", tone: "error" });
+      return;
+    }
+
     setPendingFile(finalFile);
   }
 
@@ -369,7 +382,12 @@ export function MessageInput({
     setIsDraggingFile(false);
 
     const file = e.dataTransfer.files[0];
-    if (file) setPendingFile(file);
+    if (!file) return;
+    if (file.size > MAX_FILE_BYTES) {
+      showToast({ title: "File is too large (250 MB max)", tone: "error" });
+      return;
+    }
+    setPendingFile(file);
   }
 
   // ---------------------------------------------------------------------------
@@ -542,6 +560,11 @@ export function MessageInput({
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
+    if (file && file.size > MAX_FILE_BYTES) {
+      showToast({ title: "File is too large (250 MB max)", tone: "error" });
+      e.target.value = "";
+      return;
+    }
     setPendingFile(file);
     // Reset input so picking the same file again fires onChange
     e.target.value = "";

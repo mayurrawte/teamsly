@@ -200,3 +200,128 @@ export async function getMe(accessToken: string) {
   const client = getGraphClient(accessToken);
   return client.api("/me").select("id,displayName,mail,userPrincipalName").get() as Promise<MSUser>;
 }
+
+// ---------------------------------------------------------------------------
+// Large-file upload via Graph createUploadSession (resumable, chunked).
+//
+// Graph spec: https://learn.microsoft.com/graph/api/driveitem-createuploadsession
+// Chunk size must be a multiple of 320 KiB. We use 5 MiB — large enough to
+// minimise round-trips, small enough to keep memory pressure bounded.
+// ---------------------------------------------------------------------------
+
+export interface DriveUploadItem {
+  id: string;
+  name: string;
+  webUrl: string;
+  size: number;
+  file?: { mimeType: string };
+}
+
+const CHUNK_BYTES = 5 * 1024 * 1024; // 5 MiB — multiple of 320 KiB per Graph spec
+
+export class GraphUploadError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+    this.name = "GraphUploadError";
+  }
+}
+
+/**
+ * Upload a Buffer to OneDrive via createUploadSession + chunked PUTs.
+ *
+ * `itemPath` is the drive path relative to the user's root, e.g.
+ * `/Apps/Teamsly/photo.png` (no leading drive prefix). The function adds the
+ * `/me/drive/root:` prefix and the `:/createUploadSession` action.
+ *
+ * On any non-2xx response we DELETE the upload session URL to free Graph's
+ * server-side state, then surface a GraphUploadError to the caller.
+ */
+export async function uploadLargeFileToOneDrive(
+  accessToken: string,
+  itemPath: string,
+  data: ArrayBuffer,
+  contentType: string
+): Promise<DriveUploadItem> {
+  const total = data.byteLength;
+
+  // 1. Create the upload session.
+  const createUrl = `https://graph.microsoft.com/v1.0/me/drive/root:${itemPath}:/createUploadSession`;
+  const createRes = await fetch(createUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      item: {
+        "@microsoft.graph.conflictBehavior": "rename",
+        name: decodeURIComponent(itemPath.split("/").pop() ?? "file"),
+      },
+    }),
+  });
+
+  if (!createRes.ok) {
+    throw new GraphUploadError(
+      `createUploadSession failed (${createRes.status})`,
+      createRes.status
+    );
+  }
+
+  const { uploadUrl } = (await createRes.json()) as { uploadUrl?: string };
+  if (!uploadUrl) {
+    throw new GraphUploadError("createUploadSession returned no uploadUrl", 502);
+  }
+
+  // 2. Stream chunks. Each PUT carries Content-Range bytes start-end/total.
+  //    Intermediate chunks return 202 + nextExpectedRanges; the final chunk
+  //    returns 200/201 with the completed driveItem JSON.
+  const bytes = new Uint8Array(data);
+  let offset = 0;
+
+  try {
+    while (offset < total) {
+      const end = Math.min(offset + CHUNK_BYTES, total);
+      const chunk = bytes.subarray(offset, end);
+      const chunkLen = end - offset;
+
+      const putRes = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Length": String(chunkLen),
+          "Content-Range": `bytes ${offset}-${end - 1}/${total}`,
+          "Content-Type": contentType,
+        },
+        body: chunk,
+      });
+
+      if (putRes.status === 202) {
+        // Intermediate chunk accepted — body is { expirationDateTime,
+        // nextExpectedRanges }, which we trust and ignore (we always send
+        // contiguous ranges from offset 0 upwards).
+        offset = end;
+        continue;
+      }
+
+      if (putRes.status === 200 || putRes.status === 201) {
+        // Final chunk — body is the completed driveItem.
+        return (await putRes.json()) as DriveUploadItem;
+      }
+
+      throw new GraphUploadError(
+        `chunk PUT failed at ${offset}-${end - 1} (${putRes.status})`,
+        putRes.status
+      );
+    }
+
+    // Reached only if total === 0, which is rejected earlier.
+    throw new GraphUploadError("upload completed without final response", 502);
+  } catch (err) {
+    // Best-effort cancel of the session so Graph reclaims server state.
+    try {
+      await fetch(uploadUrl, { method: "DELETE" });
+    } catch {
+      // ignore
+    }
+    throw err;
+  }
+}
