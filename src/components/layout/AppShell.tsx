@@ -47,7 +47,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const sessionError =
     (session.data as { error?: string } | null | undefined)?.error;
   const needsReauth = sessionError === "RefreshAccessTokenError";
-  const { teams, activeTeamId, channels, chats, currentUserId, setTeams, setActiveTeam, setChannels, setActiveChannel, setActiveChat, markRead, setCurrentUser } = useWorkspaceStore();
+  const { teams, activeTeamId, channels, chats, currentUserId, setTeams, setActiveTeam, setChannels, setActiveChannel, setActiveChat, markRead, setCurrentUser, hydrateMessageCache } = useWorkspaceStore();
   const unreadCounts = useWorkspaceStore((s) => s.unreadCounts);
   const showToast = useToastStore((state) => state.showToast);
   const [jumpToOpen, setJumpToOpen] = useState(false);
@@ -65,6 +65,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  // Hydrate the per-context message cache from IndexedDB once on mount, so
+  // ChannelView/ChatView's first render can return cached messages immediately
+  // instead of waiting on Graph. Fire-and-forget — IDB is best-effort.
+  useEffect(() => {
+    void hydrateMessageCache();
+  }, [hydrateMessageCache]);
 
   useEffect(() => {
     fetch("/api/me")

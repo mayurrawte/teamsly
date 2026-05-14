@@ -6,7 +6,15 @@ import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search, Set
 import { useState, useEffect, useRef, useCallback } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { signOut } from "next-auth/react";
+import { clearAll as clearMessageCache } from "@/lib/storage/message-cache";
 import { cn } from "@/lib/utils";
+
+async function handleSignOut() {
+  // Drop the IDB message cache before redirect so a previous user's messages
+  // don't leak to the next sign-in on the same device.
+  await clearMessageCache();
+  await signOut({ callbackUrl: "/" });
+}
 import { UserFooter } from "./UserFooter";
 import { SearchModal } from "@/components/modals/SearchModal";
 import { PreferencesModal } from "@/components/modals/PreferencesModal";
@@ -400,7 +408,7 @@ export function Sidebar() {
             <DropdownMenu.Separator className="my-1 h-px bg-[var(--border)]" />
 
             <DropdownMenu.Item
-              onSelect={() => signOut({ callbackUrl: "/" })}
+              onSelect={() => void handleSignOut()}
               className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-75 data-[highlighted]:bg-[#cd2553] data-[highlighted]:text-white"
             >
               <LogOut className="h-4 w-4 flex-shrink-0" />

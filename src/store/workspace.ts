@@ -1,5 +1,21 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { loadAllContexts, saveContext } from "@/lib/storage/message-cache";
+
+// Cap each context's persisted+in-memory array. Graph pages are 50; 200
+// covers a couple of "Load more" jumps without unbounded growth.
+const MAX_MESSAGES_PER_CONTEXT = 200;
+
+function trimToMax(messages: MSMessage[]): MSMessage[] {
+  if (messages.length <= MAX_MESSAGES_PER_CONTEXT) return messages;
+  return messages.slice(messages.length - MAX_MESSAGES_PER_CONTEXT);
+}
+
+function persistContext(contextId: string, messages: MSMessage[]) {
+  // Fire-and-forget; saveContext swallows its own errors and strips
+  // optimistic (__pending/__failed) entries before write.
+  void saveContext(contextId, messages);
+}
 
 interface WorkspaceState {
   teams: MSTeam[];
@@ -29,6 +45,12 @@ interface WorkspaceState {
   setActiveChat: (id: string | null) => void;
   /** Selector — returns the cached message list for a context, or []. */
   getMessages: (contextId: string) => MSMessage[];
+  /**
+   * Best-effort prefill of `messagesByContext` from IndexedDB. Called once
+   * on AppShell mount. Existing in-memory entries take precedence — IDB is
+   * only used to fill gaps so a reload restores the cache without flicker.
+   */
+  hydrateMessageCache: () => Promise<void>;
   /**
    * Replace the server-fetched message list for a context.
    * Preserves any optimistic (pending/failed) messages that the server response
@@ -125,27 +147,47 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           const pending = existing.filter((m) => m.__pending || m.__failed);
           const serverIds = new Set(incoming.map((m) => m.id));
           const uniquePending = pending.filter((m) => !serverIds.has(m.id));
-          const merged = sortByCreatedDateTime([...incoming, ...uniquePending]);
+          const merged = trimToMax(sortByCreatedDateTime([...incoming, ...uniquePending]));
+          persistContext(contextId, merged);
           return {
             messagesByContext: { ...s.messagesByContext, [contextId]: merged },
           };
         }),
 
+      hydrateMessageCache: async () => {
+        const cached = await loadAllContexts();
+        set((s) => {
+          // Don't clobber any in-memory entries that already exist — IDB is
+          // best-effort prefill, not a source of truth.
+          const merged: Record<string, MSMessage[]> = { ...cached };
+          for (const [k, v] of Object.entries(s.messagesByContext)) {
+            merged[k] = v;
+          }
+          return { messagesByContext: merged };
+        });
+      },
+
       appendMessage: (contextId, message) =>
         set((s) => {
           const existing = s.messagesByContext[contextId] ?? [];
+          const next = trimToMax([...existing, message]);
+          persistContext(contextId, next);
           return {
-            messagesByContext: { ...s.messagesByContext, [contextId]: [...existing, message] },
+            messagesByContext: { ...s.messagesByContext, [contextId]: next },
           };
         }),
 
       appendPendingMessage: (contextId, message) =>
         set((s) => {
           const existing = s.messagesByContext[contextId] ?? [];
+          const next = trimToMax([...existing, { ...message, __pending: true }]);
+          // saveContext strips pending entries internally, so this still writes
+          // the acked tail to IDB.
+          persistContext(contextId, next);
           return {
             messagesByContext: {
               ...s.messagesByContext,
-              [contextId]: [...existing, { ...message, __pending: true }],
+              [contextId]: next,
             },
           };
         }),
@@ -153,14 +195,16 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       replaceMessage: (contextId, tempId, serverMessage) =>
         set((s) => {
           const existing = s.messagesByContext[contextId] ?? [];
+          const next = existing.map((m) =>
+            m.id === tempId
+              ? { ...serverMessage, __pending: undefined, __failed: undefined }
+              : m
+          );
+          persistContext(contextId, next);
           return {
             messagesByContext: {
               ...s.messagesByContext,
-              [contextId]: existing.map((m) =>
-                m.id === tempId
-                  ? { ...serverMessage, __pending: undefined, __failed: undefined }
-                  : m
-              ),
+              [contextId]: next,
             },
           };
         }),
@@ -168,12 +212,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       markMessageFailed: (contextId, tempId) =>
         set((s) => {
           const existing = s.messagesByContext[contextId] ?? [];
+          const next = existing.map((m) =>
+            m.id === tempId ? { ...m, __pending: undefined, __failed: true } : m
+          );
+          persistContext(contextId, next);
           return {
             messagesByContext: {
               ...s.messagesByContext,
-              [contextId]: existing.map((m) =>
-                m.id === tempId ? { ...m, __pending: undefined, __failed: true } : m
-              ),
+              [contextId]: next,
             },
           };
         }),
@@ -181,10 +227,12 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       removeMessage: (contextId, messageId) =>
         set((s) => {
           const existing = s.messagesByContext[contextId] ?? [];
+          const next = existing.filter((m) => m.id !== messageId);
+          persistContext(contextId, next);
           return {
             messagesByContext: {
               ...s.messagesByContext,
-              [contextId]: existing.filter((m) => m.id !== messageId),
+              [contextId]: next,
             },
           };
         }),
@@ -192,25 +240,27 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       toggleReaction: (contextId, messageId, reactionType) =>
         set((s) => {
           const existing = s.messagesByContext[contextId] ?? [];
+          const next = existing.map((message) => {
+            if (message.id !== messageId) return message;
+            const reactions = message.reactions ?? [];
+            const reaction = reactions.find(
+              (r) => r.reactionType === reactionType && r.user.id === s.currentUserId
+            );
+            return {
+              ...message,
+              reactions: reaction
+                ? reactions.filter((r) => r !== reaction)
+                : [
+                    ...reactions,
+                    { reactionType, user: { id: s.currentUserId, displayName: s.currentUserName } },
+                  ],
+            };
+          });
+          persistContext(contextId, next);
           return {
             messagesByContext: {
               ...s.messagesByContext,
-              [contextId]: existing.map((message) => {
-                if (message.id !== messageId) return message;
-                const reactions = message.reactions ?? [];
-                const reaction = reactions.find(
-                  (r) => r.reactionType === reactionType && r.user.id === s.currentUserId
-                );
-                return {
-                  ...message,
-                  reactions: reaction
-                    ? reactions.filter((r) => r !== reaction)
-                    : [
-                        ...reactions,
-                        { reactionType, user: { id: s.currentUserId, displayName: s.currentUserName } },
-                      ],
-                };
-              }),
+              [contextId]: next,
             },
           };
         }),
@@ -224,6 +274,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           result = { message: existing[index], index };
           const next = [...existing];
           next.splice(index, 1);
+          persistContext(contextId, next);
           return {
             messagesByContext: { ...s.messagesByContext, [contextId]: next },
           };
@@ -236,6 +287,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           const existing = s.messagesByContext[contextId] ?? [];
           const next = [...existing];
           next.splice(index, 0, message);
+          persistContext(contextId, next);
           return {
             messagesByContext: { ...s.messagesByContext, [contextId]: next },
           };
@@ -259,6 +311,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           };
           const next = [...existing];
           next[index] = { ...msg, body: { contentType: "html", content: newContent } };
+          persistContext(contextId, next);
           return {
             messagesByContext: { ...s.messagesByContext, [contextId]: next },
           };
@@ -276,6 +329,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             ...next[index],
             body: { contentType: previousContentType, content: previousContent },
           };
+          persistContext(contextId, next);
           return {
             messagesByContext: { ...s.messagesByContext, [contextId]: next },
           };
