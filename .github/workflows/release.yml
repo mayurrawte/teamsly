@@ -13,6 +13,10 @@ on:
 jobs:
   build:
     name: Build (${{ matrix.os }})
+    # GITHUB_TOKEN defaults to read-only since 2023. electron-builder needs
+    # contents:write to create the GitHub Release and upload artifacts.
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -38,16 +42,24 @@ jobs:
         run: npm run electron:compile
 
       - name: Build & publish desktop app
-        run: npm run electron:release
+        # Only export signing/notarization vars when the secret exists.
+        # electron-builder treats an empty CSC_LINK as a literal file path and
+        # fails with "not a file" instead of falling back to unsigned.
+        shell: bash
+        run: |
+          if [ -n "$_APPLE_ID" ]; then export APPLE_ID="$_APPLE_ID"; fi
+          if [ -n "$_APPLE_APP_SPECIFIC_PASSWORD" ]; then export APPLE_APP_SPECIFIC_PASSWORD="$_APPLE_APP_SPECIFIC_PASSWORD"; fi
+          if [ -n "$_APPLE_TEAM_ID" ]; then export APPLE_TEAM_ID="$_APPLE_TEAM_ID"; fi
+          if [ -n "$_CSC_LINK" ]; then export CSC_LINK="$_CSC_LINK"; fi
+          if [ -n "$_CSC_KEY_PASSWORD" ]; then export CSC_KEY_PASSWORD="$_CSC_KEY_PASSWORD"; fi
+          npm run electron:release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Apple notarization (optional — leave unset to ship unsigned)
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          # Windows code signing (optional — leave unset to ship unsigned)
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          _APPLE_ID: ${{ secrets.APPLE_ID }}
+          _APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          _APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          _CSC_LINK: ${{ secrets.CSC_LINK }}
+          _CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
 
       - name: Upload build artifacts
         if: always()

@@ -4,6 +4,10 @@
   "private": false,
   "description": "Open-source modern client for Microsoft Teams",
   "license": "AGPL-3.0",
+  "author": {
+    "name": "Mayur Rawte",
+    "email": "mayur@shipthis.co"
+  },
   "main": "electron/dist/main.js",
   "scripts": {
     "dev": "next dev",
