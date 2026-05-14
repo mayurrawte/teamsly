@@ -31,6 +31,17 @@ cask "teamsly" do
 
   auto_updates true
 
+  # macOS 26+ Gatekeeper refuses to launch unsigned apps even when the
+  # quarantine attribute has been cleared. An ad-hoc signature is enough to
+  # satisfy the new check until we ship Apple Developer–notarized builds.
+  preflight do
+    staged_app = "#{staged_path}/Teamsly.app"
+    system_command "/usr/bin/xattr",   args: ["-cr", staged_app], must_succeed: false
+    system_command "/usr/bin/codesign",
+                   args: ["--force", "--deep", "--sign", "-", staged_app],
+                   must_succeed: false
+  end
+
   app "Teamsly.app"
 
   zap trash: [

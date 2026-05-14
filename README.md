@@ -25,13 +25,17 @@ brew install --cask teamsly
 
 Homebrew handles the Gatekeeper quarantine attribute automatically — no warning dialog, no right-click dance. The tap lives at [mayurrawte/homebrew-teamsly](https://github.com/mayurrawte/homebrew-teamsly).
 
-**Direct download:** grab the `.dmg` from the [latest release](https://github.com/mayurrawte/teamsly/releases/latest). Because the build is unsigned, macOS will show "Apple could not verify…" on first launch. Workaround:
+**Direct download:** grab the `.dmg` from the [latest release](https://github.com/mayurrawte/teamsly/releases/latest). Because the build is unsigned, macOS will show "Apple could not verify…" (Sequoia and earlier) or "Teamsly is damaged and can't be opened" (macOS 26 and later). Workaround:
 
-1. Right-click the app in Finder → **Open** (instead of double-clicking)
-2. Or go to **System Settings → Privacy & Security**, scroll down, click **Open Anyway**
-3. Or run `xattr -d com.apple.quarantine "/Applications/Teamsly.app"` in Terminal
+- **macOS 15 and earlier**: right-click the app in Finder → **Open**, or System Settings → Privacy & Security → **Open Anyway**.
+- **macOS 26 and later**: Gatekeeper refuses any unsigned binary even with `xattr` cleared, so you need to apply an ad-hoc local signature:
+  ```bash
+  xattr -cr /Applications/Teamsly.app
+  codesign --force --deep --sign - /Applications/Teamsly.app
+  ```
+  Then the app launches normally.
 
-This is normal behavior for unsigned open-source apps — Apple charges $99/yr for the cert that suppresses it. Once you've opened the app once, subsequent launches are clean.
+The Homebrew Cask already runs these steps automatically as part of `brew install` — that's why Homebrew is the recommended path. This is normal behavior for unsigned open-source apps; Apple charges $99/yr for the cert that suppresses it.
 
 ### Windows
 
