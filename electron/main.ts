@@ -193,6 +193,21 @@ function buildAppMenu(): void {
       label: 'View',
       submenu: viewSubmenu,
     },
+    {
+      label: 'Help',
+      submenu: [
+        {
+          // Opens GitHub's template chooser so the user picks bug vs feature
+          // on GitHub's own UI — simpler than routing through the in-app modal.
+          label: 'Send feedback…',
+          click: () => {
+            void shell.openExternal(
+              'https://github.com/mayurrawte/teamsly/issues/new/choose'
+            );
+          },
+        },
+      ],
+    },
   ];
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
