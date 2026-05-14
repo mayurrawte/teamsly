@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useWorkspaceStore } from "@/store/workspace";
+import { useToastStore } from "@/store/toasts";
 import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
 import { formatMessageTime } from "@/lib/utils/dates";
@@ -32,12 +33,15 @@ interface ActivityItem {
   href: string;
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+interface ScanResponse {
+  mentions: ActivityItem[];
+  threads: ActivityItem[];
+  reactions: ActivityItem[];
+  partial?: boolean;
+}
 
 // ---------------------------------------------------------------------------
-// Tab item renderer
+// Tab definitions
 // ---------------------------------------------------------------------------
 
 type TabDef = { id: ActivityTab; label: string };
@@ -49,6 +53,9 @@ const TABS: TabDef[] = [
   { id: "reactions", label: "Reactions" },
   { id: "dms", label: "DMs" },
 ];
+
+const SCAN_TABS: ActivityTab[] = ["mentions", "threads", "reactions"];
+const SCAN_POLL_MS = 60 * 1000;
 
 // ---------------------------------------------------------------------------
 // Icon for activity type
@@ -127,15 +134,15 @@ function EmptyState({ tab }: { tab: ActivityTab }) {
     },
     mentions: {
       heading: "No mentions",
-      sub: "Mentions require server-side message scanning — coming in a future update.",
+      sub: "Nobody @-mentioned you in your recent chats or channels.",
     },
     threads: {
       heading: "No thread activity",
-      sub: "Thread tracking requires a thread model — coming in a future update.",
+      sub: "No replies on your recent channel messages.",
     },
     reactions: {
       heading: "No reactions",
-      sub: "Reaction notifications require server-side scanning — coming in a future update.",
+      sub: "Nobody reacted to your recent messages.",
     },
   };
 
@@ -151,18 +158,25 @@ function EmptyState({ tab }: { tab: ActivityTab }) {
 }
 
 // ---------------------------------------------------------------------------
-// Stub section (Mentions / Threads / Reactions)
+// Loading skeleton — 6 rows
 // ---------------------------------------------------------------------------
 
-function StubSection({ label }: { label: string }) {
+function ScanSkeleton() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-2 px-8 text-center">
-      <Bell className="h-8 w-8 text-[#3f4144]" strokeWidth={1.5} />
-      <p className="text-[14px] font-semibold text-[#d1d2d3]">{label}</p>
-      <p className="max-w-xs text-[12px] leading-relaxed text-[#6c6f75]">
-        This tab requires server-side message scanning to detect {label.toLowerCase()} —
-        coming in a future update.
-      </p>
+    <div className="flex flex-1 flex-col">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          className="flex items-start gap-3 px-4 py-3"
+          aria-hidden="true"
+        >
+          <div className="skeleton h-9 w-9 flex-shrink-0 rounded-md" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="skeleton h-3 w-1/3 rounded" />
+            <div className="skeleton h-3 w-3/4 rounded" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -174,6 +188,7 @@ function StubSection({ label }: { label: string }) {
 export default function ActivityPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<ActivityTab>("all");
+  const showToast = useToastStore((s) => s.showToast);
 
   const {
     chats,
@@ -187,7 +202,82 @@ export default function ActivityPage() {
     setActiveChannel,
   } = useWorkspaceStore();
 
-  // Build activity items from store data
+  // -----------------------------------------------------------------------
+  // Scan state — fetched on demand when a scan tab is selected.
+  //
+  // The endpoint walks the user's recent chat + channel messages so it's
+  // Graph-throttle-heavy. We rely on its 60s server-side cache + a matching
+  // 60s client poll so re-renders / tab switches are cheap.
+  // -----------------------------------------------------------------------
+
+  const [scanData, setScanData] = useState<ScanResponse | null>(null);
+  const [scanLoading, setScanLoading] = useState(false);
+  const scanLoadedRef = useRef(false);
+
+  // Reset cached state when the active team changes so the next visit
+  // refetches against the new scope.
+  useEffect(() => {
+    scanLoadedRef.current = false;
+    setScanData(null);
+  }, [activeTeamId]);
+
+  const fetchScan = useCallback(
+    async (signal?: AbortSignal) => {
+      const isFirstLoad = !scanLoadedRef.current;
+      if (isFirstLoad) setScanLoading(true);
+      try {
+        const qs = activeTeamId
+          ? `?teamId=${encodeURIComponent(activeTeamId)}`
+          : "";
+        const res = await fetch(`/api/activity/scan${qs}`, { signal });
+        if (res.status === 401) {
+          // The reconnect banner in AppShell already handles refresh-token
+          // failure visually — don't pile on with a toast.
+          return;
+        }
+        if (!res.ok) {
+          throw new Error(`scan failed: ${res.status}`);
+        }
+        const data = (await res.json()) as ScanResponse;
+        setScanData(data);
+        scanLoadedRef.current = true;
+      } catch (err) {
+        if (signal?.aborted) return;
+        console.error("[activity] scan failed:", err);
+        if (isFirstLoad) {
+          showToast({
+            title: "Could not load activity",
+            description: "Try again in a moment.",
+            tone: "error",
+          });
+        }
+      } finally {
+        if (isFirstLoad) setScanLoading(false);
+      }
+    },
+    [activeTeamId, showToast]
+  );
+
+  const isScanTab = SCAN_TABS.includes(activeTab);
+
+  // Fetch on entering a scan tab + every 60s while we're on one.
+  useEffect(() => {
+    if (!isScanTab) return;
+    const controller = new AbortController();
+    fetchScan(controller.signal);
+    const interval = window.setInterval(() => {
+      fetchScan(controller.signal);
+    }, SCAN_POLL_MS);
+    return () => {
+      controller.abort();
+      window.clearInterval(interval);
+    };
+  }, [isScanTab, fetchScan]);
+
+  // -----------------------------------------------------------------------
+  // Build store-driven items (All + DMs)
+  // -----------------------------------------------------------------------
+
   const allItems = useMemo<ActivityItem[]>(() => {
     const items: ActivityItem[] = [];
 
@@ -257,11 +347,18 @@ export default function ActivityPage() {
     router.push(item.href);
   }
 
-  const visibleItems = activeTab === "dms" ? dmItems : allItems;
-  const isStubTab =
-    activeTab === "mentions" ||
-    activeTab === "threads" ||
-    activeTab === "reactions";
+  // -----------------------------------------------------------------------
+  // Resolve visible items per tab
+  // -----------------------------------------------------------------------
+
+  let visibleItems: ActivityItem[] = [];
+  if (activeTab === "all") visibleItems = allItems;
+  else if (activeTab === "dms") visibleItems = dmItems;
+  else if (activeTab === "mentions") visibleItems = scanData?.mentions ?? [];
+  else if (activeTab === "threads") visibleItems = scanData?.threads ?? [];
+  else if (activeTab === "reactions") visibleItems = scanData?.reactions ?? [];
+
+  const showSkeleton = isScanTab && scanLoading && !scanLoadedRef.current;
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -304,16 +401,8 @@ export default function ActivityPage() {
         role="tabpanel"
         className="flex flex-1 flex-col overflow-y-auto"
       >
-        {isStubTab ? (
-          <StubSection
-            label={
-              activeTab === "mentions"
-                ? "Mentions"
-                : activeTab === "threads"
-                  ? "Thread replies"
-                  : "Reactions"
-            }
-          />
+        {showSkeleton ? (
+          <ScanSkeleton />
         ) : visibleItems.length === 0 ? (
           <EmptyState tab={activeTab} />
         ) : (
@@ -326,11 +415,12 @@ export default function ActivityPage() {
               />
             ))}
 
-            {/* Footer nudge */}
-            <p className="px-4 py-3 text-center text-[11px] text-[#6c6f75]">
-              Mentions, thread replies, and reactions require server-side scanning
-              — coming in a future update.
-            </p>
+            {isScanTab && scanData?.partial && (
+              <p className="px-4 py-3 text-center text-[11px] text-[#6c6f75]">
+                Showing partial results — Microsoft Graph throttled the scan.
+                Refreshing in 60 s.
+              </p>
+            )}
           </div>
         )}
       </div>
