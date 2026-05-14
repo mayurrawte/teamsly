@@ -19,10 +19,11 @@ Desktop installers are produced automatically by the GitHub Actions release work
 **Recommended — Homebrew Cask:**
 
 ```bash
-brew install --cask https://raw.githubusercontent.com/mayurrawte/teamsly/main/Casks/teamsly.rb
+brew tap mayurrawte/teamsly
+brew install --cask teamsly
 ```
 
-Homebrew handles the Gatekeeper quarantine attribute automatically — no warning dialog, no right-click dance.
+Homebrew handles the Gatekeeper quarantine attribute automatically — no warning dialog, no right-click dance. The tap lives at [mayurrawte/homebrew-teamsly](https://github.com/mayurrawte/homebrew-teamsly).
 
 **Direct download:** grab the `.dmg` from the [latest release](https://github.com/mayurrawte/teamsly/releases/latest). Because the build is unsigned, macOS will show "Apple could not verify…" on first launch. Workaround:
 
