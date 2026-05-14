@@ -11,11 +11,15 @@ import { MessageInput } from "./MessageInput";
 import { ThreadPanel } from "./ThreadPanel";
 import { DmMessageHeader, type Tab } from "./MessageHeader";
 import { DmIntroCard } from "./IntroCard";
+import { ForwardMessageModal, type ForwardDestination } from "@/components/modals/ForwardMessageModal";
+import { useToastStore } from "@/store/toasts";
 
 export function DemoChatView({ chatId }: { chatId: string }) {
   const { chats, getMessages, setMessages, appendPendingMessage, replaceMessage, toggleReaction, deleteMessage, editMessage } = useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
+  const [forwardMessage, setForwardMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
+  const showToast = useToastStore((s) => s.showToast);
   const chat = chats.find((c) => c.id === chatId);
   const members = chat?.members ?? [];
   const currentUserId = "you";
@@ -37,6 +41,34 @@ export function DemoChatView({ chatId }: { chatId: string }) {
 
   function handleEdit(messageId: string, newContent: string) {
     editMessage(contextId, messageId, textToHtml(newContent));
+  }
+
+  // Demo forward — local-only optimistic append to the destination's
+  // `demo:` cache slice, with a 400ms simulated round-trip that mirrors
+  // handleSend's pattern.
+  async function handleForward(destination: ForwardDestination, htmlBody: string) {
+    const destContextId = destination.kind === "chat"
+      ? `demo:${destination.chatId}`
+      : `demo:${destination.channelId}`;
+    const tempId = `temp-${crypto.randomUUID()}`;
+    const now = new Date().toISOString();
+    appendPendingMessage(destContextId, {
+      id: tempId,
+      createdDateTime: now,
+      body: { contentType: "html", content: htmlBody },
+      from: { user: { id: "you", displayName: "You" } },
+      reactions: [],
+    });
+    window.setTimeout(() => {
+      replaceMessage(destContextId, tempId, {
+        id: `demo-forward-${Date.now()}`,
+        createdDateTime: now,
+        body: { contentType: "html", content: htmlBody },
+        from: { user: { id: "you", displayName: "You" } },
+        reactions: [],
+      });
+      showToast({ title: `Forwarded to ${destination.label}` });
+    }, 400);
   }
 
   async function handleSend(content: string) {
@@ -110,6 +142,7 @@ export function DemoChatView({ chatId }: { chatId: string }) {
             contextName={label}
             introCard={introCard}
             onReplyInThread={setThreadMessage}
+            onForward={setForwardMessage}
             onToggleReaction={(messageId, reactionType) =>
               toggleReaction(contextId, messageId, reactionType)
             }
@@ -131,6 +164,13 @@ export function DemoChatView({ chatId }: { chatId: string }) {
         open={Boolean(threadMessage)}
         message={threadMessage}
         onClose={() => setThreadMessage(null)}
+        onForward={setForwardMessage}
+      />
+      <ForwardMessageModal
+        open={Boolean(forwardMessage)}
+        onOpenChange={(next) => { if (!next) setForwardMessage(null); }}
+        message={forwardMessage}
+        onForward={handleForward}
       />
     </div>
   );

@@ -18,6 +18,7 @@ interface Props {
   contextName?: string;
   introCard?: ReactNode;
   onReplyInThread?: (message: MSMessage) => void;
+  onForward?: (message: MSMessage) => void;
   onToggleReaction?: (messageId: string, reactionType: ReactionType) => void;
   onDelete?: (messageId: string) => void;
   onEdit?: (messageId: string, newContent: string) => Promise<void> | void;
@@ -26,7 +27,7 @@ interface Props {
   onSendOwn?: (callback: () => void) => void;
 }
 
-export function MessageFeed({ messages, loading, contextName, introCard, onReplyInThread, onToggleReaction, onDelete, onEdit, onRetry, onDiscard }: Props) {
+export function MessageFeed({ messages, loading, contextName, introCard, onReplyInThread, onForward, onToggleReaction, onDelete, onEdit, onRetry, onDiscard }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
@@ -124,6 +125,7 @@ export function MessageFeed({ messages, loading, contextName, introCard, onReply
               message={msg}
               isGroupHead={meta[idx].isGroupHead}
               onReplyInThread={onReplyInThread}
+              onForward={onForward}
               onToggleReaction={onToggleReaction}
               onDelete={onDelete}
               onEdit={onEdit}

@@ -12,9 +12,10 @@ interface ThreadPanelProps {
   open: boolean;
   onClose: () => void;
   onSendReply?: (messageId: string, content: string) => Promise<MSMessage>;
+  onForward?: (message: MSMessage) => void;
 }
 
-export function ThreadPanel({ message, open, onClose, onSendReply }: ThreadPanelProps) {
+export function ThreadPanel({ message, open, onClose, onSendReply, onForward }: ThreadPanelProps) {
   const [localReplies, setLocalReplies] = useState<MSMessage[]>([]);
   const currentUserId = useWorkspaceStore((state) => state.currentUserId);
   const currentUserName = useWorkspaceStore((state) => state.currentUserName);
@@ -100,7 +101,7 @@ export function ThreadPanel({ message, open, onClose, onSendReply }: ThreadPanel
       </header>
 
       <div className="flex-1 overflow-y-auto py-2">
-        <MessageItem message={message} isGroupHead />
+        <MessageItem message={message} isGroupHead onForward={onForward} />
         {localReplies.length > 0 && (
           <div className="my-2 flex items-center px-4">
             <div className="h-px flex-1 bg-[#3f4144]" />
@@ -115,6 +116,7 @@ export function ThreadPanel({ message, open, onClose, onSendReply }: ThreadPanel
             key={reply.id}
             message={reply}
             isGroupHead
+            onForward={onForward}
             onRetry={handleRetryReply}
             onDiscard={handleDiscardReply}
           />

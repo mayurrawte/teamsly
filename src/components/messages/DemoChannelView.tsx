@@ -10,13 +10,17 @@ import { ChannelMessageHeader, type Tab } from "./MessageHeader";
 import { ChannelIntroCard } from "./IntroCard";
 import { useMemberPanelStore } from "@/store/memberPanel";
 import { openTeamsChannelMeeting } from "@/lib/utils/teams-deeplink";
+import { ForwardMessageModal, type ForwardDestination } from "@/components/modals/ForwardMessageModal";
+import { useToastStore } from "@/store/toasts";
 
 export function DemoChannelView({ channelId }: { channelId: string }) {
   const { activeTeamId, channels, getMessages, setMessages, appendPendingMessage, replaceMessage, toggleReaction } = useWorkspaceStore();
   const openChannelMembers = useMemberPanelStore((s) => s.openChannelMembers);
   const handleOpenMembers = () => openChannelMembers("demo", channelId);
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
+  const [forwardMessage, setForwardMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
+  const showToast = useToastStore((s) => s.showToast);
   const teamChannels = activeTeamId ? (channels[activeTeamId] ?? []) : [];
   const channel = teamChannels.find((c) => c.id === channelId);
 
@@ -29,6 +33,32 @@ export function DemoChannelView({ channelId }: { channelId: string }) {
     setActiveTab("messages");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelId]);
+
+  // Demo forward — local-only append to the destination's `demo:` cache slice.
+  async function handleForward(destination: ForwardDestination, htmlBody: string) {
+    const destContextId = destination.kind === "chat"
+      ? `demo:${destination.chatId}`
+      : `demo:${destination.channelId}`;
+    const tempId = `temp-${crypto.randomUUID()}`;
+    const now = new Date().toISOString();
+    appendPendingMessage(destContextId, {
+      id: tempId,
+      createdDateTime: now,
+      body: { contentType: "html", content: htmlBody },
+      from: { user: { id: "you", displayName: "You" } },
+      reactions: [],
+    });
+    window.setTimeout(() => {
+      replaceMessage(destContextId, tempId, {
+        id: `demo-forward-${Date.now()}`,
+        createdDateTime: now,
+        body: { contentType: "html", content: htmlBody },
+        from: { user: { id: "you", displayName: "You" } },
+        reactions: [],
+      });
+      showToast({ title: `Forwarded to ${destination.label}` });
+    }, 400);
+  }
 
   async function handleSend(content: string) {
     const tempId = `temp-${crypto.randomUUID()}`;
@@ -82,6 +112,7 @@ export function DemoChannelView({ channelId }: { channelId: string }) {
             contextName={channel?.displayName ? `#${channel.displayName}` : "Channel"}
             introCard={introCard}
             onReplyInThread={setThreadMessage}
+            onForward={setForwardMessage}
             onToggleReaction={(messageId, reactionType) =>
               toggleReaction(contextId, messageId, reactionType)
             }
@@ -100,6 +131,13 @@ export function DemoChannelView({ channelId }: { channelId: string }) {
         open={Boolean(threadMessage)}
         message={threadMessage}
         onClose={() => setThreadMessage(null)}
+        onForward={setForwardMessage}
+      />
+      <ForwardMessageModal
+        open={Boolean(forwardMessage)}
+        onOpenChange={(next) => { if (!next) setForwardMessage(null); }}
+        message={forwardMessage}
+        onForward={handleForward}
       />
     </div>
   );
