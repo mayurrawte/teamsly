@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, KeyboardEvent } from "react";
+import { useRef, useState, KeyboardEvent, useEffect, useCallback, ClipboardEvent, DragEvent } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import {
   Send,
@@ -16,9 +16,22 @@ import {
   Code,
   Code2,
   X,
+  Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { markdownToHtml } from "@/lib/utils/markdown-to-html";
+import { Avatar } from "@/components/ui/Avatar";
+import { useToastStore } from "@/store/toasts";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export interface MentionCandidate {
+  id: string;
+  displayName: string;
+  email?: string;
+}
 
 interface Props {
   placeholder: string;
@@ -27,6 +40,8 @@ interface Props {
   onAttachAndSend?: (content: string, file: File) => Promise<void>;
   /** Set to true by the parent while the upload+send is in flight */
   uploading?: boolean;
+  /** Members to suggest for @mention autocomplete */
+  mentionCandidates?: MentionCandidate[];
 }
 
 // ---------------------------------------------------------------------------
@@ -52,15 +67,120 @@ interface ToolbarButton {
 }
 
 // ---------------------------------------------------------------------------
+// @mention trigger detection helpers
+// ---------------------------------------------------------------------------
+
+/** Returns { query, atIndex } when cursor is inside an @-word, else null. */
+function detectMentionTrigger(
+  text: string,
+  cursor: number
+): { query: string; atIndex: number } | null {
+  // Walk backwards from cursor to find the start of the current word
+  const before = text.slice(0, cursor);
+  // The trigger is active when the segment from the last whitespace/start to cursor starts with @
+  const match = before.match(/(?:^|[\s\n])(@\S{0,50})$/);
+  if (!match) return null;
+  const segment = match[1]; // e.g. "@ma"
+  const atIndex = before.lastIndexOf(segment);
+  const query = segment.slice(1); // strip leading @
+  return { query, atIndex };
+}
+
+// ---------------------------------------------------------------------------
+// Extension for MIME type → file extension
+// ---------------------------------------------------------------------------
+
+function mimeToExt(mimeType: string): string {
+  const map: Record<string, string> = {
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/gif": "gif",
+    "image/webp": "webp",
+    "image/svg+xml": "svg",
+    "image/bmp": "bmp",
+    "image/tiff": "tiff",
+  };
+  return map[mimeType] ?? "png";
+}
+
+// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
-export function MessageInput({ placeholder, onSend, onAttachAndSend, uploading }: Props) {
+export function MessageInput({
+  placeholder,
+  onSend,
+  onAttachAndSend,
+  uploading,
+  mentionCandidates,
+}: Props) {
   const [value, setValue] = useState("");
   const [sending, setSending] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const showToast = useToastStore((state) => state.showToast);
+
+  // ---------------------------------------------------------------------------
+  // @mention state
+  // ---------------------------------------------------------------------------
+  const [mentionAnchor, setMentionAnchor] = useState<{ query: string; atIndex: number } | null>(null);
+  const [mentionSelectedIdx, setMentionSelectedIdx] = useState(0);
+  const mentionPopoverRef = useRef<HTMLDivElement>(null);
+
+  const hasMentionCandidates = Boolean(mentionCandidates && mentionCandidates.length > 0);
+
+  const filteredCandidates = mentionAnchor && hasMentionCandidates
+    ? (mentionCandidates ?? [])
+        .filter((c) => {
+          const q = mentionAnchor.query.toLowerCase();
+          if (!q) return true;
+          return (
+            c.displayName.toLowerCase().includes(q) ||
+            (c.email && c.email.toLowerCase().startsWith(q))
+          );
+        })
+        .slice(0, 6)
+    : [];
+
+  const mentionOpen = mentionAnchor !== null && filteredCandidates.length > 0;
+
+  const filteredCount = filteredCandidates.length;
+
+  // Keep selected index in bounds when filtered list changes
+  useEffect(() => {
+    if (mentionOpen) {
+      setMentionSelectedIdx((prev) => Math.min(prev, filteredCount - 1));
+    }
+  }, [filteredCount, mentionOpen]);
+
+  // ---------------------------------------------------------------------------
+  // Drag-drop state
+  // ---------------------------------------------------------------------------
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  // Counter tracks nested enter/leave events on child elements
+  const dragCounterRef = useRef(0);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
+
+  // ---------------------------------------------------------------------------
+  // Mention trigger: re-evaluate on value / cursor change
+  // ---------------------------------------------------------------------------
+  const updateMentionTrigger = useCallback(
+    (text: string, cursorPos: number) => {
+      if (!hasMentionCandidates) {
+        setMentionAnchor(null);
+        return;
+      }
+      const result = detectMentionTrigger(text, cursorPos);
+      if (result) {
+        setMentionAnchor(result);
+        setMentionSelectedIdx(0);
+      } else {
+        setMentionAnchor(null);
+      }
+    },
+    [hasMentionCandidates]
+  );
 
   const isBusy = sending || Boolean(uploading);
 
@@ -100,7 +220,63 @@ export function MessageInput({ placeholder, onSend, onAttachAndSend, uploading }
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // @mention insertion
+  // ---------------------------------------------------------------------------
+
+  function insertMention(candidate: MentionCandidate) {
+    const ta = textareaRef.current;
+    if (!ta || !mentionAnchor) return;
+
+    const cursor = ta.selectionStart ?? value.length;
+    const before = value.slice(0, mentionAnchor.atIndex);
+    const after = value.slice(cursor);
+
+    // Plain-text @DisplayName insertion — no <at> markup because the Graph
+    // chat messages API for cross-tenant DMs does not render structured
+    // mention payloads; @Display Name in plain text is universally compatible.
+    const insertion = `@${candidate.displayName} `;
+    const newValue = before + insertion + after;
+    const newCursor = mentionAnchor.atIndex + insertion.length;
+
+    setValue(newValue);
+    setMentionAnchor(null);
+
+    requestAnimationFrame(() => {
+      ta.focus();
+      ta.setSelectionRange(newCursor, newCursor);
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Key handler
+  // ---------------------------------------------------------------------------
+
   function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+    // When mention popover is open, intercept navigation keys
+    if (mentionOpen) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setMentionSelectedIdx((prev) => (prev + 1) % filteredCandidates.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setMentionSelectedIdx((prev) => (prev - 1 + filteredCandidates.length) % filteredCandidates.length);
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        insertMention(filteredCandidates[mentionSelectedIdx]);
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setMentionAnchor(null);
+        return;
+      }
+    }
+
     // Submit on Enter (without Shift)
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -126,6 +302,74 @@ export function MessageInput({ placeholder, onSend, onAttachAndSend, uploading }
           break;
       }
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Paste handler (images / files from clipboard)
+  // ---------------------------------------------------------------------------
+
+  function onPaste(e: ClipboardEvent<HTMLTextAreaElement>) {
+    if (!onAttachAndSend) return; // Only when upload is supported
+
+    const items = Array.from(e.clipboardData.items);
+    const fileItems = items.filter((item) => item.kind === "file");
+
+    if (fileItems.length === 0) return; // No files — let default text paste run
+
+    // Warn if multiple images pasted
+    if (fileItems.length > 1) {
+      showToast({ title: "Paste one image at a time", tone: "info" });
+    }
+
+    e.preventDefault();
+
+    // Prefer an image item; fall back to the first file of any type
+    const imageItem = fileItems.find((item) => item.type.startsWith("image/"));
+    const chosen = imageItem ?? fileItems[0];
+    const file = chosen.getAsFile();
+    if (!file) return;
+
+    // If the pasted image has no name, generate a friendly one
+    const finalFile =
+      file.name && file.name !== "image.png"
+        ? file
+        : new File([file], `pasted-image-${Date.now()}.${mimeToExt(chosen.type)}`, {
+            type: chosen.type,
+          });
+
+    setPendingFile(finalFile);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Drag-drop handlers (file onto composer)
+  // ---------------------------------------------------------------------------
+
+  function onDragEnter(e: DragEvent<HTMLDivElement>) {
+    if (!onAttachAndSend) return;
+    e.preventDefault();
+    dragCounterRef.current += 1;
+    if (dragCounterRef.current === 1) setIsDraggingFile(true);
+  }
+
+  function onDragOver(e: DragEvent<HTMLDivElement>) {
+    if (!onAttachAndSend) return;
+    e.preventDefault(); // Required to allow drop
+  }
+
+  function onDragLeave(_e: DragEvent<HTMLDivElement>) {
+    if (!onAttachAndSend) return;
+    dragCounterRef.current -= 1;
+    if (dragCounterRef.current === 0) setIsDraggingFile(false);
+  }
+
+  function onDrop(e: DragEvent<HTMLDivElement>) {
+    if (!onAttachAndSend) return;
+    e.preventDefault();
+    dragCounterRef.current = 0;
+    setIsDraggingFile(false);
+
+    const file = e.dataTransfer.files[0];
+    if (file) setPendingFile(file);
   }
 
   // ---------------------------------------------------------------------------
@@ -323,107 +567,180 @@ export function MessageInput({ placeholder, onSend, onAttachAndSend, uploading }
         />
       )}
 
-      <div className="rounded-lg border border-[var(--border-input)] bg-[var(--surface)] transition-colors duration-150 focus-within:border-[var(--text-secondary)]">
-        {/* Formatting toolbar */}
-        <div className="flex items-center gap-0.5 border-b border-[var(--border)] px-2 py-1">
-          {toolbarButtons.map((item, idx) => {
-            if (item === "divider") {
-              return (
-                <span
-                  key={`divider-${idx}`}
-                  className="mx-1 h-4 w-px flex-shrink-0 bg-[var(--border)]"
-                  aria-hidden="true"
-                />
-              );
-            }
-            return (
-              <button
-                key={item.action}
-                type="button"
-                aria-label={item.label}
-                title={item.label}
-                onMouseDown={(e) => {
-                  // Prevent textarea from losing focus
-                  e.preventDefault();
-                  applyFormat(item.action);
-                }}
-                className="flex h-6 w-6 items-center justify-center rounded text-[var(--text-secondary)] transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-white active:bg-[var(--accent)] active:text-white focus-ring"
-              >
-                {item.icon}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Textarea row */}
-        <div className="flex items-end gap-2 px-3 py-2">
-          {/* Paperclip only rendered when parent supports file upload */}
-          {onAttachAndSend && (
-            <button
-              type="button"
-              aria-label="Attach file"
-              disabled={isBusy}
-              onClick={() => fileInputRef.current?.click()}
-              className="flex-shrink-0 rounded p-1 text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-white focus-ring disabled:opacity-40"
-            >
-              <Paperclip className="h-4 w-4" />
-            </button>
-          )}
-          <TextareaAutosize
-            ref={textareaRef}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={onKeyDown}
-            placeholder={placeholder}
-            maxRows={8}
-            disabled={isBusy}
-            className="flex-1 resize-none bg-transparent text-[14px] text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none disabled:opacity-50"
-          />
-          <div className="flex flex-shrink-0 items-center gap-1">
-            <button
-              type="button"
-              aria-label="Insert emoji"
-              className="rounded p-1 text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-white focus-ring"
-            >
-              <Smile className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              aria-label="Send message"
-              onClick={submit}
-              disabled={!canSend}
-              className={cn(
-                "flex h-8 w-8 items-center justify-center rounded transition-[background,color] duration-150 ease-out focus-ring",
-                canSend
-                  ? "bg-[#007a5a] text-white hover:bg-[#148567]"
-                  : "text-[var(--text-muted)]"
-              )}
-            >
-              <Send className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Pending attachment chip — sits between textarea and bottom hint */}
-        {pendingFile && (
-          <div className="flex items-center gap-2 border-t border-[var(--border)] px-3 py-1.5">
-            <Paperclip className="h-3.5 w-3.5 flex-shrink-0 text-[var(--text-secondary)]" aria-hidden="true" />
-            <span className="flex-1 truncate text-[12px] text-[var(--text-primary)]">
-              {pendingFile.name}
-            </span>
-            <span className="flex-shrink-0 text-[11px] text-[var(--text-muted)]">
-              {formatBytes(pendingFile.size)}
-            </span>
-            <button
-              type="button"
-              aria-label={`Remove attachment ${pendingFile.name}`}
-              onClick={() => setPendingFile(null)}
-              className="flex-shrink-0 rounded p-0.5 text-[var(--text-secondary)] transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-white focus-ring"
-            >
-              <X className="h-3 w-3" />
-            </button>
+      {/* Outer wrapper handles drag-drop; position:relative for drop overlay */}
+      <div
+        ref={dropZoneRef}
+        className="relative"
+        onDragEnter={onDragEnter}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+      >
+        {/* Drag-over overlay */}
+        {isDraggingFile && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[var(--accent)] bg-[var(--surface)] text-[var(--accent)]">
+            <Upload className="h-6 w-6" />
+            <span className="text-[13px] font-medium">Drop to attach</span>
           </div>
         )}
+
+        {/* @mention popover — positioned above the composer */}
+        {mentionOpen && (
+          <div
+            ref={mentionPopoverRef}
+            role="listbox"
+            aria-label="Mention suggestions"
+            className="absolute bottom-full left-0 z-20 mb-1 w-72 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-lg"
+          >
+            {filteredCandidates.map((c, idx) => (
+              <button
+                key={c.id}
+                role="option"
+                aria-selected={idx === mentionSelectedIdx}
+                type="button"
+                onMouseDown={(e) => {
+                  // Prevent textarea blur before insertion
+                  e.preventDefault();
+                  insertMention(c);
+                }}
+                className={cn(
+                  "flex w-full items-center gap-2 px-3 py-1.5 text-left transition-colors duration-100",
+                  idx === mentionSelectedIdx
+                    ? "bg-[var(--surface-hover)]"
+                    : "hover:bg-[var(--surface-hover)]"
+                )}
+              >
+                <Avatar userId={c.id} displayName={c.displayName} size={20} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[13px] font-semibold text-[var(--text-primary)]">
+                    {c.displayName}
+                  </span>
+                  {c.email && (
+                    <span className="block truncate text-[11px] text-[var(--text-muted)]">
+                      {c.email}
+                    </span>
+                  )}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="rounded-lg border border-[var(--border-input)] bg-[var(--surface)] transition-colors duration-150 focus-within:border-[var(--text-secondary)]">
+          {/* Formatting toolbar */}
+          <div className="flex items-center gap-0.5 border-b border-[var(--border)] px-2 py-1">
+            {toolbarButtons.map((item, idx) => {
+              if (item === "divider") {
+                return (
+                  <span
+                    key={`divider-${idx}`}
+                    className="mx-1 h-4 w-px flex-shrink-0 bg-[var(--border)]"
+                    aria-hidden="true"
+                  />
+                );
+              }
+              return (
+                <button
+                  key={item.action}
+                  type="button"
+                  aria-label={item.label}
+                  title={item.label}
+                  onMouseDown={(e) => {
+                    // Prevent textarea from losing focus
+                    e.preventDefault();
+                    applyFormat(item.action);
+                  }}
+                  className="flex h-6 w-6 items-center justify-center rounded text-[var(--text-secondary)] transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-white active:bg-[var(--accent)] active:text-white focus-ring"
+                >
+                  {item.icon}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Textarea row */}
+          <div className="flex items-end gap-2 px-3 py-2">
+            {/* Paperclip only rendered when parent supports file upload */}
+            {onAttachAndSend && (
+              <button
+                type="button"
+                aria-label="Attach file"
+                disabled={isBusy}
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-shrink-0 rounded p-1 text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-white focus-ring disabled:opacity-40"
+              >
+                <Paperclip className="h-4 w-4" />
+              </button>
+            )}
+            <TextareaAutosize
+              ref={textareaRef}
+              value={value}
+              onChange={(e) => {
+                setValue(e.target.value);
+                updateMentionTrigger(e.target.value, e.target.selectionStart);
+              }}
+              onKeyDown={onKeyDown}
+              onKeyUp={(e) => {
+                // Re-check trigger after cursor movement keys (arrow left/right/home/end)
+                const ta = e.currentTarget;
+                updateMentionTrigger(ta.value, ta.selectionStart);
+              }}
+              onClick={(e) => {
+                const ta = e.currentTarget;
+                updateMentionTrigger(ta.value, ta.selectionStart);
+              }}
+              onPaste={onPaste}
+              placeholder={placeholder}
+              maxRows={8}
+              disabled={isBusy}
+              className="flex-1 resize-none bg-transparent text-[14px] text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none disabled:opacity-50"
+            />
+            <div className="flex flex-shrink-0 items-center gap-1">
+              <button
+                type="button"
+                aria-label="Insert emoji"
+                className="rounded p-1 text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-white focus-ring"
+              >
+                <Smile className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                aria-label="Send message"
+                onClick={submit}
+                disabled={!canSend}
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded transition-[background,color] duration-150 ease-out focus-ring",
+                  canSend
+                    ? "bg-[#007a5a] text-white hover:bg-[#148567]"
+                    : "text-[var(--text-muted)]"
+                )}
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Pending attachment chip — sits between textarea and bottom hint */}
+          {pendingFile && (
+            <div className="flex items-center gap-2 border-t border-[var(--border)] px-3 py-1.5">
+              <Paperclip className="h-3.5 w-3.5 flex-shrink-0 text-[var(--text-secondary)]" aria-hidden="true" />
+              <span className="flex-1 truncate text-[12px] text-[var(--text-primary)]">
+                {pendingFile.name}
+              </span>
+              <span className="flex-shrink-0 text-[11px] text-[var(--text-muted)]">
+                {formatBytes(pendingFile.size)}
+              </span>
+              <button
+                type="button"
+                aria-label={`Remove attachment ${pendingFile.name}`}
+                onClick={() => setPendingFile(null)}
+                className="flex-shrink-0 rounded p-0.5 text-[var(--text-secondary)] transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-white focus-ring"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
       <p className="mt-1 text-center text-[11px] text-[var(--text-muted)]">
         <kbd className="rounded bg-[var(--border)] px-1 py-0.5 text-[10px]">Enter</kbd> to send ·{" "}

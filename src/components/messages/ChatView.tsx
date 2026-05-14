@@ -256,6 +256,11 @@ export function ChatView({ chatId }: { chatId: string }) {
   const otherMembers = members.filter((m) => (m.userId ?? m.id) !== currentUserId);
   const isSelfDm = otherMembers.length === 0;
 
+  // Build mention candidates — exclude current user so they don't @mention themselves
+  const mentionCandidates = members
+    .filter((m) => (m.userId ?? m.id) !== currentUserId)
+    .map((m) => ({ id: m.userId ?? m.id, displayName: m.displayName, email: m.email }));
+
   const callEmails = otherMembers.map((m) => m.email ?? "").filter(Boolean);
 
   const introCard = (
@@ -302,6 +307,7 @@ export function ChatView({ chatId }: { chatId: string }) {
             onSend={handleSend}
             onAttachAndSend={handleAttachAndSend}
             uploading={uploading}
+            mentionCandidates={mentionCandidates}
           />
         </>
       ) : (

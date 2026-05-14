@@ -63,6 +63,13 @@ export function DemoChatView({ chatId }: { chatId: string }) {
   const otherMembers = members.filter((m) => (m.userId ?? m.id) !== currentUserId);
   const isSelfDm = otherMembers.length === 0;
 
+  // @mention candidates for demo — all members except self
+  const mentionCandidates = otherMembers.map((m) => ({
+    id: m.userId ?? m.id,
+    displayName: m.displayName,
+    email: m.email,
+  }));
+
   const callEmails = otherMembers.map((m) => m.email ?? "").filter(Boolean);
 
   const introCard = (
@@ -106,7 +113,11 @@ export function DemoChatView({ chatId }: { chatId: string }) {
             onDelete={handleDelete}
             onEdit={handleEdit}
           />
-          <MessageInput placeholder={`Message ${label}`} onSend={handleSend} />
+          <MessageInput
+            placeholder={`Message ${label}`}
+            onSend={handleSend}
+            mentionCandidates={mentionCandidates}
+          />
         </>
       ) : (
         <div className="flex flex-1 items-center justify-center text-sm text-[#6c6f75]">
