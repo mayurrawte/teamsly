@@ -1,0 +1,108 @@
+name: Update Homebrew tap
+
+# Fires when a GitHub Release transitions out of draft. Downloads the
+# just-uploaded DMGs, computes SHA256s, regenerates Casks/teamsly.rb from the
+# in-repo template, and pushes the result to mayurrawte/homebrew-teamsly.
+#
+# Setup required once: create a fine-grained PAT scoped to
+# mayurrawte/homebrew-teamsly with `Contents: Read and write` and store it as
+# the `TAP_REPO_TOKEN` repository secret on mayurrawte/teamsly.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to sync (e.g. v0.1.1)'
+        required: true
+
+jobs:
+  update-tap:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout teamsly (template source)
+        uses: actions/checkout@v4
+
+      - name: Resolve tag and version
+        id: tag
+        run: |
+          TAG="${{ github.event.release.tag_name || github.event.inputs.tag }}"
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Download DMGs and compute SHA256s
+        id: shas
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.tag.outputs.version }}"
+          ARM_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/Teamsly-${VERSION}-arm64.dmg"
+          INTEL_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/Teamsly-${VERSION}.dmg"
+          echo "Fetching $ARM_URL"
+          curl -fSL -o arm64.dmg "$ARM_URL"
+          echo "Fetching $INTEL_URL"
+          curl -fSL -o intel.dmg "$INTEL_URL"
+          ARM_SHA=$(sha256sum arm64.dmg | cut -d' ' -f1)
+          INTEL_SHA=$(sha256sum intel.dmg | cut -d' ' -f1)
+          echo "arm_sha=$ARM_SHA" >> "$GITHUB_OUTPUT"
+          echo "intel_sha=$INTEL_SHA" >> "$GITHUB_OUTPUT"
+          echo "arm:   $ARM_SHA"
+          echo "intel: $INTEL_SHA"
+
+      - name: Checkout tap repo
+        uses: actions/checkout@v4
+        with:
+          repository: mayurrawte/homebrew-teamsly
+          token: ${{ secrets.TAP_REPO_TOKEN }}
+          path: tap
+
+      - name: Regenerate Cask
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+          ARM_SHA: ${{ steps.shas.outputs.arm_sha }}
+          INTEL_SHA: ${{ steps.shas.outputs.intel_sha }}
+        run: |
+          python3 <<'PYEOF'
+          import os, re
+          version = os.environ['VERSION']
+          arm_sha = os.environ['ARM_SHA']
+          intel_sha = os.environ['INTEL_SHA']
+
+          with open('Casks/teamsly.rb', 'r') as f:
+              content = f.read()
+
+          # Strip the template-only banner so the published Cask is clean.
+          content = re.sub(
+              r'^# This file is the template[\s\S]*?install path that auto-syncs\.\n\n',
+              '',
+              content,
+          )
+
+          content = re.sub(r'version "[^"]+"', f'version "{version}"', content, count=1)
+
+          shas = [arm_sha, intel_sha]
+          def replacer(_m):
+              return f'sha256 "{shas.pop(0)}"'
+          content = re.sub(r'sha256 "[a-f0-9]+"', replacer, content, count=2)
+
+          os.makedirs('tap/Casks', exist_ok=True)
+          with open('tap/Casks/teamsly.rb', 'w') as f:
+              f.write(content)
+          PYEOF
+
+      - name: Commit and push to tap
+        run: |
+          set -euo pipefail
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet Casks/teamsly.rb; then
+            echo "Tap is already up to date; nothing to commit."
+            exit 0
+          fi
+          git add Casks/teamsly.rb
+          git commit -m "Bump teamsly to v${{ steps.tag.outputs.version }}"
+          git push

@@ -1,3 +1,9 @@
+# This file is the template the .github/workflows/update-homebrew-tap.yml
+# workflow uses to regenerate the Cask published to mayurrawte/homebrew-teamsly
+# on every release. The `version` and the two `sha256` values below may lag
+# behind the latest release — use `brew tap mayurrawte/teamsly` for the live
+# install path that auto-syncs.
+
 cask "teamsly" do
   arch arm: "arm64", intel: "x64"
 
