@@ -1,4 +1,5 @@
-import { Download, FileText } from "lucide-react";
+import { Download } from "lucide-react";
+import { getFileIcon } from "@/lib/utils/file-icon";
 import { AdaptiveCard } from "./AdaptiveCard";
 
 type MSAttachment = NonNullable<MSMessage["attachments"]>[number];
@@ -25,10 +26,12 @@ export function AttachmentCard({ attachment }: AttachmentCardProps) {
   const label = attachment.name || "Attachment";
   const contentType = attachment.contentType || "File";
 
+  const FileIcon = getFileIcon(attachment.contentType, false, attachment.name ?? undefined);
+
   const content = (
     <>
       <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[#2c2d30] text-[#ababad]">
-        <FileText size={18} />
+        <FileIcon size={18} />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[13px] font-bold text-[#d1d2d3]">{label}</span>
@@ -88,10 +91,11 @@ function AdaptiveCardAttachment({ attachment }: { attachment: MSAttachment }) {
 
   if (!parsed) {
     // Parse failed or content missing — render name-only stub
+    const FallbackIcon = getFileIcon(attachment.contentType, false, attachment.name ?? undefined);
     return (
       <div className="mt-2 flex max-w-[420px] items-center gap-3 rounded-md border border-[#3f4144] bg-[#1a1d21] px-3 py-2 text-left opacity-70">
         <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[#2c2d30] text-[#ababad]">
-          <FileText size={18} />
+          <FallbackIcon size={18} />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[13px] font-bold text-[#d1d2d3]">

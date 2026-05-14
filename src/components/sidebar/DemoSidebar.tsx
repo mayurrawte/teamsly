@@ -10,7 +10,7 @@ import { PresenceDot } from "@/components/ui/PresenceDot";
 import { DemoUserFooter } from "./DemoUserFooter";
 
 export function DemoSidebar() {
-  const { teams, activeTeamId, channels, chats, messages, presenceMap, unreadCounts, setActiveChannel, setActiveChat, activeChannelId, activeChatId, markRead } =
+  const { teams, activeTeamId, channels, chats, presenceMap, unreadCounts, setActiveChannel, setActiveChat, activeChannelId, activeChatId, markRead } =
     useWorkspaceStore();
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
@@ -141,7 +141,7 @@ export function DemoSidebar() {
         teamName={activeTeam?.displayName ?? "Teamsly"}
         channels={teamChannels}
         chats={chats}
-        messages={messages}
+        messages={[]}
         messageGroupName={searchGroupName}
         onSelectChannel={(channelId) => {
           markRead(channelId);

@@ -9,7 +9,9 @@ interface WorkspaceState {
   chats: MSChat[];
   chatsNextLink: string | null;
   activeChatId: string | null;
-  messages: MSMessage[];
+  // Per-context message cache: keyed by chatId or channelId.
+  // Preserved across navigation so re-visiting a context doesn't show a spinner.
+  messagesByContext: Record<string, MSMessage[]>;
   isLoadingMessages: boolean;
   presenceMap: Record<string, MSPresence["availability"]>;
   statusMessageMap: Record<string, MSPresence["statusMessage"]>;
@@ -25,18 +27,24 @@ interface WorkspaceState {
   setChats: (chats: MSChat[], nextLink?: string | null) => void;
   appendChats: (chats: MSChat[], nextLink: string | null) => void;
   setActiveChat: (id: string | null) => void;
-  setMessages: (messages: MSMessage[]) => void;
-  appendMessage: (message: MSMessage) => void;
-  // Optimistic-send actions — operate on the local message list only.
-  appendPendingMessage: (message: MSMessage) => void;
-  replaceMessage: (tempId: string, serverMessage: MSMessage) => void;
-  markMessageFailed: (tempId: string) => void;
-  removeMessage: (messageId: string) => void;
-  toggleReaction: (messageId: string, reactionType: string) => void;
-  deleteMessage: (messageId: string) => { message: MSMessage; index: number } | null;
-  restoreMessage: (message: MSMessage, index: number) => void;
-  editMessage: (messageId: string, newContent: string) => { previousContent: string; previousContentType: MSMessage["body"]["contentType"]; index: number } | null;
-  revertMessageEdit: (messageId: string, previousContent: string, previousContentType: MSMessage["body"]["contentType"]) => void;
+  /** Selector — returns the cached message list for a context, or []. */
+  getMessages: (contextId: string) => MSMessage[];
+  /**
+   * Replace the server-fetched message list for a context.
+   * Preserves any optimistic (pending/failed) messages that the server response
+   * won't include — merges them back in after applying the server array.
+   */
+  setMessages: (contextId: string, messages: MSMessage[]) => void;
+  appendMessage: (contextId: string, message: MSMessage) => void;
+  appendPendingMessage: (contextId: string, message: MSMessage) => void;
+  replaceMessage: (contextId: string, tempId: string, serverMessage: MSMessage) => void;
+  markMessageFailed: (contextId: string, tempId: string) => void;
+  removeMessage: (contextId: string, messageId: string) => void;
+  toggleReaction: (contextId: string, messageId: string, reactionType: string) => void;
+  deleteMessage: (contextId: string, messageId: string) => { message: MSMessage; index: number } | null;
+  restoreMessage: (contextId: string, message: MSMessage, index: number) => void;
+  editMessage: (contextId: string, messageId: string, newContent: string) => { previousContent: string; previousContentType: MSMessage["body"]["contentType"]; index: number } | null;
+  revertMessageEdit: (contextId: string, messageId: string, previousContent: string, previousContentType: MSMessage["body"]["contentType"]) => void;
   setLoadingMessages: (v: boolean) => void;
   setPresenceMap: (presenceMap: Record<string, MSPresence["availability"]>) => void;
   setStatusMessage: (userId: string, statusMessage: MSPresence["statusMessage"]) => void;
@@ -64,9 +72,15 @@ function sortChatsByActivity(chats: MSChat[]): MSChat[] {
   return [...chats].sort((a, b) => chatActivityTime(b) - chatActivityTime(a));
 }
 
+function sortByCreatedDateTime(messages: MSMessage[]): MSMessage[] {
+  return [...messages].sort(
+    (a, b) => new Date(a.createdDateTime).getTime() - new Date(b.createdDateTime).getTime()
+  );
+}
+
 export const useWorkspaceStore = create<WorkspaceState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       teams: [],
       activeTeamId: null,
       channels: {},
@@ -74,7 +88,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       chats: [],
       chatsNextLink: null,
       activeChatId: null,
-      messages: [],
+      messagesByContext: {},
       isLoadingMessages: false,
       presenceMap: {},
       statusMessageMap: {},
@@ -84,10 +98,10 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       starredIds: [],
 
       setTeams: (teams) => set({ teams }),
-      setActiveTeam: (id) => set({ activeTeamId: id, activeChannelId: null, messages: [] }),
+      setActiveTeam: (id) => set({ activeTeamId: id, activeChannelId: null }),
       setChannels: (teamId, channels) =>
         set((s) => ({ channels: { ...s.channels, [teamId]: channels } })),
-      setActiveChannel: (id) => set({ activeChannelId: id, activeChatId: null, messages: [] }),
+      setActiveChannel: (id) => set({ activeChannelId: id, activeChatId: null }),
       setChats: (chats, nextLink = null) =>
         set({ chats: sortChatsByActivity(chats), chatsNextLink: nextLink }),
       appendChats: (incoming, nextLink) =>
@@ -99,88 +113,174 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             chatsNextLink: nextLink,
           };
         }),
-      setActiveChat: (id) => set({ activeChatId: id, activeChannelId: null, messages: [] }),
-      setMessages: (messages) => set({ messages }),
-      appendMessage: (message) => set((s) => ({ messages: [...s.messages, message] })),
-      // Append an optimistic message that visually appears before server confirms it.
-      appendPendingMessage: (message) =>
-        set((s) => ({ messages: [...s.messages, { ...message, __pending: true }] })),
-      replaceMessage: (tempId, serverMessage) =>
-        set((s) => ({
-          messages: s.messages.map((m) =>
-            m.id === tempId
-              ? { ...serverMessage, __pending: undefined, __failed: undefined }
-              : m
-          ),
-        })),
-      markMessageFailed: (tempId) =>
-        set((s) => ({
-          messages: s.messages.map((m) =>
-            m.id === tempId ? { ...m, __pending: undefined, __failed: true } : m
-          ),
-        })),
-      removeMessage: (messageId) =>
-        set((s) => ({ messages: s.messages.filter((m) => m.id !== messageId) })),
-      toggleReaction: (messageId, reactionType) =>
-        set((s) => ({
-          messages: s.messages.map((message) => {
-            if (message.id !== messageId) return message;
+      setActiveChat: (id) => set({ activeChatId: id, activeChannelId: null }),
 
-            const reactions = message.reactions ?? [];
-            const existing = reactions.find(
-              (reaction) => reaction.reactionType === reactionType && reaction.user.id === s.currentUserId
-            );
+      getMessages: (contextId) => get().messagesByContext[contextId] ?? [],
 
-            return {
-              ...message,
-              reactions: existing
-                ? reactions.filter((reaction) => reaction !== existing)
-                : [
-                    ...reactions,
-                    { reactionType, user: { id: s.currentUserId, displayName: s.currentUserName } },
-                  ],
-            };
-          }),
-        })),
-      deleteMessage: (messageId) => {
+      setMessages: (contextId, incoming) =>
+        set((s) => {
+          const existing = s.messagesByContext[contextId] ?? [];
+          // Preserve optimistic (pending/failed) messages that the server response
+          // won't contain — they live only in local state until confirmed or failed.
+          const pending = existing.filter((m) => m.__pending || m.__failed);
+          const serverIds = new Set(incoming.map((m) => m.id));
+          const uniquePending = pending.filter((m) => !serverIds.has(m.id));
+          const merged = sortByCreatedDateTime([...incoming, ...uniquePending]);
+          return {
+            messagesByContext: { ...s.messagesByContext, [contextId]: merged },
+          };
+        }),
+
+      appendMessage: (contextId, message) =>
+        set((s) => {
+          const existing = s.messagesByContext[contextId] ?? [];
+          return {
+            messagesByContext: { ...s.messagesByContext, [contextId]: [...existing, message] },
+          };
+        }),
+
+      appendPendingMessage: (contextId, message) =>
+        set((s) => {
+          const existing = s.messagesByContext[contextId] ?? [];
+          return {
+            messagesByContext: {
+              ...s.messagesByContext,
+              [contextId]: [...existing, { ...message, __pending: true }],
+            },
+          };
+        }),
+
+      replaceMessage: (contextId, tempId, serverMessage) =>
+        set((s) => {
+          const existing = s.messagesByContext[contextId] ?? [];
+          return {
+            messagesByContext: {
+              ...s.messagesByContext,
+              [contextId]: existing.map((m) =>
+                m.id === tempId
+                  ? { ...serverMessage, __pending: undefined, __failed: undefined }
+                  : m
+              ),
+            },
+          };
+        }),
+
+      markMessageFailed: (contextId, tempId) =>
+        set((s) => {
+          const existing = s.messagesByContext[contextId] ?? [];
+          return {
+            messagesByContext: {
+              ...s.messagesByContext,
+              [contextId]: existing.map((m) =>
+                m.id === tempId ? { ...m, __pending: undefined, __failed: true } : m
+              ),
+            },
+          };
+        }),
+
+      removeMessage: (contextId, messageId) =>
+        set((s) => {
+          const existing = s.messagesByContext[contextId] ?? [];
+          return {
+            messagesByContext: {
+              ...s.messagesByContext,
+              [contextId]: existing.filter((m) => m.id !== messageId),
+            },
+          };
+        }),
+
+      toggleReaction: (contextId, messageId, reactionType) =>
+        set((s) => {
+          const existing = s.messagesByContext[contextId] ?? [];
+          return {
+            messagesByContext: {
+              ...s.messagesByContext,
+              [contextId]: existing.map((message) => {
+                if (message.id !== messageId) return message;
+                const reactions = message.reactions ?? [];
+                const reaction = reactions.find(
+                  (r) => r.reactionType === reactionType && r.user.id === s.currentUserId
+                );
+                return {
+                  ...message,
+                  reactions: reaction
+                    ? reactions.filter((r) => r !== reaction)
+                    : [
+                        ...reactions,
+                        { reactionType, user: { id: s.currentUserId, displayName: s.currentUserName } },
+                      ],
+                };
+              }),
+            },
+          };
+        }),
+
+      deleteMessage: (contextId, messageId) => {
         let result: { message: MSMessage; index: number } | null = null;
         set((s) => {
-          const index = s.messages.findIndex((m) => m.id === messageId);
+          const existing = s.messagesByContext[contextId] ?? [];
+          const index = existing.findIndex((m) => m.id === messageId);
           if (index === -1) return s;
-          result = { message: s.messages[index], index };
-          const next = [...s.messages];
+          result = { message: existing[index], index };
+          const next = [...existing];
           next.splice(index, 1);
-          return { messages: next };
+          return {
+            messagesByContext: { ...s.messagesByContext, [contextId]: next },
+          };
         });
         return result;
       },
-      restoreMessage: (message, index) =>
+
+      restoreMessage: (contextId, message, index) =>
         set((s) => {
-          const next = [...s.messages];
+          const existing = s.messagesByContext[contextId] ?? [];
+          const next = [...existing];
           next.splice(index, 0, message);
-          return { messages: next };
+          return {
+            messagesByContext: { ...s.messagesByContext, [contextId]: next },
+          };
         }),
-      editMessage: (messageId, newContent) => {
-        let result: { previousContent: string; previousContentType: MSMessage["body"]["contentType"]; index: number } | null = null;
+
+      editMessage: (contextId, messageId, newContent) => {
+        let result: {
+          previousContent: string;
+          previousContentType: MSMessage["body"]["contentType"];
+          index: number;
+        } | null = null;
         set((s) => {
-          const index = s.messages.findIndex((m) => m.id === messageId);
+          const existing = s.messagesByContext[contextId] ?? [];
+          const index = existing.findIndex((m) => m.id === messageId);
           if (index === -1) return s;
-          const msg = s.messages[index];
-          result = { previousContent: msg.body.content, previousContentType: msg.body.contentType, index };
-          const next = [...s.messages];
+          const msg = existing[index];
+          result = {
+            previousContent: msg.body.content,
+            previousContentType: msg.body.contentType,
+            index,
+          };
+          const next = [...existing];
           next[index] = { ...msg, body: { contentType: "html", content: newContent } };
-          return { messages: next };
+          return {
+            messagesByContext: { ...s.messagesByContext, [contextId]: next },
+          };
         });
         return result;
       },
-      revertMessageEdit: (messageId, previousContent, previousContentType) =>
+
+      revertMessageEdit: (contextId, messageId, previousContent, previousContentType) =>
         set((s) => {
-          const index = s.messages.findIndex((m) => m.id === messageId);
+          const existing = s.messagesByContext[contextId] ?? [];
+          const index = existing.findIndex((m) => m.id === messageId);
           if (index === -1) return s;
-          const next = [...s.messages];
-          next[index] = { ...next[index], body: { contentType: previousContentType, content: previousContent } };
-          return { messages: next };
+          const next = [...existing];
+          next[index] = {
+            ...next[index],
+            body: { contentType: previousContentType, content: previousContent },
+          };
+          return {
+            messagesByContext: { ...s.messagesByContext, [contextId]: next },
+          };
         }),
+
       setLoadingMessages: (v) => set({ isLoadingMessages: v }),
       setPresenceMap: (presenceMap) => set({ presenceMap }),
       setStatusMessage: (userId, statusMessage) =>
@@ -219,10 +319,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       storage: createJSONStorage(() =>
         typeof window !== "undefined" ? localStorage : (undefined as unknown as Storage)
       ),
-      version: 1,
+      version: 2,
       migrate: (persistedState, _version) => {
-        // Placeholder: return persisted state as-is for future schema migrations.
-        return persistedState as WorkspaceState;
+        // v1 → v2: messages flat array dropped; messagesByContext map introduced.
+        // Discard any persisted message state — it will be re-fetched on mount.
+        const s = persistedState as Record<string, unknown>;
+        delete s.messages;
+        if (!s.messagesByContext) s.messagesByContext = {};
+        return s as unknown as WorkspaceState;
       },
       partialize: (state) => ({
         teams: state.teams,

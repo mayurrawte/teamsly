@@ -14,13 +14,30 @@ import { useToastStore } from "@/store/toasts";
 import { openTeamsCall } from "@/lib/utils/teams-deeplink";
 
 export function ChatView({ chatId }: { chatId: string }) {
-  const { chats, messages, isLoadingMessages, currentUserId, currentUserName, setMessages, appendPendingMessage, replaceMessage, markMessageFailed, removeMessage, setLoadingMessages, toggleReaction, deleteMessage, restoreMessage, editMessage, revertMessageEdit } =
-    useWorkspaceStore();
+  const {
+    chats,
+    getMessages,
+    isLoadingMessages,
+    currentUserId,
+    currentUserName,
+    setMessages,
+    appendPendingMessage,
+    replaceMessage,
+    markMessageFailed,
+    removeMessage,
+    setLoadingMessages,
+    toggleReaction,
+    deleteMessage,
+    restoreMessage,
+    editMessage,
+    revertMessageEdit,
+  } = useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
   const [uploading, setUploading] = useState(false);
   const showToast = useToastStore((state) => state.showToast);
 
+  const messages = getMessages(chatId);
   const chat = chats.find((c) => c.id === chatId);
   const label = getChatLabel(chat, currentUserId);
   const members = chat?.members ?? [];
@@ -32,39 +49,33 @@ export function ChatView({ chatId }: { chatId: string }) {
 
   useEffect(() => {
     let cancelled = false;
+    const cached = getMessages(chatId);
+    const isFirstLoad = cached.length === 0;
 
-    async function loadInitialMessages() {
-      setLoadingMessages(true);
+    if (isFirstLoad) setLoadingMessages(true);
+
+    async function load() {
       try {
         const response = await fetch(`/api/chats/${chatId}/messages`);
         if (!response.ok) throw new Error("Failed to load chat messages");
         const data = (await response.json()) as MSMessage[];
-        if (!cancelled) setMessages(sortByCreated(data));
+        if (!cancelled) setMessages(chatId, sortByCreated(data));
       } catch {
-        if (!cancelled) showToast({ title: "Could not load messages", tone: "error" });
+        if (isFirstLoad && !cancelled) showToast({ title: "Could not load messages", tone: "error" });
       } finally {
         if (!cancelled) setLoadingMessages(false);
       }
     }
 
-    async function pollMessages() {
-      try {
-        const response = await fetch(`/api/chats/${chatId}/messages`);
-        if (!response.ok) return;
-        const data = (await response.json()) as MSMessage[];
-        if (!cancelled) setMessages(sortByCreated(data));
-      } catch {
-        // Avoid noisy repeated toasts during background polling.
-      }
-    }
+    load();
 
-    loadInitialMessages();
-
-    const interval = setInterval(pollMessages, 5000);
+    const interval = setInterval(load, 5000);
     return () => {
       cancelled = true;
       clearInterval(interval);
     };
+    // getMessages is a stable selector — intentionally not in deps to avoid re-running on cache updates
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId, setLoadingMessages, setMessages, showToast]);
 
   async function handleSend(content: string) {
@@ -80,7 +91,7 @@ export function ChatView({ chatId }: { chatId: string }) {
       __pending: true,
       __originalText: content,
     };
-    appendPendingMessage(optimistic);
+    appendPendingMessage(chatId, optimistic);
 
     try {
       const res = await fetch(`/api/chats/${chatId}/messages`, {
@@ -90,9 +101,9 @@ export function ChatView({ chatId }: { chatId: string }) {
       });
       if (!res.ok) throw new Error("Failed to send chat message");
       const serverMsg = (await res.json()) as MSMessage;
-      replaceMessage(tempId, serverMsg);
+      replaceMessage(chatId, tempId, serverMsg);
     } catch {
-      markMessageFailed(tempId);
+      markMessageFailed(chatId, tempId);
       showToast({ title: "Could not send message", tone: "error" });
     }
   }
@@ -140,7 +151,7 @@ export function ChatView({ chatId }: { chatId: string }) {
       __pending: true,
       // Attachment messages: retry is discard-only; upload is already done.
     };
-    appendPendingMessage(optimistic);
+    appendPendingMessage(chatId, optimistic);
     setUploading(false);
 
     try {
@@ -161,11 +172,11 @@ export function ChatView({ chatId }: { chatId: string }) {
       });
       if (!res.ok) throw new Error("Failed to send message with attachment");
       const serverMsg = (await res.json()) as MSMessage;
-      replaceMessage(tempId, serverMsg);
+      replaceMessage(chatId, tempId, serverMsg);
     } catch {
       // File is already uploaded; mark failed — discard-only (no retry button
       // since we'd need to re-POST the same driveItem URL which is already there).
-      markMessageFailed(tempId);
+      markMessageFailed(chatId, tempId);
       showToast({ title: "Could not send message", tone: "error" });
     }
   }
@@ -182,18 +193,18 @@ export function ChatView({ chatId }: { chatId: string }) {
 
   async function handleDelete(messageId: string) {
     if (!window.confirm("Delete this message? This cannot be undone.")) return;
-    const snapshot = deleteMessage(messageId);
+    const snapshot = deleteMessage(chatId, messageId);
     try {
       const res = await fetch(`/api/chats/${chatId}/messages/${messageId}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Graph delete failed");
     } catch {
-      if (snapshot) restoreMessage(snapshot.message, snapshot.index);
+      if (snapshot) restoreMessage(chatId, snapshot.message, snapshot.index);
       showToast({ title: "Could not delete message", tone: "error" });
     }
   }
 
   async function handleEdit(messageId: string, newContent: string) {
-    const snapshot = editMessage(messageId, textToHtml(newContent));
+    const snapshot = editMessage(chatId, messageId, textToHtml(newContent));
     try {
       const res = await fetch(`/api/chats/${chatId}/messages/${messageId}`, {
         method: "PATCH",
@@ -202,7 +213,8 @@ export function ChatView({ chatId }: { chatId: string }) {
       });
       if (!res.ok) throw new Error("Graph patch failed");
     } catch {
-      if (snapshot) revertMessageEdit(messageId, snapshot.previousContent, snapshot.previousContentType);
+      if (snapshot)
+        revertMessageEdit(chatId, messageId, snapshot.previousContent, snapshot.previousContentType);
       showToast({ title: "Could not edit message", tone: "error" });
     }
   }
@@ -210,18 +222,23 @@ export function ChatView({ chatId }: { chatId: string }) {
   function handleRetry(originalText: string) {
     // Drop the failed message then re-fire the send with the original text.
     // handleSend will create a fresh optimistic entry.
-    const failedMsg = messages.find((m) => m.__failed && (m.__originalText === originalText || messagePlainText(m.body.content, m.body.contentType) === originalText));
-    if (failedMsg) removeMessage(failedMsg.id);
+    const failedMsg = messages.find(
+      (m) =>
+        m.__failed &&
+        (m.__originalText === originalText ||
+          messagePlainText(m.body.content, m.body.contentType) === originalText)
+    );
+    if (failedMsg) removeMessage(chatId, failedMsg.id);
     void handleSend(originalText);
   }
 
   function handleDiscard(messageId: string) {
-    removeMessage(messageId);
+    removeMessage(chatId, messageId);
   }
 
   async function handleToggleReaction(messageId: string, reactionType: ReactionType) {
     const action = hasReacted(messages, messageId, reactionType, currentUserId) ? "unset" : "set";
-    toggleReaction(messageId, reactionType);
+    toggleReaction(chatId, messageId, reactionType);
     try {
       const res = await fetch(`/api/chats/${chatId}/messages/${messageId}/reactions`, {
         method: "POST",
@@ -230,7 +247,7 @@ export function ChatView({ chatId }: { chatId: string }) {
       });
       if (!res.ok) throw new Error("Failed to update reaction");
     } catch {
-      toggleReaction(messageId, reactionType);
+      toggleReaction(chatId, messageId, reactionType);
       showToast({ title: "Could not update reaction", tone: "error" });
     }
   }

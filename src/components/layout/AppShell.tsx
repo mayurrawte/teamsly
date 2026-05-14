@@ -16,7 +16,7 @@ import { sendUnreadCount } from "@/lib/electron-bridge";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { teams, activeTeamId, channels, chats, messages, setTeams, setActiveTeam, setChannels, setActiveChannel, setActiveChat, markRead, setCurrentUser } = useWorkspaceStore();
+  const { teams, activeTeamId, channels, chats, setTeams, setActiveTeam, setChannels, setActiveChannel, setActiveChat, markRead, setCurrentUser } = useWorkspaceStore();
   const unreadCounts = useWorkspaceStore((s) => s.unreadCounts);
   const showToast = useToastStore((state) => state.showToast);
   const [jumpToOpen, setJumpToOpen] = useState(false);
@@ -192,7 +192,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         teamName={teamName}
         channels={teamChannels}
         chats={chats}
-        messages={messages}
+        messages={[]}
         onSelectChannel={handleSelectChannel}
         onSelectChat={handleSelectChat}
       />

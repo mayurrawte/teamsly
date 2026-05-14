@@ -12,7 +12,7 @@ import { DmMessageHeader, type Tab } from "./MessageHeader";
 import { DmIntroCard } from "./IntroCard";
 
 export function DemoChatView({ chatId }: { chatId: string }) {
-  const { chats, messages, setMessages, appendPendingMessage, replaceMessage, toggleReaction, deleteMessage, editMessage } = useWorkspaceStore();
+  const { chats, getMessages, setMessages, appendPendingMessage, replaceMessage, toggleReaction, deleteMessage, editMessage } = useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
   const chat = chats.find((c) => c.id === chatId);
@@ -20,24 +20,28 @@ export function DemoChatView({ chatId }: { chatId: string }) {
   const label = chat?.topic ?? members.map((m) => m.displayName).join(", ") ?? "DM";
   const currentUserId = "you";
 
+  const contextId = `demo:${chatId}`;
+  const messages = getMessages(contextId);
+
   useEffect(() => {
-    setMessages(mockChatMessages[chatId] ?? []);
+    setMessages(contextId, mockChatMessages[chatId] ?? []);
     setActiveTab("messages");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId]);
 
   function handleDelete(messageId: string) {
     if (!window.confirm("Delete this message? This cannot be undone.")) return;
-    deleteMessage(messageId);
+    deleteMessage(contextId, messageId);
   }
 
   function handleEdit(messageId: string, newContent: string) {
-    editMessage(messageId, textToHtml(newContent));
+    editMessage(contextId, messageId, textToHtml(newContent));
   }
 
   async function handleSend(content: string) {
     const tempId = `temp-${crypto.randomUUID()}`;
     const now = new Date().toISOString();
-    appendPendingMessage({
+    appendPendingMessage(contextId, {
       id: tempId,
       createdDateTime: now,
       body: { contentType: "text", content },
@@ -46,7 +50,7 @@ export function DemoChatView({ chatId }: { chatId: string }) {
     });
     // Simulate server round-trip with a small delay so the pending state is visible.
     window.setTimeout(() => {
-      replaceMessage(tempId, {
+      replaceMessage(contextId, tempId, {
         id: `demo-dm-${Date.now()}`,
         createdDateTime: now,
         body: { contentType: "text", content },
@@ -96,7 +100,9 @@ export function DemoChatView({ chatId }: { chatId: string }) {
             contextName={label}
             introCard={introCard}
             onReplyInThread={setThreadMessage}
-            onToggleReaction={toggleReaction}
+            onToggleReaction={(messageId, reactionType) =>
+              toggleReaction(contextId, messageId, reactionType)
+            }
             onDelete={handleDelete}
             onEdit={handleEdit}
           />

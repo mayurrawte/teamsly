@@ -11,7 +11,7 @@ import { ChannelIntroCard } from "./IntroCard";
 import { useMemberPanelStore } from "@/store/memberPanel";
 
 export function DemoChannelView({ channelId }: { channelId: string }) {
-  const { activeTeamId, channels, messages, setMessages, appendPendingMessage, replaceMessage, toggleReaction } = useWorkspaceStore();
+  const { activeTeamId, channels, getMessages, setMessages, appendPendingMessage, replaceMessage, toggleReaction } = useWorkspaceStore();
   const openChannelMembers = useMemberPanelStore((s) => s.openChannelMembers);
   const handleOpenMembers = () => openChannelMembers("demo", channelId);
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
@@ -19,16 +19,20 @@ export function DemoChannelView({ channelId }: { channelId: string }) {
   const teamChannels = activeTeamId ? (channels[activeTeamId] ?? []) : [];
   const channel = teamChannels.find((c) => c.id === channelId);
 
+  const contextId = `demo:${channelId}`;
+  const messages = getMessages(contextId);
+
   useEffect(() => {
     const msgs = mockMessages[channelId] ?? [];
-    setMessages(msgs);
+    setMessages(contextId, msgs);
     setActiveTab("messages");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelId]);
 
   async function handleSend(content: string) {
     const tempId = `temp-${crypto.randomUUID()}`;
     const now = new Date().toISOString();
-    appendPendingMessage({
+    appendPendingMessage(contextId, {
       id: tempId,
       createdDateTime: now,
       body: { contentType: "text", content },
@@ -37,7 +41,7 @@ export function DemoChannelView({ channelId }: { channelId: string }) {
     });
     // Simulate server round-trip with a small delay so the pending state is visible.
     window.setTimeout(() => {
-      replaceMessage(tempId, {
+      replaceMessage(contextId, tempId, {
         id: `demo-${Date.now()}`,
         createdDateTime: now,
         body: { contentType: "text", content },
@@ -75,7 +79,9 @@ export function DemoChannelView({ channelId }: { channelId: string }) {
             contextName={channel?.displayName ? `#${channel.displayName}` : "Channel"}
             introCard={introCard}
             onReplyInThread={setThreadMessage}
-            onToggleReaction={toggleReaction}
+            onToggleReaction={(messageId, reactionType) =>
+              toggleReaction(contextId, messageId, reactionType)
+            }
           />
           <MessageInput
             placeholder={`Message #${channel?.displayName ?? "channel"}`}

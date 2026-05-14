@@ -50,7 +50,7 @@ function useCollapsible(storageKey: string, defaultOpen = true): [boolean, () =>
 }
 
 export function Sidebar() {
-  const { teams, activeTeamId, activeChannelId, activeChatId, channels, chats, chatsNextLink, messages, presenceMap, unreadCounts, starredIds, currentUserId, setChats, appendChats, setActiveTeam, setActiveChannel, setActiveChat, markRead, setPresenceMap } =
+  const { teams, activeTeamId, activeChannelId, activeChatId, channels, chats, chatsNextLink, presenceMap, unreadCounts, starredIds, currentUserId, setChats, appendChats, setActiveTeam, setActiveChannel, setActiveChat, markRead, setPresenceMap } =
     useWorkspaceStore();
   const router = useRouter();
   const params = useParams();
@@ -601,7 +601,7 @@ export function Sidebar() {
         teamName={activeTeam?.displayName ?? "Teamsly"}
         channels={teamChannels}
         chats={chats}
-        messages={messages}
+        messages={[]}
         messageGroupName={searchGroupName}
         onSelectChannel={(channelId) => goToChannel(channelId)}
         onSelectChat={(chatId) => goToChat(chatId)}

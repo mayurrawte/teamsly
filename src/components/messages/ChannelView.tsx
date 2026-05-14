@@ -14,13 +14,30 @@ import { textToHtml, messagePlainText } from "@/lib/utils/render-message";
 import { useMemberPanelStore } from "@/store/memberPanel";
 
 export function ChannelView({ teamId, channelId }: { teamId: string; channelId: string }) {
-  const { teams, channels, messages, isLoadingMessages, currentUserId, currentUserName, setMessages, appendPendingMessage, replaceMessage, markMessageFailed, removeMessage, setLoadingMessages, toggleReaction } =
-    useWorkspaceStore();
+  const {
+    teams,
+    channels,
+    getMessages,
+    isLoadingMessages,
+    currentUserId,
+    currentUserName,
+    setMessages,
+    appendPendingMessage,
+    replaceMessage,
+    markMessageFailed,
+    removeMessage,
+    setLoadingMessages,
+    toggleReaction,
+  } = useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
   const showToast = useToastStore((state) => state.showToast);
   const openChannelMembers = useMemberPanelStore((s) => s.openChannelMembers);
   const handleOpenMembers = () => openChannelMembers(teamId, channelId);
+
+  // Stable context key for this channel's message cache
+  const contextId = `${teamId}:${channelId}`;
+  const messages = getMessages(contextId);
 
   const team = teams.find((t) => t.id === teamId);
   const channel = channels[teamId]?.find((c) => c.id === channelId);
@@ -32,40 +49,34 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
 
   useEffect(() => {
     let cancelled = false;
+    const cached = getMessages(contextId);
+    const isFirstLoad = cached.length === 0;
 
-    async function loadInitialMessages() {
-      setLoadingMessages(true);
+    if (isFirstLoad) setLoadingMessages(true);
+
+    async function load() {
       try {
         const response = await fetch(`/api/messages/${teamId}/${channelId}`);
         if (!response.ok) throw new Error("Failed to load messages");
         const data = (await response.json()) as MSMessage[];
-        if (!cancelled) setMessages(sortByCreated(data));
+        if (!cancelled) setMessages(contextId, sortByCreated(data));
       } catch {
-        if (!cancelled) showToast({ title: "Could not load messages", tone: "error" });
+        if (isFirstLoad && !cancelled) showToast({ title: "Could not load messages", tone: "error" });
       } finally {
         if (!cancelled) setLoadingMessages(false);
       }
     }
 
-    async function pollMessages() {
-      try {
-        const response = await fetch(`/api/messages/${teamId}/${channelId}`);
-        if (!response.ok) return;
-        const data = (await response.json()) as MSMessage[];
-        if (!cancelled) setMessages(sortByCreated(data));
-      } catch {
-        // Avoid noisy repeated toasts during background polling.
-      }
-    }
+    load();
 
-    loadInitialMessages();
-
-    const interval = setInterval(pollMessages, 5000);
+    const interval = setInterval(load, 5000);
     return () => {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [teamId, channelId, setLoadingMessages, setMessages, showToast]);
+    // getMessages is a stable selector — intentionally not in deps to avoid re-running on cache updates
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teamId, channelId, contextId, setLoadingMessages, setMessages, showToast]);
 
   async function handleSend(content: string) {
     const tempId = `temp-${crypto.randomUUID()}`;
@@ -80,7 +91,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
       __pending: true,
       __originalText: content,
     };
-    appendPendingMessage(optimistic);
+    appendPendingMessage(contextId, optimistic);
 
     try {
       const res = await fetch(`/api/messages/${teamId}/${channelId}`, {
@@ -90,21 +101,26 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
       });
       if (!res.ok) throw new Error("Failed to send message");
       const serverMsg = (await res.json()) as MSMessage;
-      replaceMessage(tempId, serverMsg);
+      replaceMessage(contextId, tempId, serverMsg);
     } catch {
-      markMessageFailed(tempId);
+      markMessageFailed(contextId, tempId);
       showToast({ title: "Could not send message", tone: "error" });
     }
   }
 
   function handleRetry(originalText: string) {
-    const failedMsg = messages.find((m) => m.__failed && (m.__originalText === originalText || messagePlainText(m.body.content, m.body.contentType) === originalText));
-    if (failedMsg) removeMessage(failedMsg.id);
+    const failedMsg = messages.find(
+      (m) =>
+        m.__failed &&
+        (m.__originalText === originalText ||
+          messagePlainText(m.body.content, m.body.contentType) === originalText)
+    );
+    if (failedMsg) removeMessage(contextId, failedMsg.id);
     void handleSend(originalText);
   }
 
   function handleDiscard(messageId: string) {
-    removeMessage(messageId);
+    removeMessage(contextId, messageId);
   }
 
   async function handleThreadReply(messageId: string, content: string) {
@@ -119,7 +135,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
 
   async function handleToggleReaction(messageId: string, reactionType: ReactionType) {
     const action = hasReacted(messages, messageId, reactionType, currentUserId) ? "unset" : "set";
-    toggleReaction(messageId, reactionType);
+    toggleReaction(contextId, messageId, reactionType);
     try {
       const res = await fetch(`/api/messages/${teamId}/${channelId}/${messageId}/reactions`, {
         method: "POST",
@@ -128,7 +144,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
       });
       if (!res.ok) throw new Error("Failed to update reaction");
     } catch {
-      toggleReaction(messageId, reactionType);
+      toggleReaction(contextId, messageId, reactionType);
       showToast({ title: "Could not update reaction", tone: "error" });
     }
   }

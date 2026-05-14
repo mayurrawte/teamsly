@@ -5,6 +5,30 @@ import parse, { domToReact, Element, type DOMNode, type HTMLReactParserOptions }
 
 type ContentType = MSMessage["body"]["contentType"];
 
+// Hosts that serve authenticated Microsoft images embedded in Teams messages.
+// The image proxy injects the access token; we rewrite <img src> to route through it.
+const PROXY_HOST_PATTERNS = [
+  "graph.microsoft.com",
+  /\.sharepoint\.com$/,
+  /\.onmicrosoft\.com$/,
+  /\.svc\.ms$/,
+  /\.officeapps\.live\.com$/,
+];
+
+function shouldProxy(src: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(src);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== "https:") return false;
+  const host = parsed.hostname.toLowerCase();
+  return PROXY_HOST_PATTERNS.some((entry) =>
+    typeof entry === "string" ? host === entry : entry.test(host)
+  );
+}
+
 const ALLOWED_INLINE_TAGS = new Set(["b", "strong", "i", "em", "s", "u", "span"]);
 
 // Matches one or more consecutive <br> tags (with optional whitespace/attributes)
@@ -15,6 +39,30 @@ const MULTI_BR_RE = /(<br\s*\/?>(\s*<br\s*\/?>)+)/gi;
 // from copy/paste or from accidental space-before-Enter, which renders as a
 // visible left indent on the second paragraph.
 const LEADING_NBSP_RE = /(<(?:p|div|li)(?:\s[^>]*)?>)(?:&nbsp;|&#160;| |[ \t])+/gi;
+
+// Also strip leading \u00a0 / whitespace runs that are one child-tag deep —
+// e.g. <p><span style="...">  &nbsp; actual text</span></p> from Word/Teams paste.
+const LEADING_NBSP_NESTED_RE = /(<(?:p|div|li)(?:\s[^>]*)?>(?:<[a-z][^>]*>)+)(?:&nbsp;|&#160;| |[ \t])+/gi;
+
+// Strip text-indent and padding-left from inline style attrs on block-level tags;
+// these come from Word/Outlook copy-paste paths through Teams and produce visible indent.
+// Other style declarations on the same element are preserved.
+function stripIndentStyles(html: string): string {
+  return html.replace(
+    /(<(?:p|div)[^>]*\bstyle=")([^"]*?)("[^>]*>)/gi,
+    (_m, open, styleVal, close) => {
+      const cleaned = styleVal
+        .split(';')
+        .filter((decl: string) => {
+          const prop = decl.split(':')[0]?.trim().toLowerCase() ?? '';
+          return prop !== 'text-indent' && prop !== 'padding-left' && decl.trim() !== '';
+        })
+        .join(';');
+      return `${open}${cleaned}${close}`;
+    }
+  );
+}
+
 
 // Matches paragraphs whose only content is &nbsp; / &#160; / U+00A0 runs.
 // CSS `p:empty` and `p:has(> br:only-child)` don't catch these.
@@ -28,13 +76,15 @@ const MARKDOWN_LIST_BLOCK_RE = /(?:^|\n)((?:[ \t]*[-*] .+(?:\n|$))+)/g;
 const EMOJI_ONLY_RE = /^[\p{Emoji}\u{FE0F}\u{20E3}\u{200D}\s]+$/u;
 
 function preprocessHtml(html: string): string {
-  return html
+  return stripIndentStyles(html)
     // Collapse runs of 2+ <br> down to a single <br>
     .replace(MULTI_BR_RE, "<br>")
     // Drop paragraphs that only contain &nbsp; / whitespace / <br>
     .replace(NBSP_ONLY_P_RE, "")
     // Strip leading &nbsp; / U+00A0 runs after <p>/<div>/<li> openers
-    .replace(LEADING_NBSP_RE, "$1");
+    .replace(LEADING_NBSP_RE, "$1")
+    // Strip leading whitespace inside a first child tag (Word/Outlook copy-paste path)
+    .replace(LEADING_NBSP_NESTED_RE, "$1");
 }
 
 function convertMarkdownLists(text: string): string {
@@ -86,6 +136,21 @@ function renderHtml(html: string): React.ReactNode {
         );
       }
       if (node.name === "br") return <br />;
+      if (node.name === "img") {
+        const src = node.attribs.src;
+        if (!src || !src.startsWith("https://")) return <>[image]</>;
+        const imgSrc = shouldProxy(src)
+          ? `/api/image-proxy?url=${encodeURIComponent(src)}`
+          : src;
+        return (
+          <img
+            src={imgSrc}
+            alt={node.attribs.alt || ""}
+            className="max-h-[180px] max-w-[300px] rounded"
+            loading="lazy"
+          />
+        );
+      }
       if (node.name === "p") {
         const text = getText(node).trim();
         const isEmojiOnly = text.length > 0 && EMOJI_ONLY_RE.test(text);
