@@ -8,6 +8,7 @@ import { ThreadPanel } from "./ThreadPanel";
 import { ChannelMessageHeader, type Tab } from "./MessageHeader";
 import { ChannelIntroCard } from "./IntroCard";
 import { ContextFilesTab } from "./ContextFilesTab";
+import { ForwardMessageModal, type ForwardDestination } from "@/components/modals/ForwardMessageModal";
 import { reactionEmoji, type ReactionType } from "@/lib/utils/reactions";
 import { useToastStore } from "@/store/toasts";
 import { textToHtml, messagePlainText } from "@/lib/utils/render-message";
@@ -31,6 +32,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
     toggleReaction,
   } = useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
+  const [forwardMessage, setForwardMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
   const showToast = useToastStore((state) => state.showToast);
   const openChannelMembers = useMemberPanelStore((s) => s.openChannelMembers);
@@ -124,6 +126,47 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
     removeMessage(contextId, messageId);
   }
 
+  // Forward a channel message to either another chat or another channel.
+  // Mirrors handleForward in ChatView — writes an optimistic entry into the
+  // destination's per-context cache, then POSTs to the matching endpoint.
+  async function handleForward(destination: ForwardDestination, htmlBody: string) {
+    const tempId = `temp-${crypto.randomUUID()}`;
+    const now = new Date().toISOString();
+    const destContextId = destination.kind === "chat"
+      ? destination.chatId
+      : `${destination.teamId}:${destination.channelId}`;
+
+    const optimistic: MSMessage = {
+      id: tempId,
+      createdDateTime: now,
+      body: { contentType: "html", content: htmlBody },
+      from: { user: { id: currentUserId, displayName: currentUserName } },
+      reactions: [],
+      attachments: [],
+      __pending: true,
+    };
+    appendPendingMessage(destContextId, optimistic);
+
+    try {
+      const url = destination.kind === "chat"
+        ? `/api/chats/${destination.chatId}/messages`
+        : `/api/messages/${destination.teamId}/${destination.channelId}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: htmlBody }),
+      });
+      if (!res.ok) throw new Error("Forward failed");
+      const serverMsg = (await res.json()) as MSMessage;
+      replaceMessage(destContextId, tempId, serverMsg);
+      showToast({ title: `Forwarded to ${destination.label}` });
+    } catch {
+      markMessageFailed(destContextId, tempId);
+      showToast({ title: `Could not forward to ${destination.label}`, tone: "error" });
+      throw new Error("Forward failed");
+    }
+  }
+
   async function handleThreadReply(messageId: string, content: string) {
     const res = await fetch(`/api/messages/${teamId}/${channelId}/${messageId}/replies`, {
       method: "POST",
@@ -190,6 +233,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
             contextName={channel?.displayName ? `#${channel.displayName}` : "Channel"}
             introCard={introCard}
             onReplyInThread={setThreadMessage}
+            onForward={setForwardMessage}
             onToggleReaction={handleToggleReaction}
             onRetry={handleRetry}
             onDiscard={handleDiscard}
@@ -207,6 +251,13 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
         message={threadMessage}
         onClose={() => setThreadMessage(null)}
         onSendReply={handleThreadReply}
+        onForward={setForwardMessage}
+      />
+      <ForwardMessageModal
+        open={Boolean(forwardMessage)}
+        onOpenChange={(next) => { if (!next) setForwardMessage(null); }}
+        message={forwardMessage}
+        onForward={handleForward}
       />
     </div>
   );

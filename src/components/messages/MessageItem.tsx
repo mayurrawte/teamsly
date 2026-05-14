@@ -19,6 +19,7 @@ interface Props {
   message: MSMessage;
   isGroupHead?: boolean;
   onReplyInThread?: (message: MSMessage) => void;
+  onForward?: (message: MSMessage) => void;
   onToggleReaction?: (messageId: string, reactionType: ReactionType) => void;
   onDelete?: (messageId: string) => void;
   onEdit?: (messageId: string, newContent: string) => Promise<void> | void;
@@ -26,7 +27,7 @@ interface Props {
   onDiscard?: (messageId: string) => void;
 }
 
-export function MessageItem({ message, isGroupHead = true, onReplyInThread, onToggleReaction, onDelete, onEdit, onRetry, onDiscard }: Props) {
+export function MessageItem({ message, isGroupHead = true, onReplyInThread, onForward, onToggleReaction, onDelete, onEdit, onRetry, onDiscard }: Props) {
   const density = usePreferencesStore((state) => state.density);
   const currentUserId = useWorkspaceStore((state) => state.currentUserId);
   const [isEditing, setIsEditing] = useState(false);
@@ -171,6 +172,7 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
             messageId={message.id}
             onReact={onToggleReaction}
             onReplyInThread={() => onReplyInThread?.(message)}
+            onForward={onForward ? () => onForward(message) : undefined}
             onEdit={editHandler ? startEditing : undefined}
             onDelete={deleteHandler}
           />
@@ -218,6 +220,7 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onTo
           messageId={message.id}
           onReact={onToggleReaction}
           onReplyInThread={() => onReplyInThread?.(message)}
+          onForward={onForward ? () => onForward(message) : undefined}
           onEdit={editHandler ? startEditing : undefined}
           onDelete={deleteHandler}
         />

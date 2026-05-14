@@ -8,6 +8,7 @@ import { ThreadPanel } from "./ThreadPanel";
 import { DmMessageHeader, type Tab } from "./MessageHeader";
 import { DmIntroCard } from "./IntroCard";
 import { ContextFilesTab } from "./ContextFilesTab";
+import { ForwardMessageModal, type ForwardDestination } from "@/components/modals/ForwardMessageModal";
 import { reactionEmoji, type ReactionType } from "@/lib/utils/reactions";
 import { textToHtml, messagePlainText } from "@/lib/utils/render-message";
 import { useToastStore } from "@/store/toasts";
@@ -34,6 +35,7 @@ export function ChatView({ chatId }: { chatId: string }) {
     revertMessageEdit,
   } = useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
+  const [forwardMessage, setForwardMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
   const [uploading, setUploading] = useState(false);
   const showToast = useToastStore((state) => state.showToast);
@@ -237,6 +239,50 @@ export function ChatView({ chatId }: { chatId: string }) {
     removeMessage(chatId, messageId);
   }
 
+  // Forward — optimistically append to the destination's cache and send via
+  // the same /api/chats/{id}/messages or /api/messages/{teamId}/{channelId}
+  // endpoints used by handleSend. We never mutate the destination's view
+  // directly (the user may not be viewing it), so the optimistic entry is
+  // written through the workspace store. The toast is the only feedback the
+  // user sees when forwarding to a different context.
+  async function handleForward(destination: ForwardDestination, htmlBody: string) {
+    const tempId = `temp-${crypto.randomUUID()}`;
+    const now = new Date().toISOString();
+    const destContextId = destination.kind === "chat"
+      ? destination.chatId
+      : `${destination.teamId}:${destination.channelId}`;
+
+    const optimistic: MSMessage = {
+      id: tempId,
+      createdDateTime: now,
+      body: { contentType: "html", content: htmlBody },
+      from: { user: { id: currentUserId, displayName: currentUserName } },
+      reactions: [],
+      attachments: [],
+      __pending: true,
+    };
+    appendPendingMessage(destContextId, optimistic);
+
+    try {
+      const url = destination.kind === "chat"
+        ? `/api/chats/${destination.chatId}/messages`
+        : `/api/messages/${destination.teamId}/${destination.channelId}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: htmlBody }),
+      });
+      if (!res.ok) throw new Error("Forward failed");
+      const serverMsg = (await res.json()) as MSMessage;
+      replaceMessage(destContextId, tempId, serverMsg);
+      showToast({ title: `Forwarded to ${destination.label}` });
+    } catch {
+      markMessageFailed(destContextId, tempId);
+      showToast({ title: `Could not forward to ${destination.label}`, tone: "error" });
+      throw new Error("Forward failed");
+    }
+  }
+
   async function handleToggleReaction(messageId: string, reactionType: ReactionType) {
     const action = hasReacted(messages, messageId, reactionType, currentUserId) ? "unset" : "set";
     toggleReaction(chatId, messageId, reactionType);
@@ -301,6 +347,7 @@ export function ChatView({ chatId }: { chatId: string }) {
             contextName={label}
             introCard={introCard}
             onReplyInThread={setThreadMessage}
+            onForward={setForwardMessage}
             onToggleReaction={handleToggleReaction}
             onDelete={handleDelete}
             onEdit={handleEdit}
@@ -323,6 +370,13 @@ export function ChatView({ chatId }: { chatId: string }) {
         message={threadMessage}
         onClose={() => setThreadMessage(null)}
         onSendReply={handleThreadReply}
+        onForward={setForwardMessage}
+      />
+      <ForwardMessageModal
+        open={Boolean(forwardMessage)}
+        onOpenChange={(next) => { if (!next) setForwardMessage(null); }}
+        message={forwardMessage}
+        onForward={handleForward}
       />
     </div>
   );
