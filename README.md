@@ -12,17 +12,55 @@ No data leaves Microsoft. No shadow IT. Just a better interface.
 
 ## Download
 
-### Desktop apps (zero config — sign in and go)
-
 Desktop installers are produced automatically by the GitHub Actions release workflow on every `v*.*.*` tag push.
 
-| Platform | Download |
-|---|---|
-| macOS (Apple Silicon + Intel) | [Latest release](https://github.com/mayurrawte/teamsly/releases/latest) → `.dmg` |
-| Windows | [Latest release](https://github.com/mayurrawte/teamsly/releases/latest) → `.exe` |
-| Linux | [Latest release](https://github.com/mayurrawte/teamsly/releases/latest) → `.AppImage` or `.deb` |
+### macOS (Apple Silicon + Intel)
 
-The desktop wrapper loads the Teamsly web app in a native window and opens Microsoft sign-in in the system browser. By default it points at a hosted instance; set `TEAMSLY_URL` to point at your own deployment.
+**Recommended — Homebrew Cask:**
+
+```bash
+brew install --cask https://raw.githubusercontent.com/mayurrawte/teamsly/main/Casks/teamsly.rb
+```
+
+Homebrew handles the Gatekeeper quarantine attribute automatically — no warning dialog, no right-click dance.
+
+**Direct download:** grab the `.dmg` from the [latest release](https://github.com/mayurrawte/teamsly/releases/latest). Because the build is unsigned, macOS will show "Apple could not verify…" on first launch. Workaround:
+
+1. Right-click the app in Finder → **Open** (instead of double-clicking)
+2. Or go to **System Settings → Privacy & Security**, scroll down, click **Open Anyway**
+3. Or run `xattr -d com.apple.quarantine "/Applications/Teamsly.app"` in Terminal
+
+This is normal behavior for unsigned open-source apps — Apple charges $99/yr for the cert that suppresses it. Once you've opened the app once, subsequent launches are clean.
+
+### Windows
+
+Grab the `.exe` from the [latest release](https://github.com/mayurrawte/teamsly/releases/latest):
+
+- `Teamsly-Setup-<version>.exe` — NSIS installer (recommended)
+- `Teamsly-<version>.exe` — portable, no install
+
+Unsigned builds trigger a SmartScreen warning on first run; click **More info → Run anyway**. Auto-update is wired but each update still triggers the SmartScreen prompt until the binary is signed.
+
+### Linux
+
+| Format | Install |
+|---|---|
+| AppImage | Download `Teamsly-<version>.AppImage`, `chmod +x`, run |
+| `.deb` (Debian/Ubuntu) | `sudo dpkg -i teamsly_<version>_amd64.deb` |
+
+Auto-update works cleanly on Linux — no signing friction.
+
+### What you get
+
+The desktop wrapper loads the Teamsly web app in a native window with:
+
+- System tray icon with live unread count
+- macOS dock badge
+- Hide-to-tray on close (real quit via the tray menu or Cmd+Q)
+- Auto-update via electron-updater (downloads in background; install on next launch)
+- Microsoft sign-in opens in the system browser
+
+By default it points at `https://teamsly.vercel.app`. Set `TEAMSLY_URL` to point at your own deployment.
 
 ### Self-host
 

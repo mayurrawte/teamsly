@@ -54,6 +54,7 @@
           <a href="#features">Features</a>
           <a href="#how">How it works</a>
           <a href="#compare">vs Teams</a>
+          <a href="#download">Download</a>
           <a href="#install">Self-host</a>
           <a href="#faq">FAQ</a>
         </nav>
@@ -75,8 +76,8 @@
               Your conversations stay in Microsoft 365. Nothing is stored anywhere else.
             </p>
             <div class="hero-actions">
-              <a class="btn btn-primary" href="https://github.com/mayurrawte/teamsly">View on GitHub</a>
-              <a class="btn btn-secondary" href="#install">Self-host guide</a>
+              <a class="btn btn-primary" href="#download">Download for desktop</a>
+              <a class="btn btn-secondary" href="https://github.com/mayurrawte/teamsly">View on GitHub</a>
             </div>
             <p class="meta">
               Built with Next.js, NextAuth, and the Microsoft Graph SDK.
@@ -240,6 +241,60 @@
               </tbody>
             </table>
           </div>
+        </div>
+      </section>
+
+      <section id="download" class="section">
+        <div class="container">
+          <h2>Download for desktop</h2>
+          <p class="section-lede">
+            Native window, system tray with unread count, auto-update.
+            All three platforms, no account required to install.
+          </p>
+
+          <div class="download-grid">
+            <div class="download-card">
+              <h3>macOS</h3>
+              <p class="download-sub">Apple Silicon &amp; Intel · Homebrew (recommended)</p>
+              <pre><code>brew install --cask https://raw.githubusercontent.com/mayurrawte/teamsly/main/Casks/teamsly.rb</code></pre>
+              <p class="download-direct">
+                Or grab the <code>.dmg</code> directly from the
+                <a href="https://github.com/mayurrawte/teamsly/releases/latest">latest release</a>.
+                Unsigned builds: right-click → Open the first time.
+              </p>
+            </div>
+
+            <div class="download-card">
+              <h3>Windows</h3>
+              <p class="download-sub">10 / 11 · NSIS installer or portable</p>
+              <p>
+                Download <code>Teamsly-Setup-*.exe</code> or the portable
+                <code>Teamsly-*.exe</code> from the
+                <a href="https://github.com/mayurrawte/teamsly/releases/latest">latest release</a>.
+              </p>
+              <p class="download-direct">
+                Unsigned: SmartScreen → More info → Run anyway on first launch.
+              </p>
+            </div>
+
+            <div class="download-card">
+              <h3>Linux</h3>
+              <p class="download-sub">AppImage or Debian package</p>
+              <p>
+                Grab the <code>.AppImage</code> or <code>.deb</code> from the
+                <a href="https://github.com/mayurrawte/teamsly/releases/latest">latest release</a>.
+              </p>
+              <p class="download-direct">
+                AppImage: <code>chmod +x</code> &amp; run. Deb: <code>sudo dpkg -i ...</code>.
+                Auto-update works cleanly.
+              </p>
+            </div>
+          </div>
+
+          <p class="download-footer">
+            Or use the web app at
+            <a href="https://teamsly.vercel.app">teamsly.vercel.app</a> — no install required.
+          </p>
         </div>
       </section>
 
