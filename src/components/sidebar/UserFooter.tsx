@@ -8,6 +8,14 @@ import { Avatar } from "@/components/ui/Avatar";
 import { PresenceDot } from "@/components/ui/PresenceDot";
 import { UserProfilePopover } from "@/components/profile/UserProfilePopover";
 import { useWorkspaceStore } from "@/store/workspace";
+import { clearAll as clearMessageCache } from "@/lib/storage/message-cache";
+
+async function handleSignOut() {
+  // Drop the IDB message cache before redirect so a previous user's messages
+  // don't leak to the next sign-in on the same device.
+  await clearMessageCache();
+  await signOut({ callbackUrl: "/" });
+}
 
 export function UserFooter() {
   const { data: session } = useSession();
@@ -54,7 +62,7 @@ export function UserFooter() {
             type="button"
             title="Sign out"
             aria-label="Sign out"
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={() => void handleSignOut()}
             className="rounded p-1 text-[var(--text-secondary)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-white focus-ring"
           >
             <LogOut className="h-4 w-4" />

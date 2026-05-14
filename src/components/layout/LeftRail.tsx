@@ -17,8 +17,16 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
+import { clearAll as clearMessageCache } from "@/lib/storage/message-cache";
 import { PreferencesModal } from "@/components/modals/PreferencesModal";
 import { useWorkspaceStore } from "@/store/workspace";
+
+async function handleSignOut() {
+  // Drop the IDB message cache before redirect so a previous user's messages
+  // don't leak to the next sign-in on the same device.
+  await clearMessageCache();
+  await signOut({ callbackUrl: "/" });
+}
 
 interface NavItem {
   label: string;
@@ -200,7 +208,7 @@ export function LeftRail() {
               role="menuitem"
               onClick={() => {
                 setMoreOpen(false);
-                signOut({ callbackUrl: "/" });
+                void handleSignOut();
               }}
               className="flex w-full items-center gap-3 px-3 py-2 text-sm text-[#e8534a] transition-colors hover:bg-white/8 focus-ring"
             >
