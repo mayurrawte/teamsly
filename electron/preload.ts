@@ -19,6 +19,14 @@ contextBridge.exposeInMainWorld('electron', {
   },
   /** Renderer can call this to detect it's running inside Electron. */
   isElectron: (): true => true,
+  /**
+   * Synchronous BrowserWindow focus check. Backs the smart-notification
+   * de-dupe guard so notifications don't double-fire when the desktop window
+   * is focused and a browser tab is also visible.
+   */
+  isFocused: (): boolean => {
+    return ipcRenderer.sendSync('window-is-focused') === true;
+  },
 
   // ─── Auto-update ──────────────────────────────────────────────────────────
 

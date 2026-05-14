@@ -231,6 +231,8 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
             messages={messages}
             loading={isLoadingMessages}
             contextName={channel?.displayName ? `#${channel.displayName}` : "Channel"}
+            contextId={`${teamId}/${channelId}`}
+            contextKind="channel"
             introCard={introCard}
             onReplyInThread={setThreadMessage}
             onForward={setForwardMessage}

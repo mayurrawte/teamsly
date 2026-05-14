@@ -16,6 +16,10 @@ interface Props {
   messages: MSMessage[];
   loading: boolean;
   contextName?: string;
+  /** Identifier passed through to useSmartNotifications for the de-dupe guard. */
+  contextId?: string;
+  /** Tells the notification guard which URL pattern to compare against. */
+  contextKind?: "chat" | "channel";
   introCard?: ReactNode;
   onReplyInThread?: (message: MSMessage) => void;
   onForward?: (message: MSMessage) => void;
@@ -27,7 +31,7 @@ interface Props {
   onSendOwn?: (callback: () => void) => void;
 }
 
-export function MessageFeed({ messages, loading, contextName, introCard, onReplyInThread, onForward, onToggleReaction, onDelete, onEdit, onRetry, onDiscard }: Props) {
+export function MessageFeed({ messages, loading, contextName, contextId, contextKind, introCard, onReplyInThread, onForward, onToggleReaction, onDelete, onEdit, onRetry, onDiscard }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
@@ -36,7 +40,7 @@ export function MessageFeed({ messages, loading, contextName, introCard, onReply
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
 
-  useSmartNotifications({ messages, contextName });
+  useSmartNotifications({ messages, contextName, contextId, contextKind });
 
   // Detect whether the user is near the bottom of the scroll container.
   const checkNearBottom = useCallback(() => {

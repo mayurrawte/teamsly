@@ -345,6 +345,8 @@ export function ChatView({ chatId }: { chatId: string }) {
             messages={messages}
             loading={isLoadingMessages}
             contextName={label}
+            contextId={chatId}
+            contextKind="chat"
             introCard={introCard}
             onReplyInThread={setThreadMessage}
             onForward={setForwardMessage}

@@ -142,10 +142,30 @@ function NotificationsPanel() {
   const sound = usePreferencesStore((s) => s.notificationSound);
   const mentionsOnly = usePreferencesStore((s) => s.mentionsOnly);
   const keywords = usePreferencesStore((s) => s.notificationKeywords);
+  const mutedKeywords = usePreferencesStore((s) => s.mutedKeywords);
+  const quietHoursEnabled = usePreferencesStore((s) => s.quietHoursEnabled);
+  const quietHoursStart = usePreferencesStore((s) => s.quietHoursStart);
+  const quietHoursEnd = usePreferencesStore((s) => s.quietHoursEnd);
   const setDesktop = usePreferencesStore((s) => s.setDesktopNotifications);
   const setSound = usePreferencesStore((s) => s.setNotificationSound);
   const setMentionsOnly = usePreferencesStore((s) => s.setMentionsOnly);
   const setKeywords = usePreferencesStore((s) => s.setNotificationKeywords);
+  const setMutedKeywords = usePreferencesStore((s) => s.setMutedKeywords);
+  const setQuietHoursEnabled = usePreferencesStore((s) => s.setQuietHoursEnabled);
+  const setQuietHoursStart = usePreferencesStore((s) => s.setQuietHoursStart);
+  const setQuietHoursEnd = usePreferencesStore((s) => s.setQuietHoursEnd);
+
+  // Render the muted list as comma/newline-separated text; parse on every
+  // change. Keeps the input controlled without a parallel local-state copy.
+  const mutedDraft = mutedKeywords.join(", ");
+
+  function handleMutedChange(raw: string) {
+    const next = raw
+      .split(/[\n,]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    setMutedKeywords(next);
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -175,8 +195,50 @@ function NotificationsPanel() {
           className="h-8 rounded-md border border-[#3f4144] bg-[#222529] px-3 text-[13px] text-[#d1d2d3] outline-none transition-colors duration-150 placeholder:text-[#6c6f75] focus:border-white"
         />
       </FieldGroup>
+      <FieldGroup
+        label="Mute keywords"
+        hint="Suppress notifications when a message contains any of these words (case-insensitive)."
+      >
+        <textarea
+          value={mutedDraft}
+          onChange={(event) => handleMutedChange(event.target.value)}
+          placeholder="standup, lunch, friday-jam"
+          rows={2}
+          className="min-h-[56px] resize-y rounded-md border border-[#3f4144] bg-[#222529] px-3 py-2 text-[13px] text-[#d1d2d3] outline-none transition-colors duration-150 placeholder:text-[#6c6f75] focus:border-white"
+        />
+      </FieldGroup>
+      <FieldGroup
+        label="Quiet hours"
+        hint="Silence notifications during a recurring time window. Wraps overnight when end is earlier than start."
+      >
+        <div className="flex flex-col gap-2">
+          <ToggleRow
+            label="Enable quiet hours"
+            value={quietHoursEnabled}
+            onChange={setQuietHoursEnabled}
+          />
+          <div className="flex items-center gap-2 text-[13px] text-[#d1d2d3]">
+            <span className="text-[12px] text-[#6c6f75]">From</span>
+            <input
+              type="time"
+              value={quietHoursStart}
+              onChange={(event) => setQuietHoursStart(event.target.value)}
+              disabled={!quietHoursEnabled}
+              className="h-8 rounded-md border border-[#3f4144] bg-[#222529] px-2 text-[13px] text-[#d1d2d3] outline-none transition-colors duration-150 focus:border-white disabled:opacity-50"
+            />
+            <span className="text-[12px] text-[#6c6f75]">to</span>
+            <input
+              type="time"
+              value={quietHoursEnd}
+              onChange={(event) => setQuietHoursEnd(event.target.value)}
+              disabled={!quietHoursEnabled}
+              className="h-8 rounded-md border border-[#3f4144] bg-[#222529] px-2 text-[13px] text-[#d1d2d3] outline-none transition-colors duration-150 focus:border-white disabled:opacity-50"
+            />
+          </div>
+        </div>
+      </FieldGroup>
       <p className="mt-2 text-[12px] text-[#6c6f75]">
-        Notification sound works for all users. Desktop OS notifications require Pro.
+        Mute keywords and quiet hours work for all users. Desktop OS notifications require Pro.
       </p>
     </div>
   );
