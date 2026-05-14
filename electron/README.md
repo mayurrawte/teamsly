@@ -35,16 +35,27 @@ The wrapper provides these native capabilities on top of the web app:
 - **Close-to-tray** — closing the window hides it rather than quitting; use the
   tray "Quit" item (or Cmd+Q on macOS) to exit.
 - **App menu (macOS)** — standard shortcuts: Cmd+Q quits, Cmd+R reloads,
-  Cmd+Shift+R force-reloads, and Edit submenu provides cut/copy/paste/select-all
-  for text areas.
+  Cmd+Shift+R force-reloads, Edit submenu provides cut/copy/paste/select-all
+  for text areas, and View › "Check for Updates…" triggers a manual update
+  check.
 - **Windows App User Model ID** — set to `co.shipthis.teamsly` so renderer-side
   `Notification` shows the correct app name in Windows Action Center.
+- **Auto-update** — `electron-updater` checks for updates silently on launch
+  and exposes a "Check for Updates…" menu item. A non-modal banner in the
+  renderer shows download progress and offers a one-click install when the
+  update is ready. Platform behaviour:
+  - **Linux (AppImage)** — fully automatic; the new version installs and
+    restarts without user intervention.
+  - **Windows (NSIS, unsigned)** — download and install succeed; Windows
+    SmartScreen shows a warning on each run of the new unsigned installer.
+    Once signing is configured the warning disappears.
+  - **macOS (unsigned)** — Gatekeeper rejects unsigned auto-install zips on
+    Sonoma/Sequoia. The banner shows an "Open release page" button instead;
+    the user downloads and re-installs manually from GitHub Releases. This
+    limitation lifts automatically once the build is notarized.
 
-### Not yet implemented (v0.1.0)
+### Not yet implemented
 
-- **Auto-update** — `electron-updater` is not wired. Unsigned builds on macOS
-  cannot auto-update reliably. Check GitHub Releases for new versions and
-  reinstall manually. Auto-update will be added once code signing is configured.
 - **Global shortcuts** — bring-to-front via a global hotkey is not implemented.
 - **Windows overlay icon** — a small red-dot overlay badge on the taskbar icon
   requires an additional icon resource and is deferred.

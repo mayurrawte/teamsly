@@ -2,6 +2,7 @@
   "appId": "co.shipthis.teamsly",
   "productName": "Teamsly",
   "copyright": "Copyright © 2026 Mayur Rawte",
+  "icon": "electron/build-resources/icon.png",
   "directories": {
     "output": "release",
     "buildResources": "electron/build-resources"

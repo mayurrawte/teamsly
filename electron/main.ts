@@ -1,4 +1,5 @@
-import { app, BrowserWindow, Menu, MenuItem, Tray, ipcMain, nativeImage, shell } from 'electron';
+import { app, BrowserWindow, Menu, Tray, ipcMain, nativeImage, shell } from 'electron';
+import { autoUpdater } from 'electron-updater';
 import path from 'path';
 
 const isDev = !app.isPackaged;
@@ -18,6 +19,14 @@ if (process.platform === 'win32') {
 // Flag to distinguish user-requested quit (via tray menu) from window close.
 let isQuitting = false;
 
+// Whether a check was triggered by the user (vs. the silent startup check).
+let userInitiatedCheck = false;
+
+// macOS unsigned builds cannot auto-install — Gatekeeper rejects unsigned zips.
+// On Linux (AppImage) and Windows (NSIS) auto-install works; user may have to
+// click through SmartScreen on Windows but the install completes.
+const AUTO_INSTALL_SUPPORTED = process.platform === 'linux' || process.platform === 'win32';
+
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 
@@ -32,6 +41,45 @@ function updateUnreadIndicators(n: number): void {
   }
   // Windows overlay icon (e.g. a red dot) is deferred to a future release
   // because it requires an additional icon resource and signing infrastructure.
+}
+
+// ─── Auto-updater ─────────────────────────────────────────────────────────────
+
+function setupAutoUpdater(): void {
+  // Keep downloads automatic so the renderer progression goes:
+  // update-available → downloading (with %) → update-downloaded.
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = AUTO_INSTALL_SUPPORTED;
+
+  autoUpdater.on('update-available', (info) => {
+    mainWindow?.webContents.send('update-available', { version: info.version });
+  });
+
+  autoUpdater.on('update-not-available', () => {
+    if (userInitiatedCheck) {
+      mainWindow?.webContents.send('update-not-available', {});
+    }
+    userInitiatedCheck = false;
+  });
+
+  autoUpdater.on('error', (err: Error) => {
+    console.error('[auto-updater] error:', err.message);
+    if (userInitiatedCheck) {
+      mainWindow?.webContents.send('update-error', { message: err.message });
+    }
+    userInitiatedCheck = false;
+  });
+
+  autoUpdater.on('download-progress', (progress) => {
+    mainWindow?.webContents.send('update-download-progress', {
+      percent: Math.round(progress.percent),
+    });
+  });
+
+  autoUpdater.on('update-downloaded', (info) => {
+    mainWindow?.webContents.send('update-downloaded', { version: info.version });
+    userInitiatedCheck = false;
+  });
 }
 
 // ─── Tray ─────────────────────────────────────────────────────────────────────
@@ -99,6 +147,14 @@ function buildAppMenu(): void {
   const viewSubmenu: Electron.MenuItemConstructorOptions[] = [
     { role: 'reload', accelerator: 'CmdOrCtrl+R' },
     { role: 'forceReload', accelerator: 'CmdOrCtrl+Shift+R' },
+    { type: 'separator' },
+    {
+      label: 'Check for Updates…',
+      click: () => {
+        userInitiatedCheck = true;
+        void autoUpdater.checkForUpdates();
+      },
+    },
   ];
   if (isDev) {
     viewSubmenu.push({ role: 'toggleDevTools', accelerator: 'CmdOrCtrl+Alt+I' });
@@ -186,12 +242,33 @@ ipcMain.on('unread-count', (_event, n: number) => {
   updateUnreadIndicators(n);
 });
 
+ipcMain.on('update-check', () => {
+  userInitiatedCheck = true;
+  void autoUpdater.checkForUpdates();
+});
+
+ipcMain.on('update-install', () => {
+  autoUpdater.quitAndInstall();
+});
+
+ipcMain.on('update-open-releases', () => {
+  void shell.openExternal('https://github.com/mayurrawte/teamsly/releases/latest');
+});
+
 // ─── App lifecycle ────────────────────────────────────────────────────────────
 
 void app.whenReady().then(() => {
   buildAppMenu();
   tray = buildTrayIcon();
   createWindow();
+  setupAutoUpdater();
+
+  // Silent startup check — do not block the window from loading.
+  if (!isDev) {
+    void autoUpdater.checkForUpdates().catch((err: Error) => {
+      console.error('[auto-updater] startup check failed:', err.message);
+    });
+  }
 });
 
 // Keep the process alive even when all windows are closed (they're just hidden).

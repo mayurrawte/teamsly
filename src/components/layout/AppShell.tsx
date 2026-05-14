@@ -18,6 +18,27 @@ import { sendUnreadCount } from "@/lib/electron-bridge";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const session = useSession();
+
+  // ── Electron auto-update banner state ────────────────────────────────────
+  const [updateStatus, setUpdateStatus] = useState<{
+    kind: 'idle' | 'available' | 'downloading' | 'downloaded' | 'error' | 'not-available';
+    version?: string;
+    percent?: number;
+    message?: string;
+  }>({ kind: 'idle' });
+
+  useEffect(() => {
+    if (!window.electron?.onUpdateEvent) return;
+    const unsub = window.electron.onUpdateEvent((ev) => {
+      if (ev.kind === 'not-available') {
+        setUpdateStatus({ kind: 'not-available' });
+        const t = setTimeout(() => setUpdateStatus({ kind: 'idle' }), 4000);
+        return () => clearTimeout(t);
+      }
+      setUpdateStatus(ev);
+    });
+    return unsub;
+  }, []);
   // After ~1h the access token expires. If refresh fails (usually because new
   // scopes were added since last sign-in), useSession still reports
   // authenticated but every Graph call 401s. Show a recovery banner instead
@@ -149,8 +170,61 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     router.push(`/app/dm/${chatId}`);
   }
 
+  const autoInstallSupported =
+    typeof window !== 'undefined' && (window.electron?.isAutoInstallSupported?.() ?? false);
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[var(--content-bg)]">
+      {/* Electron auto-update banner — shown above the reconnect banner */}
+      {updateStatus.kind === 'available' && (
+        <div className="flex flex-shrink-0 items-center justify-center gap-3 border-b border-[#0F5A8F]/40 bg-[#0F5A8F]/15 px-4 py-2 text-[13px] text-blue-200">
+          <span>Teamsly v{updateStatus.version} is available — downloading…</span>
+        </div>
+      )}
+      {updateStatus.kind === 'downloading' && (
+        <div className="flex flex-shrink-0 items-center justify-center gap-3 border-b border-[#0F5A8F]/40 bg-[#0F5A8F]/15 px-4 py-2 text-[13px] text-blue-200">
+          <span>Downloading update… {updateStatus.percent ?? 0}%</span>
+        </div>
+      )}
+      {updateStatus.kind === 'downloaded' && (
+        <div className="flex flex-shrink-0 items-center justify-center gap-3 border-b border-[#0F5A8F]/40 bg-[#0F5A8F]/15 px-4 py-2 text-[13px] text-blue-200">
+          <span>Update ready — v{updateStatus.version}.</span>
+          {autoInstallSupported ? (
+            <button
+              type="button"
+              onClick={() => window.electron?.installUpdate()}
+              className="rounded bg-[#0F5A8F] px-2.5 py-0.5 text-[12px] font-semibold text-white transition-colors hover:bg-[#0d4f7d]"
+            >
+              Restart &amp; install
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => window.electron?.openReleasesPage()}
+              className="rounded bg-[#0F5A8F] px-2.5 py-0.5 text-[12px] font-semibold text-white transition-colors hover:bg-[#0d4f7d]"
+            >
+              Open release page
+            </button>
+          )}
+        </div>
+      )}
+      {updateStatus.kind === 'error' && (
+        <div className="flex flex-shrink-0 items-center justify-center gap-3 border-b border-red-500/40 bg-red-500/10 px-4 py-2 text-[13px] text-red-300">
+          <span>Update check failed: {updateStatus.message}</span>
+          <button
+            type="button"
+            onClick={() => window.electron?.openReleasesPage()}
+            className="rounded bg-red-500 px-2.5 py-0.5 text-[12px] font-semibold text-white transition-colors hover:bg-red-400"
+          >
+            Open release page
+          </button>
+        </div>
+      )}
+      {updateStatus.kind === 'not-available' && (
+        <div className="flex flex-shrink-0 items-center justify-center gap-3 border-b border-green-500/40 bg-green-500/10 px-4 py-2 text-[13px] text-green-300">
+          <span>You&apos;re on the latest version.</span>
+        </div>
+      )}
       {needsReauth && (
         <div className="flex flex-shrink-0 items-center justify-center gap-3 border-b border-amber-500/40 bg-amber-500/10 px-4 py-2 text-[13px] text-amber-200">
           <RotateCw className="h-3.5 w-3.5" />
