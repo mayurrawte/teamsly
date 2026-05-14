@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useWorkspaceStore } from "@/store/workspace";
 import { MessageFeed } from "./MessageFeed";
 import { MessageInput } from "./MessageInput";
@@ -39,6 +40,18 @@ export function ChatView({ chatId }: { chatId: string }) {
   const [activeTab, setActiveTab] = useState<Tab>("messages");
   const [uploading, setUploading] = useState(false);
   const showToast = useToastStore((state) => state.showToast);
+
+  // Search jump-to-message: pull `?anchor=` off the URL and forward to
+  // MessageFeed. Cleared via router.replace once consumed so back/forward
+  // navigation doesn't re-flash a stale row.
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const anchorMessageId = searchParams.get("anchor") ?? undefined;
+  const handleAnchorConsumed = useCallback(() => {
+    if (!anchorMessageId) return;
+    router.replace(pathname);
+  }, [anchorMessageId, pathname, router]);
 
   const messages = getMessages(chatId);
   const chat = chats.find((c) => c.id === chatId);
@@ -346,6 +359,8 @@ export function ChatView({ chatId }: { chatId: string }) {
             loading={isLoadingMessages}
             contextName={label}
             introCard={introCard}
+            anchorMessageId={anchorMessageId}
+            onAnchorConsumed={handleAnchorConsumed}
             onReplyInThread={setThreadMessage}
             onForward={setForwardMessage}
             onToggleReaction={handleToggleReaction}

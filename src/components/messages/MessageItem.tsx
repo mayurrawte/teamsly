@@ -160,6 +160,7 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onFo
     const shortTime = format(new Date(message.createdDateTime), "h:mm");
     return (
       <div
+        data-message-id={message.id}
         className={cn(
           "group relative px-4 pl-[72px] transition-colors duration-[80ms] ease-out hover:bg-[var(--message-hover-bg)]",
           density === "compact" ? "py-0" : "py-[2px]",
@@ -208,6 +209,7 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onFo
 
   return (
     <div
+      data-message-id={message.id}
       className={cn(
         "group relative flex gap-2 px-4 transition-colors duration-[80ms] ease-out hover:bg-[var(--message-hover-bg)]",
         density === "compact" ? "pb-0 pt-1" : "pb-[2px] pt-2",

@@ -4,14 +4,14 @@ import { useWorkspaceStore } from "@/store/workspace";
 import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { SearchModal } from "@/components/modals/SearchModal";
+import { SearchModal, type SearchMessageOrigin } from "@/components/modals/SearchModal";
 import { Avatar } from "@/components/ui/Avatar";
 import { PresenceDot } from "@/components/ui/PresenceDot";
 import { DemoUserFooter } from "./DemoUserFooter";
 import { getChatLabel } from "@/lib/utils/chat-label";
 
 export function DemoSidebar() {
-  const { teams, activeTeamId, channels, chats, presenceMap, unreadCounts, setActiveChannel, setActiveChat, activeChannelId, activeChatId, markRead } =
+  const { teams, activeTeamId, channels, chats, presenceMap, unreadCounts, setActiveChannel, setActiveChat, activeChannelId, activeChatId, markRead, setPendingAnchorMessageId } =
     useWorkspaceStore();
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
@@ -26,6 +26,36 @@ export function DemoSidebar() {
     : activeChat
       ? `Messages in ${activeChat.topic ?? activeChat.members?.map((member) => member.displayName).join(", ") ?? "DM"}`
       : "Messages";
+  // Demo contexts are keyed `demo:<id>` in the workspace store. Surface the
+  // active context's messages + origin so SearchModal can match in-view
+  // messages and we can jump-to-anchor on click.
+  const activeContextId = activeChannel
+    ? `demo:${activeChannel.id}`
+    : activeChat
+      ? `demo:${activeChat.id}`
+      : null;
+  const activeMessages = useWorkspaceStore((s) =>
+    activeContextId ? (s.messagesByContext[activeContextId] ?? []) : []
+  );
+  const searchMessageOrigin: SearchMessageOrigin | undefined = activeChannel
+    ? { kind: "channel", teamId: "demo", channelId: activeChannel.id }
+    : activeChat
+      ? { kind: "chat", chatId: activeChat.id }
+      : undefined;
+
+  function jumpToMessage(message: MSMessage, origin: SearchMessageOrigin) {
+    // Demo doesn't use URL routing — DemoShell renders by activeChannelId /
+    // activeChatId. Set the active context, then stash the anchor id so the
+    // demo view picks it up after the messages settle.
+    if (origin.kind === "channel") {
+      markRead(origin.channelId);
+      setActiveChannel(origin.channelId);
+    } else {
+      markRead(origin.chatId);
+      setActiveChat(origin.chatId);
+    }
+    setPendingAnchorMessageId(message.id);
+  }
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -141,8 +171,9 @@ export function DemoSidebar() {
         teamName={activeTeam?.displayName ?? "Teamsly"}
         channels={teamChannels}
         chats={chats}
-        messages={[]}
+        messages={activeMessages}
         messageGroupName={searchGroupName}
+        messageOrigin={searchMessageOrigin}
         onSelectChannel={(channelId) => {
           markRead(channelId);
           setActiveChannel(channelId);
@@ -151,10 +182,7 @@ export function DemoSidebar() {
           markRead(chatId);
           setActiveChat(chatId);
         }}
-        onSelectMessage={() => {
-          // Messages shown are from the current view; closing the modal
-          // is sufficient since the user is already in that conversation.
-        }}
+        onSelectMessage={jumpToMessage}
       />
     </div>
   );

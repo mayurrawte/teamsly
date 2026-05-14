@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useWorkspaceStore } from "@/store/workspace";
 import { mockMessages } from "@/lib/mock/data";
 import { MessageFeed } from "./MessageFeed";
@@ -14,7 +14,7 @@ import { ForwardMessageModal, type ForwardDestination } from "@/components/modal
 import { useToastStore } from "@/store/toasts";
 
 export function DemoChannelView({ channelId }: { channelId: string }) {
-  const { activeTeamId, channels, getMessages, setMessages, appendPendingMessage, replaceMessage, toggleReaction } = useWorkspaceStore();
+  const { activeTeamId, channels, getMessages, setMessages, appendPendingMessage, replaceMessage, toggleReaction, pendingAnchorMessageId, setPendingAnchorMessageId } = useWorkspaceStore();
   const openChannelMembers = useMemberPanelStore((s) => s.openChannelMembers);
   const handleOpenMembers = () => openChannelMembers("demo", channelId);
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
@@ -26,6 +26,12 @@ export function DemoChannelView({ channelId }: { channelId: string }) {
 
   const contextId = `demo:${channelId}`;
   const messages = getMessages(contextId);
+  // Demo anchor: DemoSidebar stashes the target message id in the workspace
+  // store (demo has no URL routing). Forward it to MessageFeed and clear it
+  // once consumed so a later channel switch doesn't re-flash a stale row.
+  const handleAnchorConsumed = useCallback(() => {
+    if (pendingAnchorMessageId) setPendingAnchorMessageId(null);
+  }, [pendingAnchorMessageId, setPendingAnchorMessageId]);
 
   useEffect(() => {
     const msgs = mockMessages[channelId] ?? [];
@@ -111,6 +117,8 @@ export function DemoChannelView({ channelId }: { channelId: string }) {
             loading={false}
             contextName={channel?.displayName ? `#${channel.displayName}` : "Channel"}
             introCard={introCard}
+            anchorMessageId={pendingAnchorMessageId ?? undefined}
+            onAnchorConsumed={handleAnchorConsumed}
             onReplyInThread={setThreadMessage}
             onForward={setForwardMessage}
             onToggleReaction={(messageId, reactionType) =>

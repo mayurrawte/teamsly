@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useWorkspaceStore } from "@/store/workspace";
 import { MessageFeed } from "./MessageFeed";
 import { MessageInput } from "./MessageInput";
@@ -37,6 +38,18 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
   const showToast = useToastStore((state) => state.showToast);
   const openChannelMembers = useMemberPanelStore((s) => s.openChannelMembers);
   const handleOpenMembers = () => openChannelMembers(teamId, channelId);
+
+  // Search jump-to-message: read `?anchor=` from the URL and forward it to
+  // MessageFeed. We clear the param once the anchor effect has run (or
+  // timed out) so the URL doesn't keep that anchor across later navigations.
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const anchorMessageId = searchParams.get("anchor") ?? undefined;
+  const handleAnchorConsumed = useCallback(() => {
+    if (!anchorMessageId) return;
+    router.replace(pathname);
+  }, [anchorMessageId, pathname, router]);
 
   // Stable context key for this channel's message cache
   const contextId = `${teamId}:${channelId}`;
@@ -232,6 +245,8 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
             loading={isLoadingMessages}
             contextName={channel?.displayName ? `#${channel.displayName}` : "Channel"}
             introCard={introCard}
+            anchorMessageId={anchorMessageId}
+            onAnchorConsumed={handleAnchorConsumed}
             onReplyInThread={setThreadMessage}
             onForward={setForwardMessage}
             onToggleReaction={handleToggleReaction}

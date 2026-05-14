@@ -7,6 +7,20 @@ import { formatMessageTime } from "@/lib/utils/dates";
 import { getChatLabel } from "@/lib/utils/chat-label";
 import { useWorkspaceStore } from "@/store/workspace";
 
+/**
+ * Origin metadata for the messages handed to SearchModal. Lets the modal pass
+ * back where a matched message came from when the user picks it, so the
+ * caller can navigate to the right chat/channel and anchor on the message.
+ *
+ * Today every caller hands SearchModal at most one context's worth of
+ * messages, so a single origin per modal instance is sufficient. If we ever
+ * search across multiple contexts at once, switch this to a per-message
+ * origin map.
+ */
+export type SearchMessageOrigin =
+  | { kind: "channel"; teamId: string; channelId: string }
+  | { kind: "chat"; chatId: string };
+
 interface SearchModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -15,9 +29,10 @@ interface SearchModalProps {
   chats: MSChat[];
   messages: MSMessage[];
   messageGroupName?: string;
+  messageOrigin?: SearchMessageOrigin;
   onSelectChannel?: (channelId: string) => void;
   onSelectChat?: (chatId: string) => void;
-  onSelectMessage?: (message: MSMessage) => void;
+  onSelectMessage?: (message: MSMessage, origin: SearchMessageOrigin) => void;
 }
 
 export function SearchModal({
@@ -28,6 +43,7 @@ export function SearchModal({
   chats,
   messages,
   messageGroupName = "Current view",
+  messageOrigin,
   onSelectChannel,
   onSelectChat,
   onSelectMessage,
@@ -52,16 +68,21 @@ export function SearchModal({
     return {
       channels: channels.filter((channel) => channel.displayName.toLowerCase().includes(normalizedQuery)).slice(0, 8),
       chats: chats.filter((chat) => getChatLabel(chat, currentUserId).toLowerCase().includes(normalizedQuery)).slice(0, 8),
-      messageGroups: [
-        {
-          name: messageGroupName,
-          messages: messages
-            .filter((message) => messageText(message).toLowerCase().includes(normalizedQuery))
-            .slice(0, 12),
-        },
-      ].filter((group) => group.messages.length > 0),
+      // Only surface message-result hits when the caller wired a
+      // `messageOrigin` — without it we can't navigate to the matched
+      // message, so the row would be a dead button.
+      messageGroups: messageOrigin
+        ? [
+            {
+              name: messageGroupName,
+              messages: messages
+                .filter((message) => messageText(message).toLowerCase().includes(normalizedQuery))
+                .slice(0, 12),
+            },
+          ].filter((group) => group.messages.length > 0)
+        : [],
     };
-  }, [channels, chats, currentUserId, messageGroupName, messages, normalizedQuery]);
+  }, [channels, chats, currentUserId, messageGroupName, messageOrigin, messages, normalizedQuery]);
 
   const hasResults =
     results.channels.length > 0 ||
@@ -88,7 +109,7 @@ export function SearchModal({
   function handleSelectMessage(message: MSMessage) {
     onOpenChange(false);
     resetQuery();
-    onSelectMessage?.(message);
+    if (messageOrigin) onSelectMessage?.(message, messageOrigin);
   }
 
   return (

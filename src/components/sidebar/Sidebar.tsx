@@ -16,7 +16,7 @@ async function handleSignOut() {
   await signOut({ callbackUrl: "/" });
 }
 import { UserFooter } from "./UserFooter";
-import { SearchModal } from "@/components/modals/SearchModal";
+import { SearchModal, type SearchMessageOrigin } from "@/components/modals/SearchModal";
 import { PreferencesModal } from "@/components/modals/PreferencesModal";
 import { StatusMessageModal } from "@/components/modals/StatusMessageModal";
 import { FeedbackModal } from "@/components/modals/FeedbackModal";
@@ -91,6 +91,19 @@ export function Sidebar() {
     : activeChat
       ? `Messages in ${getChatLabel(activeChat, currentUserId)}`
       : "Messages";
+  // Active context messages + origin so SearchModal can match in-view messages
+  // and navigate to them with an `?anchor=` param.
+  const activeContextId = activeChannel && activeTeamId
+    ? `${activeTeamId}:${activeChannel.id}`
+    : activeChat?.id ?? null;
+  const activeMessages = useWorkspaceStore((s) =>
+    activeContextId ? (s.messagesByContext[activeContextId] ?? []) : []
+  );
+  const searchMessageOrigin: SearchMessageOrigin | undefined = activeChannel && activeTeamId
+    ? { kind: "channel", teamId: activeTeamId, channelId: activeChannel.id }
+    : activeChat
+      ? { kind: "chat", chatId: activeChat.id }
+      : undefined;
 
   // Unread items: channels + DMs with unreadCounts > 0
   const unreadChannelItems = teamChannels.filter((ch) => (unreadCounts[ch.id] ?? 0) > 0);
@@ -211,6 +224,21 @@ export function Sidebar() {
     markRead(chatId);
     setActiveChat(chatId);
     router.push(`/app/dm/${chatId}`);
+  }
+
+  function jumpToMessage(message: MSMessage, origin: SearchMessageOrigin) {
+    // Anchor-scroll the matched message after navigating. ChannelView/ChatView
+    // pick up the `?anchor=` param, pass it through MessageFeed, and clear it
+    // once the row is in view.
+    if (origin.kind === "channel") {
+      markRead(origin.channelId);
+      setActiveChannel(origin.channelId);
+      router.push(`/app/t/${origin.teamId}/${origin.channelId}?anchor=${encodeURIComponent(message.id)}`);
+    } else {
+      markRead(origin.chatId);
+      setActiveChat(origin.chatId);
+      router.push(`/app/dm/${origin.chatId}?anchor=${encodeURIComponent(message.id)}`);
+    }
   }
 
   function switchTeam(teamId: string) {
@@ -620,14 +648,12 @@ export function Sidebar() {
         teamName={activeTeam?.displayName ?? "Teamsly"}
         channels={teamChannels}
         chats={chats}
-        messages={[]}
+        messages={activeMessages}
         messageGroupName={searchGroupName}
+        messageOrigin={searchMessageOrigin}
         onSelectChannel={(channelId) => goToChannel(channelId)}
         onSelectChat={(chatId) => goToChat(chatId)}
-        onSelectMessage={() => {
-          // Messages shown are from the current view; closing the modal
-          // is sufficient since the user is already in that conversation.
-        }}
+        onSelectMessage={jumpToMessage}
       />
       <PreferencesModal open={settingsOpen} onOpenChange={setSettingsOpen} />
       <StatusMessageModal open={statusModalOpen} onOpenChange={setStatusModalOpen} />
