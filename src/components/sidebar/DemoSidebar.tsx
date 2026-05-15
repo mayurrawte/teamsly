@@ -1,6 +1,6 @@
 "use client";
 
-import { useWorkspaceStore } from "@/store/workspace";
+import { EMPTY_MESSAGES, useWorkspaceStore } from "@/store/workspace";
 import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -35,7 +35,7 @@ export function DemoSidebar() {
       ? `demo:${activeChat.id}`
       : null;
   const activeMessages = useWorkspaceStore((s) =>
-    activeContextId ? (s.messagesByContext[activeContextId] ?? []) : []
+    activeContextId ? (s.messagesByContext[activeContextId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES
   );
   const searchMessageOrigin: SearchMessageOrigin | undefined = activeChannel
     ? { kind: "channel", teamId: "demo", channelId: activeChannel.id }

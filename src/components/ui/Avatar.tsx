@@ -74,13 +74,14 @@ export function Avatar({ userId, displayName, size = 36, photoUrl, className }: 
   }
 
   // Use proxy route when userId looks like a Graph object id (non-empty, not an email)
-  const isGraphId = userId && !userId.includes("@") && !userId.includes(" ");
+  const photoUserId = userId === "you" ? "me" : userId;
+  const isGraphId = photoUserId && !photoUserId.includes("@") && !photoUserId.includes(" ");
 
   if (isGraphId && !imageError) {
     return (
       <>
         <img
-          src={`/api/users/${encodeURIComponent(userId)}/photo`}
+          src={`/api/users/${encodeURIComponent(photoUserId)}/photo`}
           alt={displayName}
           width={size}
           height={size}

@@ -5,6 +5,7 @@ import { loadAllContexts, saveContext } from "@/lib/storage/message-cache";
 // Cap each context's persisted+in-memory array. Graph pages are 50; 200
 // covers a couple of "Load more" jumps without unbounded growth.
 const MAX_MESSAGES_PER_CONTEXT = 200;
+export const EMPTY_MESSAGES: MSMessage[] = [];
 
 function trimToMax(messages: MSMessage[]): MSMessage[] {
   if (messages.length <= MAX_MESSAGES_PER_CONTEXT) return messages;
@@ -147,7 +148,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }),
       setActiveChat: (id) => set({ activeChatId: id, activeChannelId: null }),
 
-      getMessages: (contextId) => get().messagesByContext[contextId] ?? [],
+      getMessages: (contextId) => get().messagesByContext[contextId] ?? EMPTY_MESSAGES,
 
       setMessages: (contextId, incoming) =>
         set((s) => {

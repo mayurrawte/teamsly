@@ -11,10 +11,11 @@ export async function GET(
   }
 
   const { userId } = await params;
+  const graphUserId = userId === "me" || userId === "you" ? "me" : userId;
   const endpoint =
-    userId === "me"
+    graphUserId === "me"
       ? "https://graph.microsoft.com/v1.0/me/photo/$value"
-      : `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(userId)}/photo/$value`;
+      : `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(graphUserId)}/photo/$value`;
 
   try {
     const graphRes = await fetch(endpoint, {

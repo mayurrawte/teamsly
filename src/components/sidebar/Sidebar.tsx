@@ -1,6 +1,6 @@
 "use client";
 
-import { useWorkspaceStore } from "@/store/workspace";
+import { EMPTY_MESSAGES, useWorkspaceStore } from "@/store/workspace";
 import { useRouter, useParams } from "next/navigation";
 import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search, Settings, UserPlus, Moon, LogOut, Inbox, GitBranch, Star, Check, Circle, CircleDot, BellOff, Clock, CircleOff, Smile, MessageCircleQuestion } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -26,8 +26,6 @@ import { FeedbackModal } from "@/components/modals/FeedbackModal";
 import { Avatar } from "@/components/ui/Avatar";
 import { PresenceDot } from "@/components/ui/PresenceDot";
 import { useToastStore } from "@/store/toasts";
-import { useSession } from "next-auth/react";
-import { avatarInitials } from "@/lib/utils/avatar";
 import { getChatLabel } from "@/lib/utils/chat-label";
 
 // localStorage keys for per-section collapsed state
@@ -76,10 +74,6 @@ export function Sidebar() {
   const [loadingMoreChats, setLoadingMoreChats] = useState(false);
   const presenceErrorShownRef = useRef(false);
   const showToast = useToastStore((state) => state.showToast);
-  const { data: session } = useSession();
-  const sessionName = session?.user?.name ?? "User";
-  const sessionEmail = session?.user?.email ?? undefined;
-  const sessionInitials = avatarInitials(sessionName);
 
   const [unreadsOpen, toggleUnreads] = useCollapsible(COLLAPSE_KEYS.unreads, true);
   const [threadsOpen, toggleThreads] = useCollapsible(COLLAPSE_KEYS.threads, true);
@@ -100,7 +94,7 @@ export function Sidebar() {
     ? `${activeTeamId}:${activeChannel.id}`
     : activeChat?.id ?? null;
   const activeMessages = useWorkspaceStore((s) =>
-    activeContextId ? (s.messagesByContext[activeContextId] ?? []) : []
+    activeContextId ? (s.messagesByContext[activeContextId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES
   );
   const searchMessageOrigin: SearchMessageOrigin | undefined = activeChannel && activeTeamId
     ? { kind: "channel", teamId: activeTeamId, channelId: activeChannel.id }

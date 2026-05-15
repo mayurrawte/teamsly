@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import { Search, HelpCircle, RotateCw } from "lucide-react";
@@ -11,7 +11,7 @@ import { FilePreviewPanel } from "@/components/files/FilePreviewPanel";
 import { JumpToSwitcher, type JumpToItem } from "@/components/modals/JumpToSwitcher";
 import { SearchModal, type SearchMessageOrigin } from "@/components/modals/SearchModal";
 import { Logo } from "@/components/ui/Logo";
-import { useWorkspaceStore } from "@/store/workspace";
+import { EMPTY_MESSAGES, useWorkspaceStore } from "@/store/workspace";
 import { useDraftsStore } from "@/store/drafts";
 import { useBookmarksStore } from "@/store/bookmarks";
 import { ToastViewport } from "@/components/ui/ToastViewport";
@@ -58,13 +58,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     ? `${activeTeamId}:${activeChannelId}`
     : activeChatId ?? null;
   const activeMessages = useWorkspaceStore((s) =>
-    activeContextId ? (s.messagesByContext[activeContextId] ?? []) : []
+    activeContextId ? (s.messagesByContext[activeContextId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES
   );
   const showToast = useToastStore((state) => state.showToast);
   const [jumpToOpen, setJumpToOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
