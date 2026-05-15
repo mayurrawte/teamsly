@@ -350,11 +350,22 @@ export function ChatView({ chatId }: { chatId: string }) {
     .filter((m) => (m.userId ?? m.id) !== currentUserId)
     .map((m) => ({ id: m.userId ?? m.id, displayName: m.displayName, email: m.email }));
 
-  // Graph often omits `email` on chat members; fall back to userId so the
-  // deeplink still resolves. Teams' `users=` param accepts UPN/GUID/email.
+  // Graph often omits `email`; fall back to userId (AAD GUID → gets 8:orgid: prefix
+  // in buildCallDeeplink). Only skip a member if ALL three fields are missing.
   const callIdentifiers = otherMembers
-    .map((m) => m.email ?? m.userId ?? m.id ?? "")
+    .map((m) => m.email ?? m.userId ?? "")
     .filter(Boolean);
+
+  // Show call/video buttons immediately for oneOnOne chats so they are always
+  // visible. If identifiers haven't loaded yet (members still fetching) the
+  // handlers are no-ops — they become active once members resolve.
+  const isOneOnOne = chat?.chatType === "oneOnOne";
+  const handleCall = isOneOnOne
+    ? () => { if (callIdentifiers.length) openTeamsCall(callIdentifiers); }
+    : undefined;
+  const handleVideoCall = isOneOnOne
+    ? () => { if (callIdentifiers.length) openTeamsCall(callIdentifiers, { withVideo: true }); }
+    : undefined;
 
   const introCard = (
     <DmIntroCard
@@ -374,10 +385,8 @@ export function ChatView({ chatId }: { chatId: string }) {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onOpenMembers={undefined}
-        {...(callIdentifiers.length > 0 && {
-          onCall: () => openTeamsCall(callIdentifiers),
-          onVideoCall: () => openTeamsCall(callIdentifiers, { withVideo: true }),
-        })}
+        onCall={handleCall}
+        onVideoCall={handleVideoCall}
       />
       {activeTab === "files" ? (
         <ContextFilesTab mode={{ kind: "chat", chatId }} />
