@@ -55,12 +55,31 @@ export function ChatView({ chatId }: { chatId: string }) {
 
   const messages = getMessages(chatId);
   const chat = chats.find((c) => c.id === chatId);
-  const label = getChatLabel(chat, currentUserId);
-  const members = chat?.members ?? [];
+
+  // On-demand members fetch: Graph's $expand=members on the chats list is
+  // unreliable (some tenants omit it). Fetch directly via the dedicated
+  // members endpoint whenever the store has no members for this chat.
+  const [localMembers, setLocalMembers] = useState<MSChatMember[]>([]);
+  const storeMembers = chat?.members ?? [];
+  const members = storeMembers.length > 0 ? storeMembers : localMembers;
+
+  useEffect(() => {
+    if (storeMembers.length > 0) return;
+    let cancelled = false;
+    fetch(`/api/chats/${chatId}/members`)
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((data: MSChatMember[]) => { if (!cancelled) setLocalMembers(data); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatId, storeMembers.length]);
+
+  const label = getChatLabel(chat ? { ...chat, members } : undefined, currentUserId);
 
   // Reset tab when chat changes
   useEffect(() => {
     setActiveTab("messages");
+    setLocalMembers([]);
   }, [chatId]);
 
   useEffect(() => {

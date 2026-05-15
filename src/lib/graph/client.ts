@@ -113,6 +113,15 @@ export async function getChatMessages(accessToken: string, chatId: string) {
   return res.value as MSMessage[];
 }
 
+export async function getChatMembers(accessToken: string, chatId: string) {
+  const client = getGraphClient(accessToken);
+  const res = await client
+    .api(`/me/chats/${chatId}/members`)
+    .select("id,displayName,userId,email")
+    .get();
+  return res.value as MSChatMember[];
+}
+
 export interface ChatAttachment {
   id: string;
   contentType: "reference";
