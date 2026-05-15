@@ -271,3 +271,10 @@ body {
 .message-anchor-flash {
   animation: message-anchor-flash 1500ms ease-out forwards;
 }
+
+@keyframes presence-ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}

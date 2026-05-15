@@ -34,13 +34,16 @@ export function PresenceDot({ availability, className }: PresenceDotProps) {
     );
   }
 
+  // Available (green) — wrapper holds both the ping ring and the solid dot
   return (
-    <span
-      aria-label="Available"
-      className={cn(
-        "absolute bottom-[-2px] right-[-2px] h-[10px] w-[10px] rounded-full border-2 border-[var(--sidebar-bg)] bg-[#2bac76]",
-        className
-      )}
-    />
+    <span className={cn("absolute bottom-[-2px] right-[-2px] h-[10px] w-[10px]", className)}>
+      {/* Ping ring — slow sonar pulse */}
+      <span className="absolute inset-0 rounded-full bg-[#2bac76] opacity-75 animate-[presence-ping_2.5s_ease-out_infinite]" />
+      {/* Solid dot */}
+      <span
+        aria-label="Available"
+        className="absolute inset-0 rounded-full border-2 border-[var(--sidebar-bg)] bg-[#2bac76]"
+      />
+    </span>
   );
 }
