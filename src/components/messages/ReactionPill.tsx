@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Plus } from "lucide-react";
 import { EmojiPicker } from "./EmojiPicker";
 import { reactionEmoji, type ReactionType } from "@/lib/utils/reactions";
@@ -12,10 +13,19 @@ interface ReactionPillProps {
 }
 
 export function ReactionPill({ reactionType, count, active, onClick }: ReactionPillProps) {
+  const [animating, setAnimating] = useState(false);
+
+  function handleClick() {
+    setAnimating(true);
+    setTimeout(() => setAnimating(false), 200);
+    onClick();
+  }
+
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={handleClick}
+      style={{ animation: animating ? "reaction-pop 200ms ease-out" : undefined }}
       className={[
         "inline-flex h-[24px] items-center gap-1 rounded-full border px-2 text-[12px] transition-colors duration-150 focus-ring",
         active
