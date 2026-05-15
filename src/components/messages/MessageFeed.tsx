@@ -24,6 +24,8 @@ interface Props {
   contextId?: string;
   /** Tells the notification guard which URL pattern to compare against. */
   contextKind?: "chat" | "channel";
+  /** Current user's Graph id — own messages are suppressed from notifications. */
+  currentUserId?: string;
   introCard?: ReactNode;
   /**
    * If set, the feed scroll-anchors to the message with this id and flashes
@@ -64,7 +66,7 @@ const ANCHOR_FLASH_MS = 1500;
 // the URL doesn't keep stale state.
 const ANCHOR_GIVE_UP_MS = 4000;
 
-export function MessageFeed({ messages, loading, contextName, bookmarkContextId, contextLabel, contextId, contextKind, introCard, anchorMessageId, onAnchorConsumed, onReplyInThread, onForward, onToggleReaction, onDelete, onEdit, onRetry, onDiscard }: Props) {
+export function MessageFeed({ messages, loading, contextName, bookmarkContextId, contextLabel, contextId, contextKind, currentUserId, introCard, anchorMessageId, onAnchorConsumed, onReplyInThread, onForward, onToggleReaction, onDelete, onEdit, onRetry, onDiscard }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
@@ -73,7 +75,7 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
 
-  useSmartNotifications({ messages, contextName, contextId, contextKind });
+  useSmartNotifications({ messages, contextName, contextId, contextKind, currentUserId });
 
   // Detect whether the user is near the bottom of the scroll container.
   const checkNearBottom = useCallback(() => {

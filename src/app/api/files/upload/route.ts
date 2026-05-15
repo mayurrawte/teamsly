@@ -20,6 +20,26 @@ const MAX_BYTES = 250 * 1024 * 1024;
 
 const RESERVED_CHARS = /[/\\:*?"<>|]/g;
 
+/**
+ * Create an org-scoped view-only sharing link for the uploaded drive item so
+ * chat recipients can open the file without needing access to the sender's
+ * personal OneDrive. Falls back to null on error (caller uses item.webUrl).
+ */
+async function createOrgSharingLink(accessToken: string, itemId: string): Promise<string | null> {
+  try {
+    const client = getGraphClient(accessToken);
+    const result = (await client
+      .api(`/me/drive/items/${itemId}/createLink`)
+      .post({ type: "view", scope: "organization" })) as {
+      link?: { webUrl?: string };
+    };
+    return result?.link?.webUrl ?? null;
+  } catch (err) {
+    console.warn("[graph] createLink failed, falling back to item webUrl:", err);
+    return null;
+  }
+}
+
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.accessToken) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -73,10 +93,11 @@ export async function POST(req: Request) {
         file?: { mimeType: string };
       };
 
+      const shareUrl = await createOrgSharingLink(session.accessToken, item.id);
       return NextResponse.json({
         id: item.id,
         name: item.name,
-        webUrl: item.webUrl,
+        webUrl: shareUrl ?? item.webUrl,
         size: item.size,
         mimeType: item.file?.mimeType ?? contentType,
       });
@@ -94,10 +115,11 @@ export async function POST(req: Request) {
       buffer,
       contentType
     );
+    const shareUrl = await createOrgSharingLink(session.accessToken, item.id);
     return NextResponse.json({
       id: item.id,
       name: item.name,
-      webUrl: item.webUrl,
+      webUrl: shareUrl ?? item.webUrl,
       size: item.size,
       mimeType: item.file?.mimeType ?? contentType,
     });

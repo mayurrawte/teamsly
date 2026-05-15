@@ -256,6 +256,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
             contextLabel={channel?.displayName ? `#${channel.displayName}` : "Channel"}
             contextId={`${teamId}/${channelId}`}
             contextKind="channel"
+            currentUserId={currentUserId}
             introCard={introCard}
             anchorMessageId={anchorMessageId}
             onAnchorConsumed={handleAnchorConsumed}

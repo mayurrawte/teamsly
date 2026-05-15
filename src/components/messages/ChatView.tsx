@@ -391,6 +391,7 @@ export function ChatView({ chatId }: { chatId: string }) {
             contextLabel={label}
             contextId={chatId}
             contextKind="chat"
+            currentUserId={currentUserId}
             introCard={introCard}
             anchorMessageId={anchorMessageId}
             onAnchorConsumed={handleAnchorConsumed}

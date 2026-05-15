@@ -16,6 +16,8 @@ interface UseSmartNotificationsOptions {
   contextId?: string;
   /** "chat" or "channel" — used to pick the URL pattern to compare against. */
   contextKind?: "chat" | "channel";
+  /** Current user's Graph id — messages authored by this user are never notified. */
+  currentUserId?: string;
 }
 
 export function useSmartNotifications({
@@ -23,6 +25,7 @@ export function useSmartNotifications({
   contextName = "Teamsly",
   contextId,
   contextKind,
+  currentUserId,
 }: UseSmartNotificationsOptions) {
   const desktopNotifications = usePreferencesStore((state) => state.desktopNotifications);
   const notificationSound = usePreferencesStore((state) => state.notificationSound);
@@ -45,8 +48,10 @@ export function useSmartNotifications({
     if (lastMessageId.current === latest.id) return;
     lastMessageId.current = latest.id;
 
-    // Ignore messages sent by the current user.
-    if (latest.from?.user?.id === "you") return;
+    // Ignore messages sent by the current user (real mode: compare GUID; demo mode: id === "you").
+    const senderId = latest.from?.user?.id;
+    if (senderId === "you") return;
+    if (currentUserId && senderId === currentUserId) return;
 
     const author = latest.from?.user?.displayName ?? "Unknown";
     const text = messagePlainText(latest.body.content, latest.body.contentType);
@@ -91,6 +96,7 @@ export function useSmartNotifications({
     contextName,
     contextId,
     contextKind,
+    currentUserId,
     desktopNotifications,
     mentionsOnly,
     messages,
