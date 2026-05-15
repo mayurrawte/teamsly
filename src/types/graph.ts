@@ -140,3 +140,18 @@ interface MSChatFileAttachment {
   sharedBy?: { displayName?: string };
   sharedDateTime: string;
 }
+
+// Shape consumed by FilePreviewPanel. `itemId` is the Graph driveItem id (if
+// we have it — we usually don't for messages, only webUrl). When itemId is
+// present we can hit /api/files/preview/[itemId]/* routes; otherwise the
+// panel falls back to "Open in browser" / iframe Office viewer with webUrl.
+interface MSFilePreview {
+  name: string;
+  webUrl: string;
+  itemId?: string;
+  driveId?: string;
+  downloadUrl?: string;
+  mimeType?: string;
+  thumbnailUrl?: string;
+  size?: number;
+}

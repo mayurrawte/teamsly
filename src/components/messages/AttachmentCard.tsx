@@ -1,5 +1,6 @@
 import { Download } from "lucide-react";
 import { getFileIcon } from "@/lib/utils/file-icon";
+import { useFilePreviewStore } from "@/store/filePreview";
 import { AdaptiveCard } from "./AdaptiveCard";
 
 type MSAttachment = NonNullable<MSMessage["attachments"]>[number];
@@ -49,16 +50,75 @@ export function AttachmentCard({ attachment }: AttachmentCardProps) {
     );
   }
 
+  function onClick(e: React.MouseEvent<HTMLAnchorElement>) {
+    // Power-user opt-out: Ctrl/Cmd+click or middle-click keeps the legacy
+    // "open in new tab" behaviour. Default click opens the inline preview
+    // panel so we don't bounce the user to SharePoint and back.
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+    if (!href) return; // demo / null webUrl — no-op preview, no-op link
+    e.preventDefault();
+    useFilePreviewStore.getState().openPreview({
+      name: label,
+      webUrl: href,
+      mimeType: attachment.contentType ?? sniffMimeFromName(label),
+    });
+  }
+
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="mt-2 flex max-w-[420px] items-center gap-3 rounded-md border border-[#3f4144] bg-[#1a1d21] px-3 py-2 text-left transition-colors duration-150 hover:border-[#565856] hover:bg-[#27292d]"
+      onClick={onClick}
+      // Middle-click (button 1) goes to onAuxClick, not onClick, so the
+      // browser's default "open in new tab" already works for us — no
+      // explicit handler needed.
+      className="mt-2 flex max-w-[420px] cursor-pointer items-center gap-3 rounded-md border border-[#3f4144] bg-[#1a1d21] px-3 py-2 text-left transition-colors duration-150 hover:border-[#565856] hover:bg-[#27292d]"
     >
       {content}
     </a>
   );
+}
+
+// Graph chat/channel message attachments often carry contentType "reference"
+// (a sharing reference, not a real MIME). Sniff from extension so the preview
+// panel can pick the right renderer.
+function sniffMimeFromName(name: string): string | undefined {
+  const ext = name.split(".").pop()?.toLowerCase();
+  if (!ext) return undefined;
+  switch (ext) {
+    case "png":
+    case "jpg":
+    case "jpeg":
+    case "gif":
+    case "webp":
+    case "svg":
+      return `image/${ext === "jpg" ? "jpeg" : ext === "svg" ? "svg+xml" : ext}`;
+    case "pdf":
+      return "application/pdf";
+    case "docx":
+      return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    case "xlsx":
+      return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    case "pptx":
+      return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+    case "doc":
+      return "application/msword";
+    case "xls":
+      return "application/vnd.ms-excel";
+    case "ppt":
+      return "application/vnd.ms-powerpoint";
+    case "txt":
+    case "md":
+    case "log":
+      return "text/plain";
+    case "csv":
+      return "text/csv";
+    case "json":
+      return "application/json";
+    default:
+      return undefined;
+  }
 }
 
 function safeAttachmentHref(url?: string | null): string | null {

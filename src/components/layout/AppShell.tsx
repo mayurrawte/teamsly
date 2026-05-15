@@ -7,6 +7,7 @@ import { Search, HelpCircle, RotateCw } from "lucide-react";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { LeftRail } from "@/components/layout/LeftRail";
 import { MemberPanel } from "@/components/layout/MemberPanel";
+import { FilePreviewPanel } from "@/components/files/FilePreviewPanel";
 import { JumpToSwitcher, type JumpToItem } from "@/components/modals/JumpToSwitcher";
 import { SearchModal } from "@/components/modals/SearchModal";
 import { Logo } from "@/components/ui/Logo";
@@ -295,6 +296,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
         <MemberPanel />
+        <FilePreviewPanel />
       </div>
 
       <JumpToSwitcher open={jumpToOpen} onOpenChange={setJumpToOpen} items={items} />

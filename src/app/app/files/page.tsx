@@ -5,6 +5,7 @@ import { formatDistanceToNow, format, differenceInDays } from "date-fns";
 import { Search, ExternalLink, FileX, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getFileIcon } from "@/lib/utils/file-icon";
+import { useFilePreviewStore } from "@/store/filePreview";
 
 // ---------------------------------------------------------------------------
 // Tab types and filtering
@@ -111,9 +112,29 @@ function FilesSkeleton() {
 function FileRow({ file }: { file: NormalisedFile }) {
   const Icon = getFileIcon(file.mimeType, file.isFolder);
   const href = file.webUrl;
+  const openPreview = useFilePreviewStore((s) => s.openPreview);
+
+  // Folders bounce out to SharePoint — no inline folder view in the panel.
+  const previewable = !!href && !file.isFolder;
+
+  function onRowClick() {
+    if (!previewable || !href) return;
+    openPreview({
+      name: file.name,
+      webUrl: href,
+      itemId: file.id,
+      mimeType: file.mimeType,
+    });
+  }
+
+  const RowEl: "button" | "div" = previewable ? "button" : "div";
 
   return (
-    <div className="group flex items-center gap-3 rounded-md px-3 py-2.5 transition-colors duration-[80ms] hover:bg-[#27292d]">
+    <RowEl
+      type={previewable ? "button" : undefined}
+      onClick={previewable ? onRowClick : undefined}
+      className="group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors duration-[80ms] hover:bg-[#27292d]"
+    >
       {/* Icon */}
       <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[#2c2d30] text-[#ababad]">
         <Icon size={18} />
@@ -134,7 +155,7 @@ function FileRow({ file }: { file: NormalisedFile }) {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          title={`Open ${file.name}`}
+          title={`Open ${file.name} in browser`}
           className="flex-shrink-0 text-[#ababad] opacity-0 transition-opacity duration-[80ms] group-hover:opacity-100 focus:opacity-100"
           onClick={(e) => e.stopPropagation()}
         >
@@ -143,7 +164,7 @@ function FileRow({ file }: { file: NormalisedFile }) {
       ) : (
         <span className="w-[15px] flex-shrink-0" />
       )}
-    </div>
+    </RowEl>
   );
 }
 
