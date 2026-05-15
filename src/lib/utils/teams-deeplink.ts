@@ -2,6 +2,17 @@
 const CALL_BASE = "https://teams.microsoft.com/l/call/0/0";
 const MEETING_NEW_BASE = "https://teams.microsoft.com/l/meeting/new";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Teams deeplinks accept UPN (email) or MRI. Bare AAD GUIDs need the
+ * `8:orgid:` prefix to be interpreted as MRI; without it the Teams client
+ * ignores the users= param.
+ */
+function toTeamsIdentifier(id: string): string {
+  return UUID_RE.test(id) ? `8:orgid:${id}` : id;
+}
+
 /**
  * Build a Teams call deeplink. Per the Teams docs the `users` param accepts
  * any of: UPN, AAD user GUID, or email. We pass whatever the caller supplies
@@ -14,7 +25,7 @@ export function buildCallDeeplink(
   const filtered = identifiers.filter(Boolean);
   if (filtered.length === 0) return null;
 
-  const users = filtered.map(encodeURIComponent).join(",");
+  const users = filtered.map(toTeamsIdentifier).map(encodeURIComponent).join(",");
   const url = new URL(CALL_BASE);
   url.searchParams.set("users", users);
   if (opts?.withVideo) url.searchParams.set("withVideo", "true");
