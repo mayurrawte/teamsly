@@ -51,6 +51,7 @@ interface WorkspaceState {
   setActiveChannel: (id: string | null) => void;
   setChats: (chats: MSChat[], nextLink?: string | null) => void;
   appendChats: (chats: MSChat[], nextLink: string | null) => void;
+  patchChatMembers: (chatId: string, members: MSChatMember[]) => void;
   setActiveChat: (id: string | null) => void;
   /** Selector — returns the cached message list for a context, or []. */
   getMessages: (contextId: string) => MSMessage[];
@@ -146,6 +147,10 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             chatsNextLink: nextLink,
           };
         }),
+      patchChatMembers: (chatId, members) =>
+        set((s) => ({
+          chats: s.chats.map((c) => (c.id === chatId ? { ...c, members } : c)),
+        })),
       setActiveChat: (id) => set({ activeChatId: id, activeChannelId: null }),
 
       getMessages: (contextId) => get().messagesByContext[contextId] ?? EMPTY_MESSAGES,

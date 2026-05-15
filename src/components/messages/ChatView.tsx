@@ -104,7 +104,7 @@ export function ChatView({ chatId }: { chatId: string }) {
 
     load();
 
-    const interval = setInterval(load, 5000);
+    const interval = setInterval(load, 4000);
     return () => {
       cancelled = true;
       clearInterval(interval);

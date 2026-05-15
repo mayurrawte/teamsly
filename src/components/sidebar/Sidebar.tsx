@@ -61,7 +61,7 @@ function useCollapsible(storageKey: string, defaultOpen = true): [boolean, () =>
 }
 
 export function Sidebar() {
-  const { teams, activeTeamId, activeChannelId, activeChatId, channels, chats, chatsNextLink, presenceMap, unreadCounts, starredIds, currentUserId, setChats, appendChats, setActiveTeam, setActiveChannel, setActiveChat, markRead, setPresenceMap } =
+  const { teams, activeTeamId, activeChannelId, activeChatId, channels, chats, chatsNextLink, presenceMap, unreadCounts, starredIds, currentUserId, setChats, appendChats, patchChatMembers, setActiveTeam, setActiveChannel, setActiveChat, markRead, setPresenceMap } =
     useWorkspaceStore();
   const router = useRouter();
   const params = useParams();
@@ -72,7 +72,6 @@ export function Sidebar() {
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [loadingMoreChats, setLoadingMoreChats] = useState(false);
-  const [membersCache, setMembersCache] = useState<Record<string, MSChatMember[]>>({});
   const membersFetchedRef = useRef(new Set<string>());
   const presenceErrorShownRef = useRef(false);
   const showToast = useToastStore((state) => state.showToast);
@@ -88,7 +87,7 @@ export function Sidebar() {
   const searchGroupName = activeChannel
     ? `Messages in #${activeChannel.displayName}`
     : activeChat
-      ? `Messages in ${getChatLabel(membersCache[activeChat.id] ? { ...activeChat, members: membersCache[activeChat.id] } : activeChat, currentUserId)}`
+      ? `Messages in ${getChatLabel(activeChat, currentUserId)}`
       : "Messages";
   // Active context messages + origin so SearchModal can match in-view messages
   // and navigate to them with an `?anchor=` param.
@@ -150,7 +149,6 @@ export function Sidebar() {
   useEffect(() => {
     const toFetch = chats.filter(
       (chat) =>
-        chat.chatType === "oneOnOne" &&
         (!chat.members || chat.members.length === 0) &&
         !membersFetchedRef.current.has(chat.id)
     );
@@ -159,13 +157,13 @@ export function Sidebar() {
       fetch(`/api/chats/${chat.id}/members`)
         .then((r) => (r.ok ? r.json() : Promise.reject()))
         .then((members: MSChatMember[]) => {
-          setMembersCache((prev) => ({ ...prev, [chat.id]: members }));
+          if (members.length > 0) patchChatMembers(chat.id, members);
         })
         .catch(() => {
           membersFetchedRef.current.delete(chat.id);
         });
     }
-  }, [chats]);
+  }, [chats, patchChatMembers]);
 
   async function loadMoreChats() {
     if (!chatsNextLink || loadingMoreChats) return;
@@ -502,19 +500,16 @@ export function Sidebar() {
                   onClick={() => goToChannel(ch.id)}
                 />
               ))}
-              {unreadChatItems.map((chat) => {
-                const rc = membersCache[chat.id] ? { ...chat, members: membersCache[chat.id] } : chat;
-                return (
-                  <SidebarItem
-                    key={chat.id}
-                    label={getChatLabel(rc, currentUserId)}
-                    icon={<ChatAvatar chat={rc} presenceMap={presenceMap} currentUserId={currentUserId} />}
-                    active={params?.chatId === chat.id}
-                    unreadCount={unreadCounts[chat.id] ?? 0}
-                    onClick={() => goToChat(chat.id)}
-                  />
-                );
-              })}
+              {unreadChatItems.map((chat) => (
+                <SidebarItem
+                  key={chat.id}
+                  label={getChatLabel(chat, currentUserId)}
+                  icon={<ChatAvatar chat={chat} presenceMap={presenceMap} currentUserId={currentUserId} />}
+                  active={params?.chatId === chat.id}
+                  unreadCount={unreadCounts[chat.id] ?? 0}
+                  onClick={() => goToChat(chat.id)}
+                />
+              ))}
               {totalUnreads === 0 && (
                 <p className="px-4 py-1 text-[12px] text-[var(--text-muted)]">All caught up</p>
               )}
@@ -563,19 +558,16 @@ export function Sidebar() {
                   onClick={() => goToChannel(ch.id)}
                 />
               ))}
-              {starredChatItems.map((chat) => {
-                const rc = membersCache[chat.id] ? { ...chat, members: membersCache[chat.id] } : chat;
-                return (
-                  <SidebarItem
-                    key={chat.id}
-                    label={getChatLabel(rc, currentUserId)}
-                    icon={<ChatAvatar chat={rc} presenceMap={presenceMap} currentUserId={currentUserId} />}
-                    active={params?.chatId === chat.id}
-                    unreadCount={unreadCounts[chat.id] ?? 0}
-                    onClick={() => goToChat(chat.id)}
-                  />
-                );
-              })}
+              {starredChatItems.map((chat) => (
+                <SidebarItem
+                  key={chat.id}
+                  label={getChatLabel(chat, currentUserId)}
+                  icon={<ChatAvatar chat={chat} presenceMap={presenceMap} currentUserId={currentUserId} />}
+                  active={params?.chatId === chat.id}
+                  unreadCount={unreadCounts[chat.id] ?? 0}
+                  onClick={() => goToChat(chat.id)}
+                />
+              ))}
               {totalStarred === 0 && (
                 <p className="px-4 py-1 text-[12px] text-[var(--text-muted)]">
                   Star channels and DMs to find them faster
@@ -641,21 +633,16 @@ export function Sidebar() {
           </button>
 
           {dmsOpen &&
-            chats.map((chat) => {
-              const resolvedChat = membersCache[chat.id]
-                ? { ...chat, members: membersCache[chat.id] }
-                : chat;
-              return (
-                <SidebarItem
-                  key={chat.id}
-                  label={getChatLabel(resolvedChat, currentUserId)}
-                  icon={<ChatAvatar chat={resolvedChat} presenceMap={presenceMap} currentUserId={currentUserId} />}
-                  active={params?.chatId === chat.id}
-                  unreadCount={unreadCounts[chat.id] ?? 0}
-                  onClick={() => goToChat(chat.id)}
-                />
-              );
-            })}
+            chats.map((chat) => (
+              <SidebarItem
+                key={chat.id}
+                label={getChatLabel(chat, currentUserId)}
+                icon={<ChatAvatar chat={chat} presenceMap={presenceMap} currentUserId={currentUserId} />}
+                active={params?.chatId === chat.id}
+                unreadCount={unreadCounts[chat.id] ?? 0}
+                onClick={() => goToChat(chat.id)}
+              />
+            ))}
 
           {dmsOpen && chatsNextLink && (
             <button

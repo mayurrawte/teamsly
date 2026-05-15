@@ -85,7 +85,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
 
     load();
 
-    const interval = setInterval(load, 5000);
+    const interval = setInterval(load, 4000);
     return () => {
       cancelled = true;
       clearInterval(interval);
