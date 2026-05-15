@@ -55,7 +55,7 @@ const TABS: TabDef[] = [
   { id: "dms", label: "DMs" },
 ];
 
-const SCAN_TABS: ActivityTab[] = ["mentions", "threads", "reactions"];
+const SCAN_TABS: ActivityTab[] = ["all", "mentions", "threads", "reactions"];
 const SCAN_POLL_MS = 60 * 1000;
 
 // ---------------------------------------------------------------------------
@@ -377,11 +377,32 @@ export default function ActivityPage() {
   // -----------------------------------------------------------------------
 
   let visibleItems: ActivityItem[] = [];
-  if (activeTab === "all") visibleItems = allItems;
-  else if (activeTab === "dms") visibleItems = dmItems;
-  else if (activeTab === "mentions") visibleItems = scanData?.mentions ?? [];
-  else if (activeTab === "threads") visibleItems = scanData?.threads ?? [];
-  else if (activeTab === "reactions") visibleItems = scanData?.reactions ?? [];
+  if (activeTab === "all") {
+    // Merge store-driven unreads with scan results, sort newest first.
+    const scanItems: ActivityItem[] = [
+      ...(scanData?.mentions ?? []),
+      ...(scanData?.threads ?? []),
+      ...(scanData?.reactions ?? []),
+    ];
+    const merged = [...allItems, ...scanItems];
+    const seen = new Set<string>();
+    visibleItems = merged.filter((item) => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+    visibleItems.sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+  } else if (activeTab === "dms") {
+    visibleItems = dmItems;
+  } else if (activeTab === "mentions") {
+    visibleItems = scanData?.mentions ?? [];
+  } else if (activeTab === "threads") {
+    visibleItems = scanData?.threads ?? [];
+  } else if (activeTab === "reactions") {
+    visibleItems = scanData?.reactions ?? [];
+  }
 
   // Unread-only filter — applies to every tab.
   //
