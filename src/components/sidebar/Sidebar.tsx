@@ -7,12 +7,15 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { signOut } from "next-auth/react";
 import { clearAll as clearMessageCache } from "@/lib/storage/message-cache";
+import { clearAll as clearDraftsCache } from "@/lib/storage/drafts";
+import { clearAll as clearBookmarksCache } from "@/lib/storage/bookmarks";
 import { cn } from "@/lib/utils";
 
 async function handleSignOut() {
-  // Drop the IDB message cache before redirect so a previous user's messages
-  // don't leak to the next sign-in on the same device.
-  await clearMessageCache();
+  // Drop the IDB caches before redirect so a previous user's messages,
+  // drafts, and saved bookmarks don't leak to the next sign-in on the
+  // same device.
+  await Promise.all([clearMessageCache(), clearDraftsCache(), clearBookmarksCache()]);
   await signOut({ callbackUrl: "/" });
 }
 import { UserFooter } from "./UserFooter";

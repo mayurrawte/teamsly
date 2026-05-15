@@ -110,6 +110,8 @@ export function DemoChannelView({ channelId }: { channelId: string }) {
             messages={messages}
             loading={false}
             contextName={channel?.displayName ? `#${channel.displayName}` : "Channel"}
+            bookmarkContextId={contextId}
+            contextLabel={channel?.displayName ? `#${channel.displayName}` : "Channel"}
             introCard={introCard}
             onReplyInThread={setThreadMessage}
             onForward={setForwardMessage}
@@ -120,6 +122,7 @@ export function DemoChannelView({ channelId }: { channelId: string }) {
           <MessageInput
             placeholder={`Message #${channel?.displayName ?? "channel"}`}
             onSend={handleSend}
+            contextId={`demo:${channelId}`}
           />
         </>
       ) : (

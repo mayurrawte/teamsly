@@ -216,6 +216,15 @@ function buildAppMenu(): void {
 // ─── Main window ──────────────────────────────────────────────────────────────
 
 function createWindow(): void {
+  const appIcon = nativeImage.createFromPath(
+    path.join(__dirname, '..', 'build-resources', 'icon.png')
+  );
+
+  // macOS: set dock icon in dev (packaged builds get it from the .app bundle).
+  if (process.platform === 'darwin' && isDev) {
+    app.dock?.setIcon(appIcon);
+  }
+
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
@@ -223,6 +232,8 @@ function createWindow(): void {
     minHeight: 600,
     backgroundColor: '#1a1d21',
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    // icon is used by Windows/Linux; macOS reads it from the .app bundle
+    icon: appIcon,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

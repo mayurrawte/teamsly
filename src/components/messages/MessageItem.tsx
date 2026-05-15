@@ -13,11 +13,24 @@ import { messagePlainText, renderMessageBody } from "@/lib/utils/render-message"
 import type { ReactionType } from "@/lib/utils/reactions";
 import { usePreferencesStore } from "@/store/preferences";
 import { useWorkspaceStore } from "@/store/workspace";
+import { useBookmarksStore } from "@/store/bookmarks";
 import { cn } from "@/lib/utils";
 
 interface Props {
   message: MSMessage;
   isGroupHead?: boolean;
+  /**
+   * Context key the parent feed lives in — same shape as the workspace
+   * store's per-context message map (`chatId` or `${teamId}:${channelId}`,
+   * or `demo:...` for the demo views). Used as part of the bookmark key.
+   * When undefined, the save affordance is suppressed.
+   */
+  contextId?: string;
+  /**
+   * Human-readable label for where the message lives, shown in `/app/later`.
+   * E.g. `#general` for a channel or the chat partner's display name for a DM.
+   */
+  contextLabel?: string;
   onReplyInThread?: (message: MSMessage) => void;
   onForward?: (message: MSMessage) => void;
   onToggleReaction?: (messageId: string, reactionType: ReactionType) => void;
@@ -27,12 +40,58 @@ interface Props {
   onDiscard?: (messageId: string) => void;
 }
 
-export function MessageItem({ message, isGroupHead = true, onReplyInThread, onForward, onToggleReaction, onDelete, onEdit, onRetry, onDiscard }: Props) {
+export function MessageItem({
+  message,
+  isGroupHead = true,
+  contextId,
+  contextLabel,
+  onReplyInThread,
+  onForward,
+  onToggleReaction,
+  onDelete,
+  onEdit,
+  onRetry,
+  onDiscard,
+}: Props) {
   const density = usePreferencesStore((state) => state.density);
   const currentUserId = useWorkspaceStore((state) => state.currentUserId);
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Subscribe to the bookmarks store *only* for this message's saved state.
+  // Selecting at the boolean level keeps every other message from re-rendering
+  // when an unrelated bookmark changes.
+  const isSaved = useBookmarksStore((s) =>
+    contextId ? s.isSaved(contextId, message.id) : false
+  );
+  const addBookmark = useBookmarksStore((s) => s.addBookmark);
+  const removeBookmark = useBookmarksStore((s) => s.removeBookmark);
+
+  // Optimistic + pending messages can't be saved — there's nothing stable
+  // to bookmark against until the server assigns a real id.
+  const canSave = Boolean(
+    contextId && !message.__pending && !message.__failed
+  );
+
+  const handleSaveToggle = canSave
+    ? () => {
+        if (!contextId) return;
+        if (isSaved) {
+          removeBookmark(contextId, message.id);
+          return;
+        }
+        const plain = messagePlainText(message.body.content, message.body.contentType);
+        addBookmark({
+          contextId,
+          messageId: message.id,
+          savedAt: Date.now(),
+          snippet: plain.slice(0, 200),
+          senderName: message.from?.user?.displayName ?? "Unknown",
+          contextLabel: contextLabel ?? "",
+        });
+      }
+    : undefined;
 
   useEffect(() => {
     if (isEditing) {
@@ -173,6 +232,8 @@ export function MessageItem({ message, isGroupHead = true, onReplyInThread, onFo
             onReact={onToggleReaction}
             onReplyInThread={() => onReplyInThread?.(message)}
             onForward={onForward ? () => onForward(message) : undefined}
+            onSave={handleSaveToggle}
+            isSaved={isSaved}
             onEdit={editHandler ? startEditing : undefined}
             onDelete={deleteHandler}
           />

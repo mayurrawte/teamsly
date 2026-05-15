@@ -1,5 +1,14 @@
 import { auth } from "@/lib/auth/config";
-import { getChatMessages, sendChatMessage, type ChatAttachment } from "@/lib/graph/client";
+import {
+  buildGraphMentions,
+  rewriteBodyWithAtMarkup,
+  type ClientMention,
+} from "@/lib/graph/mentions";
+import {
+  getChatMessages,
+  sendChatMessage,
+  type ChatAttachment,
+} from "@/lib/graph/client";
 import { NextResponse } from "next/server";
 
 type Params = Promise<{ chatId: string }>;
@@ -21,8 +30,12 @@ export async function POST(req: Request, { params }: { params: Params }) {
   if (!session?.accessToken) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { chatId } = await params;
 
-  const body = (await req.json()) as { content?: string; attachments?: unknown[] };
-  const { content, attachments } = body;
+  const body = (await req.json()) as {
+    content?: string;
+    attachments?: unknown[];
+    mentions?: ClientMention[];
+  };
+  const { content, attachments, mentions } = body;
   if (!content?.trim() && !attachments?.length) {
     return NextResponse.json({ error: "Empty message" }, { status: 400 });
   }
@@ -45,10 +58,48 @@ export async function POST(req: Request, { params }: { params: Params }) {
     validatedAttachments = attachments as ChatAttachment[];
   }
 
+  // Translate the client-side `mentions` list into the Graph `mentions[]`
+  // shape and rewrite the body to wrap each `@Name` with `<at id="i">…</at>`.
+  // `__everyone__` becomes a `conversation` identity set with
+  // `conversationIdentityType: "chat"`.
+  let graphMentions: ReturnType<typeof buildGraphMentions> | undefined;
+  let finalContent = content ?? "";
+  if (mentions?.length && finalContent) {
+    const built = buildGraphMentions(mentions, {
+      kind: "chat",
+      chatId,
+    });
+    graphMentions = built;
+    finalContent = rewriteBodyWithAtMarkup(finalContent, built);
+  }
+
   try {
-    const msg = await sendChatMessage(session.accessToken, chatId, content ?? "", validatedAttachments);
+    const msg = await sendChatMessage(
+      session.accessToken,
+      chatId,
+      finalContent,
+      validatedAttachments,
+      graphMentions
+    );
     return NextResponse.json(msg);
   } catch {
+    // Graph occasionally rejects a structured mentions[] for cross-tenant
+    // DMs. Fall back to sending without the array — the `<at>` markup will
+    // still render a pill in real Teams clients, just without the notification
+    // ping. Better than a 502 to the user.
+    if (graphMentions && finalContent) {
+      try {
+        const msg = await sendChatMessage(
+          session.accessToken,
+          chatId,
+          finalContent,
+          validatedAttachments
+        );
+        return NextResponse.json(msg);
+      } catch {
+        return NextResponse.json({ error: "Graph chat send failed" }, { status: 502 });
+      }
+    }
     return NextResponse.json({ error: "Graph chat send failed" }, { status: 502 });
   }
 }

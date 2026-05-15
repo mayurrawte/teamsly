@@ -118,6 +118,8 @@ export function PreferencesModal({ open, onOpenChange }: Props) {
             <div className="flex-1 overflow-y-auto px-6 py-5">
               {section === "appearance" ? (
                 <AppearancePanel />
+              ) : section === "notifications" ? (
+                <NotificationsPanel />
               ) : (
                 <ComingSoonPanel />
               )}
@@ -260,6 +262,89 @@ function AppearancePanel() {
           </span>
         </span>
       </label>
+    </div>
+  );
+}
+
+// ─── Notifications panel ─────────────────────────────────────────────────────
+
+function NotificationsPanel() {
+  const desktop = usePreferencesStore((s) => s.desktopNotifications);
+  const sound = usePreferencesStore((s) => s.notificationSound);
+  const mentionsOnly = usePreferencesStore((s) => s.mentionsOnly);
+  const keywords = usePreferencesStore((s) => s.notificationKeywords);
+  const setDesktop = usePreferencesStore((s) => s.setDesktopNotifications);
+  const setSound = usePreferencesStore((s) => s.setNotificationSound);
+  const setMentionsOnly = usePreferencesStore((s) => s.setMentionsOnly);
+  const setKeywords = usePreferencesStore((s) => s.setNotificationKeywords);
+
+  return (
+    <div className="flex flex-col gap-6">
+      <ToggleRow
+        label="Desktop notifications"
+        hint="Show OS notifications when new messages arrive."
+        value={desktop}
+        onChange={setDesktop}
+      />
+      <ToggleRow
+        label="Notification sound"
+        hint="Play a sound for new messages."
+        value={sound}
+        onChange={setSound}
+      />
+      <ToggleRow
+        label="Notify only on mentions"
+        hint="Mute everything except direct @mentions and DMs."
+        value={mentionsOnly}
+        onChange={setMentionsOnly}
+      />
+      <FieldGroup
+        label="Keyword alerts"
+        hint="Comma-separated words that trigger notifications (case-insensitive)."
+      >
+        <input
+          value={keywords}
+          onChange={(e) => setKeywords(e.target.value)}
+          placeholder="launch, incident, blocker"
+          className="h-8 w-full max-w-[360px] rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-[13px] text-[var(--text-primary)] outline-none transition-colors placeholder:text-[var(--text-muted)] focus:border-[var(--border-input)]"
+        />
+      </FieldGroup>
+    </div>
+  );
+}
+
+function ToggleRow({
+  label,
+  hint,
+  value,
+  onChange,
+}: {
+  label: string;
+  hint?: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <div className="min-w-0 flex-1">
+        <p className="text-[13px] font-bold text-white">{label}</p>
+        {hint && <p className="mt-[2px] text-[12px] text-[var(--text-muted)]">{hint}</p>}
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={value}
+        onClick={() => onChange(!value)}
+        className={`relative mt-[2px] h-5 w-9 flex-shrink-0 rounded-full transition-colors duration-150 ${
+          value ? "bg-[var(--accent)]" : "bg-[#565856]"
+        }`}
+      >
+        <span
+          className={`absolute top-[2px] h-4 w-4 rounded-full bg-white transition-transform duration-150 ${
+            value ? "translate-x-[18px]" : "translate-x-[2px]"
+          }`}
+        />
+      </button>
     </div>
   );
 }

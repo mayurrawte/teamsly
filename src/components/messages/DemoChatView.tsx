@@ -140,6 +140,8 @@ export function DemoChatView({ chatId }: { chatId: string }) {
             messages={messages}
             loading={false}
             contextName={label}
+            bookmarkContextId={contextId}
+            contextLabel={label}
             introCard={introCard}
             onReplyInThread={setThreadMessage}
             onForward={setForwardMessage}
@@ -153,6 +155,7 @@ export function DemoChatView({ chatId }: { chatId: string }) {
             placeholder={`Message ${label}`}
             onSend={handleSend}
             mentionCandidates={mentionCandidates}
+            contextId={`demo:${chatId}`}
           />
         </>
       ) : (

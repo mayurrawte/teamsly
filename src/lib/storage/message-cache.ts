@@ -16,8 +16,8 @@
  * failed.
  */
 
-const DB_NAME = "teamsly";
-const DB_VERSION = 1;
+import { openTeamslyDb } from "./drafts";
+
 const STORE_NAME = "messages-by-context";
 
 interface ContextRecord {
@@ -26,39 +26,12 @@ interface ContextRecord {
   updatedAt: number;
 }
 
-let dbPromise: Promise<IDBDatabase | null> | null = null;
-
+// The shared `teamsly` IDB is opened from `drafts.ts` so the upgrade path
+// (which adds new object stores like `drafts` and `bookmarks`) lives in
+// one place. Every module here goes through openTeamslyDb to avoid racing
+// open-with-different-version calls.
 function openDb(): Promise<IDBDatabase | null> {
-  if (typeof window === "undefined" || typeof indexedDB === "undefined") {
-    return Promise.resolve(null);
-  }
-  if (dbPromise) return dbPromise;
-
-  dbPromise = new Promise<IDBDatabase | null>((resolve) => {
-    try {
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
-      request.onupgradeneeded = () => {
-        const db = request.result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          db.createObjectStore(STORE_NAME, { keyPath: "contextId" });
-        }
-      };
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => {
-        console.warn("[message-cache] open failed", request.error);
-        resolve(null);
-      };
-      request.onblocked = () => {
-        console.warn("[message-cache] open blocked");
-        resolve(null);
-      };
-    } catch (err) {
-      console.warn("[message-cache] open threw", err);
-      resolve(null);
-    }
-  });
-
-  return dbPromise;
+  return openTeamslyDb();
 }
 
 /**

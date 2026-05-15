@@ -81,7 +81,10 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [teamId, channelId, contextId, setLoadingMessages, setMessages, showToast]);
 
-  async function handleSend(content: string) {
+  async function handleSend(
+    content: string,
+    options?: { mentions?: { id: string; name: string }[] }
+  ) {
     const tempId = `temp-${crypto.randomUUID()}`;
     const now = new Date().toISOString();
     const optimistic: MSMessage = {
@@ -100,7 +103,12 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
       const res = await fetch(`/api/messages/${teamId}/${channelId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({
+          content,
+          // Server route turns this into Graph's `mentions[]` array and
+          // wraps each `@Name` in the body with `<at id="i">…</at>` markup.
+          ...(options?.mentions?.length ? { mentions: options.mentions } : {}),
+        }),
       });
       if (!res.ok) throw new Error("Failed to send message");
       const serverMsg = (await res.json()) as MSMessage;
@@ -231,6 +239,8 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
             messages={messages}
             loading={isLoadingMessages}
             contextName={channel?.displayName ? `#${channel.displayName}` : "Channel"}
+            bookmarkContextId={contextId}
+            contextLabel={channel?.displayName ? `#${channel.displayName}` : "Channel"}
             introCard={introCard}
             onReplyInThread={setThreadMessage}
             onForward={setForwardMessage}
@@ -241,6 +251,8 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
           <MessageInput
             placeholder={`Message #${channel?.displayName ?? "channel"}`}
             onSend={handleSend}
+            contextId={contextId}
+            allowEveryone
           />
         </>
       ) : (

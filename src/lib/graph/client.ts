@@ -47,12 +47,24 @@ export async function sendMessage(
   accessToken: string,
   teamId: string,
   channelId: string,
-  content: string
+  content: string,
+  /**
+   * Optional Graph `mentions[]` array, already built server-side from the
+   * client's `{ id, name }[]` list — see `lib/graph/mentions.ts`. When
+   * present, the body should already contain the matching `<at id="i">…</at>`
+   * markup; otherwise Graph errors with `Mention id X must be referenced in
+   * the message body`.
+   */
+  mentions?: unknown[]
 ) {
   const client = getGraphClient(accessToken);
-  return client.api(`/teams/${teamId}/channels/${channelId}/messages`).post({
+  const payload: Record<string, unknown> = {
     body: { content, contentType: "html" },
-  });
+  };
+  if (mentions?.length) {
+    payload.mentions = mentions;
+  }
+  return client.api(`/teams/${teamId}/channels/${channelId}/messages`).post(payload);
 }
 
 export async function sendChannelReply(
@@ -86,7 +98,6 @@ export async function getChats(
         .api("/me/chats")
         .expand("members,lastMessagePreview")
         .select("id,chatType,topic,lastUpdatedDateTime")
-        .orderby("lastMessagePreview/createdDateTime desc")
         .top(pageSize)
         .get();
 
@@ -113,7 +124,13 @@ export async function sendChatMessage(
   accessToken: string,
   chatId: string,
   content: string,
-  attachments?: ChatAttachment[]
+  attachments?: ChatAttachment[],
+  /**
+   * Optional Graph `mentions[]` array — see `lib/graph/mentions.ts`. When
+   * present, the body must contain `<at id="i">…</at>` markup for each
+   * entry or Graph rejects the request.
+   */
+  mentions?: unknown[]
 ) {
   const client = getGraphClient(accessToken);
   const payload: Record<string, unknown> = {
@@ -121,6 +138,9 @@ export async function sendChatMessage(
   };
   if (attachments?.length) {
     payload.attachments = attachments;
+  }
+  if (mentions?.length) {
+    payload.mentions = mentions;
   }
   return client.api(`/me/chats/${chatId}/messages`).post(payload);
 }

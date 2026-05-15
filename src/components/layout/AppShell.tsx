@@ -11,6 +11,8 @@ import { JumpToSwitcher, type JumpToItem } from "@/components/modals/JumpToSwitc
 import { SearchModal } from "@/components/modals/SearchModal";
 import { Logo } from "@/components/ui/Logo";
 import { useWorkspaceStore } from "@/store/workspace";
+import { useDraftsStore } from "@/store/drafts";
+import { useBookmarksStore } from "@/store/bookmarks";
 import { ToastViewport } from "@/components/ui/ToastViewport";
 import { useToastStore } from "@/store/toasts";
 import { sendUnreadCount } from "@/lib/electron-bridge";
@@ -71,6 +73,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // instead of waiting on Graph. Fire-and-forget — IDB is best-effort.
   useEffect(() => {
     void hydrateMessageCache();
+    // Same pattern for composer drafts and saved-message bookmarks — both
+    // are also IDB-backed so they survive reloads. Hydration completes well
+    // after the first render but that's fine: stores merge IDB into any
+    // already-in-memory state so a quick draft typed during boot isn't lost.
+    void useDraftsStore.getState().hydrate();
+    void useBookmarksStore.getState().hydrate();
   }, [hydrateMessageCache]);
 
   useEffect(() => {

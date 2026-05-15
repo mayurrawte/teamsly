@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { markdownToHtml } from "@/lib/utils/markdown-to-html";
 import { Avatar } from "@/components/ui/Avatar";
 import { useToastStore } from "@/store/toasts";
+import { useDraftsStore } from "@/store/drafts";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -33,16 +34,51 @@ export interface MentionCandidate {
   email?: string;
 }
 
+/**
+ * Lightweight mention descriptor passed alongside the HTML body when
+ * the user sends. `id` is the AAD user id, or the sentinel `__everyone__`
+ * for `@everyone`. The send handler turns this into a Graph `mentions[]`
+ * array on the server (see `/api/chats/[chatId]/messages` and the channel
+ * route) — the client never has to know the Graph shape.
+ */
+export interface PendingMention {
+  id: string;
+  name: string;
+}
+
+export interface SendOptions {
+  mentions?: PendingMention[];
+}
+
 interface Props {
   placeholder: string;
-  onSend: (content: string) => Promise<void>;
+  onSend: (content: string, options?: SendOptions) => Promise<void>;
   /** Called instead of onSend when a file is pending. Only rendered when provided. */
   onAttachAndSend?: (content: string, file: File) => Promise<void>;
   /** Set to true by the parent while the upload+send is in flight */
   uploading?: boolean;
   /** Members to suggest for @mention autocomplete */
   mentionCandidates?: MentionCandidate[];
+  /**
+   * Force the `@everyone` entry to appear at the top of the mention
+   * popover even when no per-member candidates are passed. Used by
+   * channels where we don't pre-load the roster — the autocomplete then
+   * only has `@everyone` to offer until the user types past it.
+   */
+  allowEveryone?: boolean;
+  /**
+   * Stable key used to scope the composer's draft persistence. When
+   * provided, `MessageInput` seeds `value` from the drafts store on mount
+   * and writes back on every change (debounced 300 ms). When `undefined`
+   * (e.g. thread reply composer), nothing is persisted.
+   */
+  contextId?: string;
 }
+
+// Sentinel mention id for `@everyone`. The chat/channel API routes turn
+// this into the Graph `conversation` mention shape; everything else is
+// treated as a real AAD user.
+const EVERYONE_MENTION_ID = "__everyone__";
 
 // ---------------------------------------------------------------------------
 // Toolbar configuration
@@ -121,13 +157,50 @@ export function MessageInput({
   onAttachAndSend,
   uploading,
   mentionCandidates,
+  allowEveryone,
+  contextId,
 }: Props) {
   const [value, setValue] = useState("");
   const [sending, setSending] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  // Mentions the user has accepted via the autocomplete (or `@everyone`).
+  // Reset on send. Kept parallel to the plain `@Display Name` text in the
+  // textarea so the parent can build a structured Graph `mentions[]`.
+  const [pendingMentions, setPendingMentions] = useState<PendingMention[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const showToast = useToastStore((state) => state.showToast);
+  const setDraft = useDraftsStore((s) => s.setDraft);
+  const clearDraftInStore = useDraftsStore((s) => s.clearDraft);
+
+  // ---------------------------------------------------------------------------
+  // Draft seed + debounced write-back
+  // ---------------------------------------------------------------------------
+  // Seed `value` from the drafts store when the context changes (incl. mount).
+  // We read the store imperatively so this effect doesn't re-run on every
+  // draft mutation. When `contextId` is undefined (thread reply composer),
+  // skip persistence entirely.
+  useEffect(() => {
+    if (!contextId) {
+      setValue("");
+      return;
+    }
+    const existing = useDraftsStore.getState().drafts[contextId] ?? "";
+    setValue(existing);
+    // We intentionally reset on every contextId change so switching chats
+    // doesn't leak the previous chat's typing into the new one.
+  }, [contextId]);
+
+  // Debounced write-back: 300 ms after the user stops typing, persist the
+  // current `value`. Cancelled on the next keystroke. Fire-and-forget IDB
+  // write — store + IDB stay in sync without blocking the UI.
+  useEffect(() => {
+    if (!contextId) return;
+    const handle = window.setTimeout(() => {
+      setDraft(contextId, value);
+    }, 300);
+    return () => window.clearTimeout(handle);
+  }, [value, contextId, setDraft]);
 
   // ---------------------------------------------------------------------------
   // @mention state
@@ -136,19 +209,43 @@ export function MessageInput({
   const [mentionSelectedIdx, setMentionSelectedIdx] = useState(0);
   const mentionPopoverRef = useRef<HTMLDivElement>(null);
 
-  const hasMentionCandidates = Boolean(mentionCandidates && mentionCandidates.length > 0);
+  // Treat `allowEveryone` as enough on its own to enable the popover —
+  // channels currently don't pre-load the roster so `mentionCandidates`
+  // is empty, but we still want `@everyone` to surface there.
+  const hasMentionCandidates =
+    Boolean(mentionCandidates && mentionCandidates.length > 0) ||
+    Boolean(allowEveryone);
+
+  // Group context: expose `@everyone` at the top of the suggestion list.
+  // Trigger when there's more than one candidate (group chats) OR when the
+  // parent explicitly opts in via `allowEveryone` (channels).
+  const showEveryone =
+    Boolean(allowEveryone) || (mentionCandidates?.length ?? 0) > 1;
+
+  const everyoneCandidate: MentionCandidate = {
+    id: EVERYONE_MENTION_ID,
+    displayName: "everyone",
+  };
 
   const filteredCandidates = mentionAnchor && hasMentionCandidates
-    ? (mentionCandidates ?? [])
-        .filter((c) => {
-          const q = mentionAnchor.query.toLowerCase();
-          if (!q) return true;
-          return (
-            c.displayName.toLowerCase().includes(q) ||
-            (c.email && c.email.toLowerCase().startsWith(q))
-          );
-        })
-        .slice(0, 6)
+    ? (() => {
+        const q = mentionAnchor.query.toLowerCase();
+        const memberMatches = (mentionCandidates ?? [])
+          .filter((c) => {
+            if (!q) return true;
+            return (
+              c.displayName.toLowerCase().includes(q) ||
+              (c.email && c.email.toLowerCase().startsWith(q))
+            );
+          })
+          .slice(0, 6);
+        // Show @everyone first when it matches the query (or no query yet).
+        const includeEveryone =
+          showEveryone && (!q || "everyone".startsWith(q));
+        return includeEveryone
+          ? [everyoneCandidate, ...memberMatches].slice(0, 7)
+          : memberMatches;
+      })()
     : [];
 
   const mentionOpen = mentionAnchor !== null && filteredCandidates.length > 0;
@@ -203,8 +300,14 @@ export function MessageInput({
       setSending(true);
       setValue("");
       setPendingFile(null);
+      // Drop the persisted draft optimistically; if the send fails we
+      // re-seed `value` below and the debounced write-back will rewrite it.
+      if (contextId) clearDraftInStore(contextId);
       try {
         await onAttachAndSend(markdownToHtml(trimmed), fileToSend);
+        // Attachment path doesn't carry mentions in the current flow,
+        // but reset anyway in case we extend it.
+        setPendingMentions([]);
       } catch {
         setValue(trimmed);
         setPendingFile(fileToSend);
@@ -217,10 +320,23 @@ export function MessageInput({
     if (!trimmed) return;
     setSending(true);
     setValue("");
+    if (contextId) clearDraftInStore(contextId);
+    // Snapshot mentions for this send, narrowed to names that still appear
+    // in the trimmed body — the user may have typed `@Alex` then deleted it.
+    const mentionsForSend = pendingMentions.filter((m) => {
+      if (m.id === EVERYONE_MENTION_ID) {
+        return /(^|\s)@everyone(\s|$)/.test(trimmed);
+      }
+      return trimmed.includes(`@${m.name}`);
+    });
     try {
       // Convert markdown-subset to HTML before sending so the Graph API
       // renders formatting correctly (contentType: "html" in graph/client.ts).
-      await onSend(markdownToHtml(trimmed));
+      await onSend(
+        markdownToHtml(trimmed),
+        mentionsForSend.length > 0 ? { mentions: mentionsForSend } : undefined
+      );
+      setPendingMentions([]);
     } catch {
       setValue(trimmed);
     } finally {
@@ -240,15 +356,21 @@ export function MessageInput({
     const before = value.slice(0, mentionAnchor.atIndex);
     const after = value.slice(cursor);
 
-    // Plain-text @DisplayName insertion — no <at> markup because the Graph
-    // chat messages API for cross-tenant DMs does not render structured
-    // mention payloads; @Display Name in plain text is universally compatible.
+    // Insert `@DisplayName ` so the textarea still reads naturally for the
+    // user. Parallel to this, we accumulate `pendingMentions` so the parent
+    // can build the Graph `mentions[]` array on send — that's what gives
+    // real Teams clients a notification ping instead of a colored pill.
     const insertion = `@${candidate.displayName} `;
     const newValue = before + insertion + after;
     const newCursor = mentionAnchor.atIndex + insertion.length;
 
     setValue(newValue);
     setMentionAnchor(null);
+    setPendingMentions((prev) => {
+      // Avoid duplicate entries for the same user across multiple inserts.
+      if (prev.some((m) => m.id === candidate.id)) return prev;
+      return [...prev, { id: candidate.id, name: candidate.displayName }];
+    });
 
     requestAnimationFrame(() => {
       ta.focus();
@@ -369,7 +491,7 @@ export function MessageInput({
     e.preventDefault(); // Required to allow drop
   }
 
-  function onDragLeave(_e: DragEvent<HTMLDivElement>) {
+  function onDragLeave() {
     if (!onAttachAndSend) return;
     dragCounterRef.current -= 1;
     if (dragCounterRef.current === 0) setIsDraggingFile(false);

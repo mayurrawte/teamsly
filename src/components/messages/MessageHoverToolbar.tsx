@@ -1,8 +1,9 @@
 "use client";
 
-import { Smile, MessageSquare, Forward, Pin, MoreHorizontal, Trash2, Pencil, type LucideIcon } from "lucide-react";
+import { Bookmark, Smile, MessageSquare, Forward, Pin, MoreHorizontal, Trash2, Pencil, type LucideIcon } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { EmojiPicker } from "./EmojiPicker";
+import { cn } from "@/lib/utils";
 import type { ReactionType } from "@/lib/utils/reactions";
 
 interface Props {
@@ -11,6 +12,9 @@ interface Props {
   onReplyInThread?: (messageId: string) => void;
   onForward?: (messageId: string) => void;
   onPin?: (messageId: string) => void;
+  /** Toggle save-for-later. When `isSaved`, the icon shows filled. */
+  onSave?: (messageId: string) => void;
+  isSaved?: boolean;
   onEdit?: (messageId: string) => void;
   onDelete?: (messageId: string) => void;
 }
@@ -21,6 +25,8 @@ export function MessageHoverToolbar({
   onReplyInThread,
   onForward,
   onPin,
+  onSave,
+  isSaved,
   onEdit,
   onDelete,
 }: Props) {
@@ -39,6 +45,14 @@ export function MessageHoverToolbar({
         <ToolbarButton icon={MessageSquare} label="Reply in thread" onClick={() => onReplyInThread(messageId)} />
       )}
       {onForward && <ToolbarButton icon={Forward} label="Forward message" onClick={() => onForward(messageId)} />}
+      {onSave && (
+        <ToolbarButton
+          icon={Bookmark}
+          label={isSaved ? "Remove from Later" : "Save for later"}
+          onClick={() => onSave(messageId)}
+          active={isSaved}
+        />
+      )}
       {onPin && <ToolbarButton icon={Pin} label="Pin message" onClick={() => onPin(messageId)} />}
       {showMoreMenu && (
         <DropdownMenu.Root>
@@ -82,18 +96,24 @@ interface ToolbarButtonProps {
   icon: LucideIcon;
   label: string;
   onClick?: () => void;
+  /** Visual press-state; used by Save-for-later to indicate the message is bookmarked. */
+  active?: boolean;
 }
 
-function ToolbarButton({ icon: Icon, label, onClick }: ToolbarButtonProps) {
+function ToolbarButton({ icon: Icon, label, onClick, active }: ToolbarButtonProps) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={label}
+      aria-pressed={active ?? undefined}
       title={label}
-      className="flex h-7 w-7 items-center justify-center rounded text-[var(--text-secondary)] transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-white focus-ring"
+      className={cn(
+        "flex h-7 w-7 items-center justify-center rounded transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-white focus-ring",
+        active ? "text-[var(--accent)]" : "text-[var(--text-secondary)]"
+      )}
     >
-      <Icon size={16} strokeWidth={2} />
+      <Icon size={16} strokeWidth={2} fill={active ? "currentColor" : "none"} />
     </button>
   );
 }

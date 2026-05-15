@@ -81,7 +81,10 @@ export function ChatView({ chatId }: { chatId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId, setLoadingMessages, setMessages, showToast]);
 
-  async function handleSend(content: string) {
+  async function handleSend(
+    content: string,
+    options?: { mentions?: { id: string; name: string }[] }
+  ) {
     const tempId = `temp-${crypto.randomUUID()}`;
     const now = new Date().toISOString();
     const optimistic: MSMessage = {
@@ -100,7 +103,14 @@ export function ChatView({ chatId }: { chatId: string }) {
       const res = await fetch(`/api/chats/${chatId}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({
+          content,
+          // Only include the array when the user actually @mentioned someone.
+          // The server route translates this into Graph's `mentions[]` shape
+          // and rewrites the body with `<at>` markup; omit otherwise to avoid
+          // the round-trip cost of an extra rewrite pass.
+          ...(options?.mentions?.length ? { mentions: options.mentions } : {}),
+        }),
       });
       if (!res.ok) throw new Error("Failed to send chat message");
       const serverMsg = (await res.json()) as MSMessage;
@@ -345,6 +355,8 @@ export function ChatView({ chatId }: { chatId: string }) {
             messages={messages}
             loading={isLoadingMessages}
             contextName={label}
+            bookmarkContextId={chatId}
+            contextLabel={label}
             introCard={introCard}
             onReplyInThread={setThreadMessage}
             onForward={setForwardMessage}
@@ -360,6 +372,7 @@ export function ChatView({ chatId }: { chatId: string }) {
             onAttachAndSend={handleAttachAndSend}
             uploading={uploading}
             mentionCandidates={mentionCandidates}
+            contextId={chatId}
           />
         </>
       ) : (

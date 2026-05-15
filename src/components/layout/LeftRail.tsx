@@ -13,18 +13,24 @@ import {
   MoreHorizontal,
   Settings,
   Info,
+  MessageCircleQuestion,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 import { clearAll as clearMessageCache } from "@/lib/storage/message-cache";
+import { clearAll as clearDraftsCache } from "@/lib/storage/drafts";
+import { clearAll as clearBookmarksCache } from "@/lib/storage/bookmarks";
 import { PreferencesModal } from "@/components/modals/PreferencesModal";
+import { FeedbackModal } from "@/components/modals/FeedbackModal";
 import { useWorkspaceStore } from "@/store/workspace";
+import { useBookmarksStore } from "@/store/bookmarks";
 
 async function handleSignOut() {
-  // Drop the IDB message cache before redirect so a previous user's messages
-  // don't leak to the next sign-in on the same device.
-  await clearMessageCache();
+  // Drop the IDB caches before redirect so a previous user's messages,
+  // drafts, and saved bookmarks don't leak to the next sign-in on the
+  // same device.
+  await Promise.all([clearMessageCache(), clearDraftsCache(), clearBookmarksCache()]);
   await signOut({ callbackUrl: "/" });
 }
 
@@ -59,11 +65,15 @@ export function LeftRail() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
   const [prefsOpen, setPrefsOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
   // Unread badge: sum of all unread channels + unread DMs
   const unreadCounts = useWorkspaceStore((s) => s.unreadCounts);
   const totalUnread = Object.values(unreadCounts).reduce((sum, n) => sum + n, 0);
+  // Saved-message count for the Later rail badge. Subscribing to length only
+  // means an unrelated bookmark mutation doesn't re-render the whole rail.
+  const savedCount = useBookmarksStore((s) => s.bookmarks.length);
 
   // Close popover when clicking outside
   useEffect(() => {
@@ -87,12 +97,19 @@ export function LeftRail() {
         {NAV_ITEMS.map((item) => {
           const active = isActive(pathname, item);
           const Icon = item.icon;
-          const showBadge = item.label === "Activity" && totalUnread > 0 && !active;
+          const activityBadge = item.label === "Activity" && totalUnread > 0 && !active;
+          const laterBadge = item.label === "Later" && savedCount > 0 && !active;
+          const showBadge = activityBadge || laterBadge;
+          const badgeCount = activityBadge ? totalUnread : savedCount;
           return (
             <Link
               key={item.label}
               href={item.href}
-              aria-label={showBadge ? `${item.label}, ${totalUnread} unread` : item.label}
+              aria-label={
+                showBadge
+                  ? `${item.label}, ${badgeCount} ${activityBadge ? "unread" : "saved"}`
+                  : item.label
+              }
               title={item.label}
               className={cn(
                 "group relative flex w-full flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-medium transition-colors focus-ring",
@@ -131,7 +148,7 @@ export function LeftRail() {
                     aria-hidden="true"
                     className="absolute -right-1 -top-1 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-[#cd2553] px-[3px] text-[9px] font-bold leading-none text-white"
                   >
-                    {totalUnread > 99 ? "99+" : totalUnread}
+                    {badgeCount > 99 ? "99+" : badgeCount}
                   </span>
                 )}
               </span>
@@ -182,7 +199,7 @@ export function LeftRail() {
           <div
             role="menu"
             aria-label="More options menu"
-            className="absolute bottom-full left-full mb-1 ml-1 w-48 overflow-hidden rounded-lg border border-white/10 bg-[#1e2027] py-1 shadow-xl"
+            className="absolute bottom-full left-full z-[200] mb-1 ml-1 w-48 overflow-hidden rounded-lg border border-white/10 bg-[#1e2027] py-1 shadow-xl"
           >
             <button
               role="menuitem"
@@ -194,6 +211,17 @@ export function LeftRail() {
             >
               <Settings size={15} strokeWidth={1.8} className="shrink-0 text-[#a0a3a8]" />
               Preferences
+            </button>
+            <button
+              role="menuitem"
+              onClick={() => {
+                setMoreOpen(false);
+                setFeedbackOpen(true);
+              }}
+              className="flex w-full items-center gap-3 px-3 py-2 text-sm text-[#d1d2d3] transition-colors hover:bg-white/8 focus-ring"
+            >
+              <MessageCircleQuestion size={15} strokeWidth={1.8} className="shrink-0 text-[#a0a3a8]" />
+              Send feedback…
             </button>
             <button
               role="menuitem"
@@ -220,6 +248,7 @@ export function LeftRail() {
       </div>
 
       <PreferencesModal open={prefsOpen} onOpenChange={setPrefsOpen} />
+      <FeedbackModal open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </nav>
   );
 }
