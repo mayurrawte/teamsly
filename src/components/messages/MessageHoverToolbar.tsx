@@ -34,7 +34,7 @@ export function MessageHoverToolbar({
 
   return (
     <div
-      className="absolute right-2 top-[-20px] z-[100] flex translate-y-1 gap-[2px] rounded-md border border-[var(--border)] bg-[#1a1d21] px-1 py-[2px] opacity-0 shadow-[0_2px_8px_rgba(0,0,0,0.35)] transition-[opacity,transform] duration-[80ms] ease-out group-hover:translate-y-0 group-hover:opacity-100"
+      className="absolute right-2 top-[-20px] z-[100] flex translate-x-1 translate-y-1 gap-[2px] rounded-md border border-[var(--border)] bg-[#1a1d21] px-1 py-[2px] opacity-0 shadow-[0_2px_8px_rgba(0,0,0,0.35)] transition-[opacity,transform] duration-[80ms] ease-out group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100"
       role="toolbar"
       aria-label="Message actions"
     >
