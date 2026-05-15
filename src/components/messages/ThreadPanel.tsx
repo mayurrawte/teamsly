@@ -83,7 +83,7 @@ export function ThreadPanel({ message, open, onClose, onSendReply, onForward }: 
     <aside
       className={[
         "absolute bottom-0 right-0 top-0 z-50 flex w-[360px] flex-col border-l border-[#3f4144] bg-[#1a1d21] shadow-[-4px_0_16px_rgba(0,0,0,0.3)]",
-        "transition-transform duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)]",
+        "transition-transform duration-[250ms] ease-[cubic-bezier(0.34,1.56,0.64,1)]",
         open ? "translate-x-0" : "translate-x-full",
       ].join(" ")}
       aria-hidden={!open}
