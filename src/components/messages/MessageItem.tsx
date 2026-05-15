@@ -221,7 +221,7 @@ export function MessageItem({
       <div
         data-message-id={message.id}
         className={cn(
-          "group relative px-4 pl-[72px] transition-colors duration-[80ms] ease-out hover:bg-[var(--message-hover-bg)]",
+          "group relative px-4 pl-[60px] transition-colors duration-[80ms] ease-out hover:bg-[var(--message-hover-bg)]",
           density === "compact" ? "py-0" : "py-[2px]",
           message.__pending && "opacity-60",
           message.__failed && "border-l-2 border-red-500/60 pl-2"
@@ -240,7 +240,7 @@ export function MessageItem({
           />
         )}
         <span
-          className="pointer-events-none absolute left-4 top-[3px] w-9 select-none text-right text-xs leading-[18px] text-[var(--text-muted)] opacity-0 transition-opacity duration-100 group-hover:opacity-100"
+          className="pointer-events-none absolute left-4 top-[3px] w-10 select-none text-right text-xs leading-[18px] text-[var(--text-muted)] opacity-0 transition-opacity duration-100 group-hover:opacity-100"
           title={formatFullTimestamp(message.createdDateTime)}
         >
           {shortTime}
