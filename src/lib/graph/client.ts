@@ -100,7 +100,7 @@ export async function getChats(
     ? await client.api(nextLink).get()
     : await client
         .api("/me/chats")
-        .select("id,chatType,topic,lastUpdatedDateTime")
+        .select("id,chatType,topic,lastUpdatedDateTime,lastMessagePreview")
         .expand("members($select=id,displayName,userId,email)")
         .top(pageSize)
         .get();
