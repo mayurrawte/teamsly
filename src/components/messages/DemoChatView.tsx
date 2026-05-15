@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useWorkspaceStore } from "@/store/workspace";
 import { mockChatMessages } from "@/lib/mock/data";
 import { openTeamsCall } from "@/lib/utils/teams-deeplink";
@@ -15,7 +15,7 @@ import { ForwardMessageModal, type ForwardDestination } from "@/components/modal
 import { useToastStore } from "@/store/toasts";
 
 export function DemoChatView({ chatId }: { chatId: string }) {
-  const { chats, getMessages, setMessages, appendPendingMessage, replaceMessage, toggleReaction, deleteMessage, editMessage } = useWorkspaceStore();
+  const { chats, getMessages, setMessages, appendPendingMessage, replaceMessage, toggleReaction, deleteMessage, editMessage, pendingAnchorMessageId, setPendingAnchorMessageId } = useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [forwardMessage, setForwardMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
@@ -27,6 +27,11 @@ export function DemoChatView({ chatId }: { chatId: string }) {
 
   const contextId = `demo:${chatId}`;
   const messages = getMessages(contextId);
+  // Demo anchor: DemoSidebar set `pendingAnchorMessageId` after selecting a
+  // message result. Forward to MessageFeed and clear after consumption.
+  const handleAnchorConsumed = useCallback(() => {
+    if (pendingAnchorMessageId) setPendingAnchorMessageId(null);
+  }, [pendingAnchorMessageId, setPendingAnchorMessageId]);
 
   useEffect(() => {
     setMessages(contextId, mockChatMessages[chatId] ?? []);
@@ -143,6 +148,8 @@ export function DemoChatView({ chatId }: { chatId: string }) {
             bookmarkContextId={contextId}
             contextLabel={label}
             introCard={introCard}
+            anchorMessageId={pendingAnchorMessageId ?? undefined}
+            onAnchorConsumed={handleAnchorConsumed}
             onReplyInThread={setThreadMessage}
             onForward={setForwardMessage}
             onToggleReaction={(messageId, reactionType) =>

@@ -9,7 +9,7 @@ import { LeftRail } from "@/components/layout/LeftRail";
 import { MemberPanel } from "@/components/layout/MemberPanel";
 import { FilePreviewPanel } from "@/components/files/FilePreviewPanel";
 import { JumpToSwitcher, type JumpToItem } from "@/components/modals/JumpToSwitcher";
-import { SearchModal } from "@/components/modals/SearchModal";
+import { SearchModal, type SearchMessageOrigin } from "@/components/modals/SearchModal";
 import { Logo } from "@/components/ui/Logo";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useDraftsStore } from "@/store/drafts";
@@ -50,8 +50,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const sessionError =
     (session.data as { error?: string } | null | undefined)?.error;
   const needsReauth = sessionError === "RefreshAccessTokenError";
-  const { teams, activeTeamId, channels, chats, currentUserId, setTeams, setActiveTeam, setChannels, setActiveChannel, setActiveChat, markRead, setCurrentUser, hydrateMessageCache } = useWorkspaceStore();
+  const { teams, activeTeamId, activeChannelId, activeChatId, channels, chats, currentUserId, setTeams, setActiveTeam, setChannels, setActiveChannel, setActiveChat, markRead, setCurrentUser, hydrateMessageCache } = useWorkspaceStore();
   const unreadCounts = useWorkspaceStore((s) => s.unreadCounts);
+  // Pull the active context's messages so SearchModal can find matches in the
+  // currently open chat/channel. Empty array when nothing is open.
+  const activeContextId = activeChannelId && activeTeamId
+    ? `${activeTeamId}:${activeChannelId}`
+    : activeChatId ?? null;
+  const activeMessages = useWorkspaceStore((s) =>
+    activeContextId ? (s.messagesByContext[activeContextId] ?? []) : []
+  );
   const showToast = useToastStore((state) => state.showToast);
   const [jumpToOpen, setJumpToOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -187,6 +195,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     router.push(`/app/dm/${chatId}`);
   }
 
+  // Compute SearchModal context — group name + origin used when a message
+  // result is picked. Origin is what powers the jump-to-message anchor.
+  const activeChannel = activeTeamId ? channels[activeTeamId]?.find((c) => c.id === activeChannelId) : undefined;
+  const activeChat = chats.find((c) => c.id === activeChatId);
+  const searchGroupName = activeChannel
+    ? `Messages in #${activeChannel.displayName}`
+    : activeChat
+      ? `Messages in ${getChatLabel(activeChat, currentUserId)}`
+      : "Messages";
+  const searchMessageOrigin: SearchMessageOrigin | undefined = activeChannel && activeTeamId
+    ? { kind: "channel", teamId: activeTeamId, channelId: activeChannel.id }
+    : activeChat
+      ? { kind: "chat", chatId: activeChat.id }
+      : undefined;
+
+  function handleSelectMessage(message: MSMessage, origin: SearchMessageOrigin) {
+    // Navigate to the matched message's context with `?anchor=` so the
+    // destination view scrolls + highlights that row. ChannelView/ChatView
+    // read this param and clear it after the anchor effect fires.
+    if (origin.kind === "channel") {
+      markRead(origin.channelId);
+      setActiveChannel(origin.channelId);
+      router.push(`/app/t/${origin.teamId}/${origin.channelId}?anchor=${encodeURIComponent(message.id)}`);
+    } else {
+      markRead(origin.chatId);
+      setActiveChat(origin.chatId);
+      router.push(`/app/dm/${origin.chatId}?anchor=${encodeURIComponent(message.id)}`);
+    }
+  }
+
   const autoInstallSupported =
     typeof window !== 'undefined' && (window.electron?.isAutoInstallSupported?.() ?? false);
 
@@ -306,9 +344,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         teamName={teamName}
         channels={teamChannels}
         chats={chats}
-        messages={[]}
+        messages={activeMessages}
+        messageGroupName={searchGroupName}
+        messageOrigin={searchMessageOrigin}
         onSelectChannel={handleSelectChannel}
         onSelectChat={handleSelectChat}
+        onSelectMessage={handleSelectMessage}
       />
       <ToastViewport />
     </div>

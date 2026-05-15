@@ -236,3 +236,17 @@ body {
   line-height: 1.2;
   margin: 0.1rem 0;
 }
+
+/* Anchor-flash highlight applied by MessageFeed when a search result jumps
+ * to a specific message. Subtle amber wash that fades to transparent so the
+ * row remains readable. Duration matches ANCHOR_FLASH_MS (1500ms) in
+ * MessageFeed.tsx. The animation handles fade-out — the JS removes the
+ * class after the animation completes for tidiness. */
+@keyframes message-anchor-flash {
+  0% { background-color: rgba(245, 199, 64, 0.32); }
+  60% { background-color: rgba(245, 199, 64, 0.22); }
+  100% { background-color: transparent; }
+}
+.message-anchor-flash {
+  animation: message-anchor-flash 1500ms ease-out forwards;
+}

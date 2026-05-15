@@ -25,6 +25,28 @@ interface Props {
   /** Tells the notification guard which URL pattern to compare against. */
   contextKind?: "chat" | "channel";
   introCard?: ReactNode;
+  /**
+   * If set, the feed scroll-anchors to the message with this id and flashes
+   * the row briefly (~1.5s). Re-runs when the id changes or when the target
+   * message first appears in `messages` (handles the case where polling
+   * hasn't fetched it yet on navigation).
+   *
+   * Trade-off: we don't fetch surrounding messages on demand. Microsoft
+   * Graph's chat-messages endpoint doesn't support `$skipToken`-based
+   * positioning around a specific message id well enough to justify a new
+   * route. The per-context cache (F51/F67) plus the 5s polling in
+   * ChannelView/ChatView normally has the message within a few seconds; if
+   * the message is older than the loaded window (max 200 entries per
+   * context — see workspace store), the anchor effect waits silently until
+   * the row mounts, which may never happen. The feed still renders the
+   * window normally — we don't blank out.
+   */
+  anchorMessageId?: string;
+  /**
+   * Called after the anchor has been scrolled into view + flashed, so the
+   * parent can clear the URL `?anchor=` param (or the demo store hint).
+   */
+  onAnchorConsumed?: () => void;
   onReplyInThread?: (message: MSMessage) => void;
   onForward?: (message: MSMessage) => void;
   onToggleReaction?: (messageId: string, reactionType: ReactionType) => void;
@@ -35,7 +57,14 @@ interface Props {
   onSendOwn?: (callback: () => void) => void;
 }
 
-export function MessageFeed({ messages, loading, contextName, bookmarkContextId, contextLabel, contextId, contextKind, introCard, onReplyInThread, onForward, onToggleReaction, onDelete, onEdit, onRetry, onDiscard }: Props) {
+// How long to leave the flash highlight on the anchored row before fading.
+const ANCHOR_FLASH_MS = 1500;
+// Fallback: if the anchor message never shows up (older than the loaded
+// window, or wrong context), give up and clear the hint after this long so
+// the URL doesn't keep stale state.
+const ANCHOR_GIVE_UP_MS = 4000;
+
+export function MessageFeed({ messages, loading, contextName, bookmarkContextId, contextLabel, contextId, contextKind, introCard, anchorMessageId, onAnchorConsumed, onReplyInThread, onForward, onToggleReaction, onDelete, onEdit, onRetry, onDiscard }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
@@ -108,6 +137,63 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
     prevMessageCountRef.current = curr;
   }, [messages, loading, isNearBottom, scrollToBottom]);
 
+  // Track which anchor request we've already handled so polling refetches
+  // don't re-flash the row every 5s. We tag each request with the current
+  // anchor id; selecting the *same* message again from search produces a
+  // fresh effect cycle (anchorMessageId goes undefined → set after the
+  // parent clears + the user re-clicks), and the previous-anchor reset
+  // below keeps us responsive in that case.
+  const consumedAnchorRef = useRef<string | null>(null);
+  const lastAnchorRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    // Reset the consumed marker whenever the requested anchor changes,
+    // including back to the same id after a falsy gap — otherwise picking
+    // the same message twice would silently no-op the second time.
+    if (lastAnchorRef.current !== (anchorMessageId ?? null)) {
+      lastAnchorRef.current = anchorMessageId ?? null;
+      consumedAnchorRef.current = null;
+    }
+    if (!anchorMessageId) return;
+    if (consumedAnchorRef.current === anchorMessageId) return;
+    // Wait until messages have rendered — during the LoadingSkeleton phase
+    // there is no scroll container to query.
+    if (loading) return;
+
+    // Try to find the row. Re-fires when messages.length changes (polling
+    // pulled the target into the window) — DM/channel views use 5s polling
+    // (F51) that can blow away pending messages; this effect tolerates the
+    // array changing under it.
+    const scroll = scrollRef.current;
+    if (!scroll) return;
+    const node = scroll.querySelector<HTMLElement>(
+      `[data-message-id="${cssEscape(anchorMessageId)}"]`
+    );
+
+    if (node) {
+      consumedAnchorRef.current = anchorMessageId;
+      node.scrollIntoView({ behavior: "smooth", block: "center" });
+      node.classList.add("message-anchor-flash");
+      const t = window.setTimeout(() => {
+        node.classList.remove("message-anchor-flash");
+        onAnchorConsumed?.();
+      }, ANCHOR_FLASH_MS);
+      return () => window.clearTimeout(t);
+    }
+
+    // Anchor not present yet — schedule a fallback so we don't loop forever.
+    // If polling never brings the row in (older than the loaded window), we
+    // give up after ANCHOR_GIVE_UP_MS so the URL anchor doesn't stick.
+    const giveUp = window.setTimeout(() => {
+      // Mark consumed to stop retrying; let the parent clear its hint.
+      consumedAnchorRef.current = anchorMessageId;
+      onAnchorConsumed?.();
+    }, ANCHOR_GIVE_UP_MS);
+    return () => window.clearTimeout(giveUp);
+    // Re-run when the array length changes so we re-try once the target row
+    // is added by a polling refetch.
+  }, [anchorMessageId, loading, messages.length, onAnchorConsumed]);
+
   const meta = useMemo(() => computeMeta(messages), [messages]);
 
   if (loading) return <LoadingSkeleton />;
@@ -173,6 +259,16 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
 // messages.length change will naturally trigger scrollToBottom through
 // the new-message effect above because the user just acted intentionally.
 // No extra plumbing needed for the current architecture.
+
+// CSS.escape is supported in every browser we ship to (Electron 28+, modern
+// evergreens). Tiny wrapper so the call site is readable.
+function cssEscape(value: string): string {
+  if (typeof window !== "undefined" && typeof window.CSS?.escape === "function") {
+    return window.CSS.escape(value);
+  }
+  // Fallback — escape characters that would terminate an attribute selector.
+  return value.replace(/(["\\])/g, "\\$1");
+}
 
 interface MessageMeta {
   isGroupHead: boolean;

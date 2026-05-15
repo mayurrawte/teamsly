@@ -35,6 +35,14 @@ interface WorkspaceState {
   currentUserId: string;
   currentUserName: string;
   starredIds: string[];
+  /**
+   * Transient anchor target used by demo-mode search-jump-to-message. Real
+   * mode passes the anchor via `?anchor=` URL param so back/forward works;
+   * demo mode doesn't use URL routing (DemoShell renders by active*Id from
+   * the store), so the anchor has to live somewhere shared. Cleared by the
+   * receiving view after the scroll-and-flash effect runs.
+   */
+  pendingAnchorMessageId: string | null;
 
   setTeams: (teams: MSTeam[]) => void;
   setActiveTeam: (id: string) => void;
@@ -75,6 +83,7 @@ interface WorkspaceState {
   setUnreadCount: (id: string, count: number) => void;
   markRead: (id: string) => void;
   toggleStar: (id: string) => void;
+  setPendingAnchorMessageId: (id: string | null) => void;
 }
 
 const UNREAD_STORAGE_KEY = "teamsly:unread-counts";
@@ -118,6 +127,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       currentUserId: "you",
       currentUserName: "You",
       starredIds: [],
+      pendingAnchorMessageId: null,
 
       setTeams: (teams) => set({ teams }),
       setActiveTeam: (id) => set({ activeTeamId: id, activeChannelId: null }),
@@ -367,6 +377,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             : [...s.starredIds, id];
           return { starredIds: next };
         }),
+      setPendingAnchorMessageId: (id) => set({ pendingAnchorMessageId: id }),
     }),
     {
       name: "teamsly:workspace",
