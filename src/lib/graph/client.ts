@@ -92,14 +92,16 @@ export async function getChats(
   const client = getGraphClient(accessToken);
   const { pageSize = 20, nextLink } = options;
 
-  // Graph does NOT support $expand=members on the /me/chats collection endpoint
-  // (only on individual /me/chats/{id}). Members are fetched on-demand per chat
-  // via getChatMembers(). lastMessagePreview is also unreliable via $expand here.
+  // Graph silently ignores $expand=members on /me/chats for some tenants
+  // but does return partial member data on others, so we keep it as a
+  // best-effort. The sidebar falls back to per-chat lazy fetches for any
+  // chat where members come back empty.
   const res = nextLink
     ? await client.api(nextLink).get()
     : await client
         .api("/me/chats")
         .select("id,chatType,topic,lastUpdatedDateTime")
+        .expand("members($select=id,displayName,userId,email)")
         .top(pageSize)
         .get();
 

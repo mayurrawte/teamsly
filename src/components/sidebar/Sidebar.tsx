@@ -502,16 +502,19 @@ export function Sidebar() {
                   onClick={() => goToChannel(ch.id)}
                 />
               ))}
-              {unreadChatItems.map((chat) => (
-                <SidebarItem
-                  key={chat.id}
-                  label={getChatLabel(chat, currentUserId)}
-                  icon={<ChatAvatar chat={chat} presenceMap={presenceMap} currentUserId={currentUserId} />}
-                  active={params?.chatId === chat.id}
-                  unreadCount={unreadCounts[chat.id] ?? 0}
-                  onClick={() => goToChat(chat.id)}
-                />
-              ))}
+              {unreadChatItems.map((chat) => {
+                const rc = membersCache[chat.id] ? { ...chat, members: membersCache[chat.id] } : chat;
+                return (
+                  <SidebarItem
+                    key={chat.id}
+                    label={getChatLabel(rc, currentUserId)}
+                    icon={<ChatAvatar chat={rc} presenceMap={presenceMap} currentUserId={currentUserId} />}
+                    active={params?.chatId === chat.id}
+                    unreadCount={unreadCounts[chat.id] ?? 0}
+                    onClick={() => goToChat(chat.id)}
+                  />
+                );
+              })}
               {totalUnreads === 0 && (
                 <p className="px-4 py-1 text-[12px] text-[var(--text-muted)]">All caught up</p>
               )}
@@ -560,16 +563,19 @@ export function Sidebar() {
                   onClick={() => goToChannel(ch.id)}
                 />
               ))}
-              {starredChatItems.map((chat) => (
-                <SidebarItem
-                  key={chat.id}
-                  label={getChatLabel(chat, currentUserId)}
-                  icon={<ChatAvatar chat={chat} presenceMap={presenceMap} currentUserId={currentUserId} />}
-                  active={params?.chatId === chat.id}
-                  unreadCount={unreadCounts[chat.id] ?? 0}
-                  onClick={() => goToChat(chat.id)}
-                />
-              ))}
+              {starredChatItems.map((chat) => {
+                const rc = membersCache[chat.id] ? { ...chat, members: membersCache[chat.id] } : chat;
+                return (
+                  <SidebarItem
+                    key={chat.id}
+                    label={getChatLabel(rc, currentUserId)}
+                    icon={<ChatAvatar chat={rc} presenceMap={presenceMap} currentUserId={currentUserId} />}
+                    active={params?.chatId === chat.id}
+                    unreadCount={unreadCounts[chat.id] ?? 0}
+                    onClick={() => goToChat(chat.id)}
+                  />
+                );
+              })}
               {totalStarred === 0 && (
                 <p className="px-4 py-1 text-[12px] text-[var(--text-muted)]">
                   Star channels and DMs to find them faster

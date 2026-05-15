@@ -13,7 +13,7 @@ export function PresenceDot({ availability, className }: PresenceDotProps) {
       <span
         aria-label="Away"
         className={cn(
-          "absolute bottom-[-1px] right-[-1px] h-[10px] w-[10px] rounded-full border-2 border-[#e8a838] bg-transparent",
+          "absolute bottom-[-2px] right-[-2px] h-[10px] w-[10px] rounded-full border-2 border-[var(--sidebar-bg)] bg-[#e8a838]",
           className
         )}
       />
@@ -25,7 +25,7 @@ export function PresenceDot({ availability, className }: PresenceDotProps) {
       <span
         aria-label="Busy"
         className={cn(
-          "absolute bottom-[-1px] right-[-1px] flex h-[10px] w-[10px] items-center justify-center rounded-full border-2 border-[#19171d] bg-[#e01e5a]",
+          "absolute bottom-[-2px] right-[-2px] flex h-[10px] w-[10px] items-center justify-center rounded-full border-2 border-[var(--sidebar-bg)] bg-[#e01e5a]",
           className
         )}
       >
@@ -38,7 +38,7 @@ export function PresenceDot({ availability, className }: PresenceDotProps) {
     <span
       aria-label="Available"
       className={cn(
-        "absolute bottom-[-1px] right-[-1px] h-[10px] w-[10px] rounded-full border-2 border-[#19171d] bg-[#2bac76]",
+        "absolute bottom-[-2px] right-[-2px] h-[10px] w-[10px] rounded-full border-2 border-[var(--sidebar-bg)] bg-[#2bac76]",
         className
       )}
     />
