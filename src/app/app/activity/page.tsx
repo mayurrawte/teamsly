@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useToastStore } from "@/store/toasts";
+import { usePreferencesStore } from "@/store/preferences";
 import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
 import { formatMessageTime } from "@/lib/utils/dates";
@@ -122,7 +123,7 @@ function ActivityRow({
 // Empty state
 // ---------------------------------------------------------------------------
 
-function EmptyState({ tab }: { tab: ActivityTab }) {
+function EmptyState({ tab, unreadOnly }: { tab: ActivityTab; unreadOnly: boolean }) {
   const messages: Record<ActivityTab, { heading: string; sub: string }> = {
     all: {
       heading: "All caught up",
@@ -153,6 +154,11 @@ function EmptyState({ tab }: { tab: ActivityTab }) {
       <CheckCheck className="h-8 w-8 text-[#3f4144]" strokeWidth={1.5} />
       <p className="text-[14px] font-semibold text-[#d1d2d3]">{msg.heading}</p>
       <p className="max-w-xs text-[12px] leading-relaxed text-[#6c6f75]">{msg.sub}</p>
+      {unreadOnly && (
+        <p className="mt-1 max-w-xs text-[11px] text-[#6c6f75]">
+          “Unread only” is on — turn it off to see read items.
+        </p>
+      )}
     </div>
   );
 }
@@ -185,10 +191,29 @@ function ScanSkeleton() {
 // Main page
 // ---------------------------------------------------------------------------
 
+/**
+ * Pull the underlying chat or channel id out of an activity item so we can
+ * cross-reference `unreadCounts` for the Unread-only filter.
+ *
+ *   /app/dm/{chatId}             → { kind: "chat",    id: chatId }
+ *   /app/t/{teamId}/{channelId}  → { kind: "channel", id: channelId }
+ *
+ * Returns null for malformed hrefs so the filter falls back to "include".
+ */
+function unreadKeyFromHref(href: string): { kind: "chat" | "channel"; id: string } | null {
+  const dmMatch = /^\/app\/dm\/([^/]+)$/.exec(href);
+  if (dmMatch) return { kind: "chat", id: dmMatch[1] };
+  const chMatch = /^\/app\/t\/[^/]+\/([^/]+)$/.exec(href);
+  if (chMatch) return { kind: "channel", id: chMatch[1] };
+  return null;
+}
+
 export default function ActivityPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<ActivityTab>("all");
   const showToast = useToastStore((s) => s.showToast);
+  const unreadOnly = usePreferencesStore((s) => s.activityUnreadOnly);
+  const setUnreadOnly = usePreferencesStore((s) => s.setActivityUnreadOnly);
 
   const {
     chats,
@@ -358,6 +383,33 @@ export default function ActivityPage() {
   else if (activeTab === "threads") visibleItems = scanData?.threads ?? [];
   else if (activeTab === "reactions") visibleItems = scanData?.reactions ?? [];
 
+  // Unread-only filter — applies to every tab.
+  //
+  // For `all` / `dms` / `channel_unread` items: those are *built* from
+  // unreadCounts already, so the filter is effectively idempotent — keeping
+  // it here keeps the behaviour consistent and lets the user notice the
+  // filter is "on" even when there's nothing to filter out.
+  //
+  // For scan-tab items (mentions / threads / reactions): items don't carry
+  // their own unread state, so we look up the parent chat/channel via the
+  // item's `href`. An item is "unread" iff its parent has unreadCounts > 0.
+  if (unreadOnly) {
+    visibleItems = visibleItems.filter((item) => {
+      if (item.type === "dm") {
+        const chatId = item.id.replace("dm-", "");
+        return (unreadCounts[chatId] ?? 0) > 0;
+      }
+      if (item.type === "channel_unread") {
+        const channelId = item.id.replace("ch-", "");
+        return (unreadCounts[channelId] ?? 0) > 0;
+      }
+      // mention / thread / reaction — derive id from href.
+      const key = unreadKeyFromHref(item.href);
+      if (!key) return true; // malformed href → don't hide it
+      return (unreadCounts[key.id] ?? 0) > 0;
+    });
+  }
+
   const showSkeleton = isScanTab && scanLoading && !scanLoadedRef.current;
 
   return (
@@ -366,33 +418,44 @@ export default function ActivityPage() {
       <div className="flex-shrink-0 border-b border-[#3f4144] px-4 pb-0 pt-4">
         <h1 className="mb-3 text-[18px] font-bold text-white">Activity</h1>
 
-        {/* Tab row */}
-        <div className="flex gap-0" role="tablist" aria-label="Activity filters">
-          {TABS.map((tab) => {
-            const active = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                role="tab"
-                aria-selected={active}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "relative px-3 pb-2.5 pt-1 text-[13px] font-medium transition-colors duration-[80ms] ease-out focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]",
-                  active
-                    ? "text-white"
-                    : "text-[#ababad] hover:text-[#d1d2d3]"
-                )}
-              >
-                {tab.label}
-                {active && (
-                  <span
-                    aria-hidden="true"
-                    className="absolute bottom-0 left-0 right-0 h-[2px] rounded-t-full bg-[#0F5A8F]"
-                  />
-                )}
-              </button>
-            );
-          })}
+        {/* Tab row + Unread-only toggle */}
+        <div className="flex items-end justify-between gap-2">
+          <div className="flex gap-0" role="tablist" aria-label="Activity filters">
+            {TABS.map((tab) => {
+              const active = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "relative px-3 pb-2.5 pt-1 text-[13px] font-medium transition-colors duration-[80ms] ease-out focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]",
+                    active
+                      ? "text-white"
+                      : "text-[#ababad] hover:text-[#d1d2d3]"
+                  )}
+                >
+                  {tab.label}
+                  {active && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute bottom-0 left-0 right-0 h-[2px] rounded-t-full bg-[#0F5A8F]"
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <label className="mb-2 flex cursor-pointer select-none items-center gap-2 text-[12px] text-[#ababad] hover:text-[#d1d2d3]">
+            <input
+              type="checkbox"
+              checked={unreadOnly}
+              onChange={(event) => setUnreadOnly(event.target.checked)}
+              className="h-3.5 w-3.5 cursor-pointer accent-[#0F5A8F]"
+            />
+            Unread only
+          </label>
         </div>
       </div>
 
@@ -404,7 +467,7 @@ export default function ActivityPage() {
         {showSkeleton ? (
           <ScanSkeleton />
         ) : visibleItems.length === 0 ? (
-          <EmptyState tab={activeTab} />
+          <EmptyState tab={activeTab} unreadOnly={unreadOnly} />
         ) : (
           <div className="divide-y divide-[#3f4144]/50">
             {visibleItems.map((item) => (

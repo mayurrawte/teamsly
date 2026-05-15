@@ -11,6 +11,13 @@ declare global {
     electron?: {
       setUnreadCount: (n: number) => void;
       isElectron: () => boolean;
+      /**
+       * Synchronous BrowserWindow focus check used by the notification
+       * de-dupe guard. Returns `undefined` if the preload doesn't expose it
+       * (older builds) — callers should treat that as "fall back to
+       * document.visibilityState".
+       */
+      isFocused?: () => boolean;
       // Auto-update
       checkForUpdates: () => void;
       installUpdate: () => void;

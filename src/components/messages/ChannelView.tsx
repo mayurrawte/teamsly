@@ -241,6 +241,8 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
             contextName={channel?.displayName ? `#${channel.displayName}` : "Channel"}
             bookmarkContextId={contextId}
             contextLabel={channel?.displayName ? `#${channel.displayName}` : "Channel"}
+            contextId={`${teamId}/${channelId}`}
+            contextKind="channel"
             introCard={introCard}
             onReplyInThread={setThreadMessage}
             onForward={setForwardMessage}

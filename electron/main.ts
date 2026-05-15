@@ -281,6 +281,14 @@ ipcMain.on('update-open-releases', () => {
   void shell.openExternal('https://github.com/mayurrawte/teamsly/releases/latest');
 });
 
+// Sync handler — the notification de-dupe guard in the renderer needs
+// a "is the BrowserWindow actually focused right now?" answer before deciding
+// to skip a ding. Using ipcRenderer.sendSync stays cheap (single boolean) and
+// avoids racing against an async resolution in the hot notification path.
+ipcMain.on('window-is-focused', (event) => {
+  event.returnValue = mainWindow?.isFocused() ?? false;
+});
+
 // ─── App lifecycle ────────────────────────────────────────────────────────────
 
 void app.whenReady().then(() => {

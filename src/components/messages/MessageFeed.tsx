@@ -16,15 +16,14 @@ interface Props {
   messages: MSMessage[];
   loading: boolean;
   contextName?: string;
-  /**
-   * Stable bookmark key for this feed — same shape as the workspace store's
-   * per-context message map (`chatId` or `${teamId}:${channelId}`, or a
-   * `demo:` variant). Plumbed into MessageItem so the hover-toolbar Save
-   * button writes against the right context.
-   */
+  /** Stable bookmark key for this feed — chatId or ${teamId}:${channelId}. */
   bookmarkContextId?: string;
   /** Human-readable label of where these messages live ("#general", "Alex Wu"). */
   contextLabel?: string;
+  /** Identifier passed through to useSmartNotifications for the de-dupe guard. */
+  contextId?: string;
+  /** Tells the notification guard which URL pattern to compare against. */
+  contextKind?: "chat" | "channel";
   introCard?: ReactNode;
   onReplyInThread?: (message: MSMessage) => void;
   onForward?: (message: MSMessage) => void;
@@ -36,7 +35,7 @@ interface Props {
   onSendOwn?: (callback: () => void) => void;
 }
 
-export function MessageFeed({ messages, loading, contextName, bookmarkContextId, contextLabel, introCard, onReplyInThread, onForward, onToggleReaction, onDelete, onEdit, onRetry, onDiscard }: Props) {
+export function MessageFeed({ messages, loading, contextName, bookmarkContextId, contextLabel, contextId, contextKind, introCard, onReplyInThread, onForward, onToggleReaction, onDelete, onEdit, onRetry, onDiscard }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
@@ -45,7 +44,7 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
 
-  useSmartNotifications({ messages, contextName });
+  useSmartNotifications({ messages, contextName, contextId, contextKind });
 
   // Detect whether the user is near the bottom of the scroll container.
   const checkNearBottom = useCallback(() => {
