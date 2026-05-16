@@ -1,19 +1,40 @@
 "use client";
 
+import { useState } from "react";
 import { X } from "lucide-react";
 import { useToastStore } from "@/store/toasts";
+
+const EXIT_DURATION = 150;
 
 export function ToastViewport() {
   const toasts = useToastStore((state) => state.toasts);
   const dismissToast = useToastStore((state) => state.dismissToast);
+  const [exiting, setExiting] = useState<Set<string>>(new Set());
 
   if (toasts.length === 0) return null;
+
+  function handleDismiss(id: string) {
+    setExiting((prev) => new Set([...prev, id]));
+    setTimeout(() => {
+      dismissToast(id);
+      setExiting((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }, EXIT_DURATION);
+  }
 
   return (
     <div className="fixed bottom-4 right-4 z-[200] flex w-[340px] max-w-[calc(100vw-32px)] flex-col gap-2">
       {toasts.map((toast) => (
         <div
           key={toast.id}
+          style={{
+            animation: exiting.has(toast.id)
+              ? `toast-out ${EXIT_DURATION}ms ease-in forwards`
+              : "toast-in 200ms ease-out both",
+          }}
           className="rounded-md border border-[#3f4144] bg-[#1a1d21] p-3 text-[#d1d2d3] shadow-[0_8px_32px_rgba(0,0,0,0.45)]"
         >
           <div className="flex items-start justify-between gap-3">
@@ -34,7 +55,7 @@ export function ToastViewport() {
             <button
               type="button"
               aria-label="Dismiss"
-              onClick={() => dismissToast(toast.id)}
+              onClick={() => handleDismiss(toast.id)}
               className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded text-[#ababad] hover:bg-[#27292d] hover:text-white"
             >
               <X size={14} />
