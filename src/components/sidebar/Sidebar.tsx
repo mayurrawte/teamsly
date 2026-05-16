@@ -552,8 +552,13 @@ export function Sidebar() {
             count={totalStarred}
             onToggle={toggleStarred}
           />
-          {starredOpen && (
-            <>
+          <div
+            className={cn(
+              "grid transition-[grid-template-rows] duration-200 ease-out",
+              starredOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+            )}
+          >
+            <div className="overflow-hidden min-h-0">
               {starredChannelItems.map((ch) => (
                 <SidebarItem
                   key={ch.id}
@@ -585,8 +590,8 @@ export function Sidebar() {
                   Star channels and DMs to find them faster
                 </p>
               )}
-            </>
-          )}
+            </div>
+          </div>
         </div>
 
         {/* Channels section */}
@@ -607,23 +612,31 @@ export function Sidebar() {
             <Plus className="h-3 w-3 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
           </button>
 
-          {channelsOpen &&
-            teamChannels.map((ch) => (
-              <SidebarItem
-                key={ch.id}
-                label={ch.displayName}
-                icon={
-                  ch.membershipType === "private" ? (
-                    <Lock className="h-3.5 w-3.5" />
-                  ) : (
-                    <Hash className="h-3.5 w-3.5" />
-                  )
-                }
-                active={params?.channelId === ch.id}
-                unreadCount={unreadCounts[ch.id] ?? 0}
-                onClick={() => goToChannel(ch.id)}
-              />
-            ))}
+          <div
+            className={cn(
+              "grid transition-[grid-template-rows] duration-200 ease-out",
+              channelsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+            )}
+          >
+            <div className="overflow-hidden min-h-0">
+              {teamChannels.map((ch) => (
+                <SidebarItem
+                  key={ch.id}
+                  label={ch.displayName}
+                  icon={
+                    ch.membershipType === "private" ? (
+                      <Lock className="h-3.5 w-3.5" />
+                    ) : (
+                      <Hash className="h-3.5 w-3.5" />
+                    )
+                  }
+                  active={params?.channelId === ch.id}
+                  unreadCount={unreadCounts[ch.id] ?? 0}
+                  onClick={() => goToChannel(ch.id)}
+                />
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* DMs section */}
@@ -644,29 +657,36 @@ export function Sidebar() {
             <Plus className="h-3 w-3 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
           </button>
 
-          {dmsOpen &&
-            chats.map((chat) => (
-              <SidebarItem
-                key={chat.id}
-                label={getChatLabel(chat, currentUserId)}
-                icon={<ChatAvatar chat={chat} presenceMap={presenceMap} currentUserId={currentUserId} />}
-                active={params?.chatId === chat.id}
-                unreadCount={unreadCounts[chat.id] ?? 0}
-                onClick={() => goToChat(chat.id)}
-              />
-            ))}
-
-          {dmsOpen && chatsNextLink && (
-            <button
-              type="button"
-              disabled={loadingMoreChats}
-              onClick={loadMoreChats}
-              className="mx-2 mt-0.5 flex h-7 w-[calc(100%-16px)] items-center gap-1.5 rounded-md px-2 text-[13px] text-[var(--text-muted)] transition-colors duration-[80ms] ease-out hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
-            >
-              <ChevronDown className="h-3 w-3 flex-shrink-0" />
-              <span>{loadingMoreChats ? "Loading..." : "Show older chats"}</span>
-            </button>
-          )}
+          <div
+            className={cn(
+              "grid transition-[grid-template-rows] duration-200 ease-out",
+              dmsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+            )}
+          >
+            <div className="overflow-hidden min-h-0">
+              {chats.map((chat) => (
+                <SidebarItem
+                  key={chat.id}
+                  label={getChatLabel(chat, currentUserId)}
+                  icon={<ChatAvatar chat={chat} presenceMap={presenceMap} currentUserId={currentUserId} />}
+                  active={params?.chatId === chat.id}
+                  unreadCount={unreadCounts[chat.id] ?? 0}
+                  onClick={() => goToChat(chat.id)}
+                />
+              ))}
+              {chatsNextLink && (
+                <button
+                  type="button"
+                  disabled={loadingMoreChats}
+                  onClick={loadMoreChats}
+                  className="mx-2 mt-0.5 flex h-7 w-[calc(100%-16px)] items-center gap-1.5 rounded-md px-2 text-[13px] text-[var(--text-muted)] transition-colors duration-[80ms] ease-out hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+                >
+                  <ChevronDown className="h-3 w-3 flex-shrink-0" />
+                  <span>{loadingMoreChats ? "Loading..." : "Show older chats"}</span>
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
