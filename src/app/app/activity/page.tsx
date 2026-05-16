@@ -16,6 +16,7 @@ import {
   GitBranch,
   Smile,
   Bell,
+  ChevronDown,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -79,6 +80,39 @@ function ActivityTypeIcon({ type }: { type: ActivityItem["type"] }) {
 }
 
 // ---------------------------------------------------------------------------
+// Thread inline preview panel
+// ---------------------------------------------------------------------------
+
+function ThreadPreviewPanel({
+  item,
+  onNavigate,
+}: {
+  item: ActivityItem;
+  onNavigate: () => void;
+}) {
+  return (
+    <div
+      className="mx-4 mb-3 overflow-hidden rounded-lg border border-[#3f4144] bg-[#222529]"
+      style={{ animation: "context-fade-in 150ms ease-out both" }}
+    >
+      <div className="p-3">
+        <p className="text-[12px] font-semibold text-[#d1d2d3]">{item.senderName}</p>
+        <p className="mt-0.5 line-clamp-3 text-[12px] text-[#ababad]">{item.summary}</p>
+      </div>
+      <div className="flex items-center justify-end border-t border-[#3f4144] px-3 py-2">
+        <button
+          type="button"
+          onClick={onNavigate}
+          className="text-[12px] font-medium text-[#4da3e0] hover:underline focus:outline-none"
+        >
+          Open in channel →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Single activity row
 // ---------------------------------------------------------------------------
 
@@ -89,33 +123,59 @@ function ActivityRow({
   item: ActivityItem;
   onClick: () => void;
 }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group flex w-full items-start gap-3 px-4 py-3 text-left transition-colors duration-[80ms] ease-out hover:bg-white/5 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]"
-    >
-      {/* Avatar */}
-      <div className="relative mt-0.5 flex-shrink-0">
-        <Avatar userId={item.senderId} displayName={item.senderName} size={36} />
-        <span className="absolute -bottom-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-[#222529] p-[3px]">
-          <ActivityTypeIcon type={item.type} />
-        </span>
-      </div>
+  const [expanded, setExpanded] = useState(false);
 
-      {/* Body */}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="truncate text-[13px] font-semibold text-[#d1d2d3] group-hover:text-white">
-            {item.senderName}
-          </span>
-          <span className="flex-shrink-0 text-[11px] text-[#6c6f75]">
-            {formatMessageTime(item.timestamp)}
+  const handleClick = () => {
+    if (item.type === "thread") {
+      setExpanded((v) => !v);
+    } else {
+      onClick();
+    }
+  };
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={handleClick}
+        className="group flex w-full items-start gap-3 px-4 py-3 text-left transition-colors duration-[80ms] ease-out hover:bg-white/5 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]"
+      >
+        {/* Avatar */}
+        <div className="relative mt-0.5 flex-shrink-0">
+          <Avatar userId={item.senderId} displayName={item.senderName} size={36} />
+          <span className="absolute -bottom-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-[#222529] p-[3px]">
+            <ActivityTypeIcon type={item.type} />
           </span>
         </div>
-        <p className="mt-0.5 truncate text-[12px] text-[#ababad]">{item.summary}</p>
-      </div>
-    </button>
+
+        {/* Body */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="truncate text-[13px] font-semibold text-[#d1d2d3] group-hover:text-white">
+              {item.senderName}
+            </span>
+            <span className="flex-shrink-0 text-[11px] text-[#6c6f75]">
+              {formatMessageTime(item.timestamp)}
+            </span>
+          </div>
+          <p className="mt-0.5 truncate text-[12px] text-[#ababad]">{item.summary}</p>
+        </div>
+
+        {/* Chevron for thread rows */}
+        {item.type === "thread" && (
+          <ChevronDown
+            className={cn(
+              "h-3.5 w-3.5 flex-shrink-0 text-[#6c6f75] transition-transform duration-150",
+              expanded && "rotate-180"
+            )}
+          />
+        )}
+      </button>
+
+      {expanded && item.type === "thread" && (
+        <ThreadPreviewPanel item={item} onNavigate={onClick} />
+      )}
+    </div>
   );
 }
 
