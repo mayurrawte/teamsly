@@ -17,7 +17,8 @@ export async function GET(request: NextRequest) {
     // was undoing that order, so we trust the server response as-is.
     return NextResponse.json({ chats: page.chats, nextLink: page.nextLink });
   } catch (err) {
-    console.error("[graph] chats failed:", err);
-    return NextResponse.json({ error: "Graph chats failed" }, { status: 502 });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[graph] chats failed:", msg);
+    return NextResponse.json({ error: "Graph chats failed", detail: msg }, { status: 502 });
   }
 }
