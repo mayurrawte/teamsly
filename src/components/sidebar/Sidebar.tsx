@@ -135,7 +135,7 @@ export function Sidebar() {
     }
 
     loadChats();
-    const interval = window.setInterval(loadChats, 60_000);
+    const interval = window.setInterval(loadChats, 15_000);
     function onFocus() {
       loadChats();
     }

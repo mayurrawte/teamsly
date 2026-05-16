@@ -399,6 +399,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         if (!s.messagesByContext) s.messagesByContext = {};
         return s as unknown as WorkspaceState;
       },
+      onRehydrateStorage: () => (state) => {
+        if (state && state.chats.length > 0) {
+          state.chats = sortChatsByActivity(state.chats);
+        }
+      },
       partialize: (state) => ({
         teams: state.teams,
         channels: state.channels,
