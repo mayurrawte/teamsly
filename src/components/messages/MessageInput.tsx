@@ -57,6 +57,8 @@ interface Props {
   onAttachAndSend?: (content: string, file: File) => Promise<void>;
   /** Set to true by the parent while the upload+send is in flight */
   uploading?: boolean;
+  /** Upload progress percentage (0–100). Displayed as a progress bar when uploading. */
+  uploadProgress?: number;
   /** Members to suggest for @mention autocomplete */
   mentionCandidates?: MentionCandidate[];
   /**
@@ -156,6 +158,7 @@ export function MessageInput({
   onSend,
   onAttachAndSend,
   uploading,
+  uploadProgress,
   mentionCandidates,
   allowEveryone,
   contextId,
@@ -892,17 +895,33 @@ export function MessageInput({
               <span className="flex-1 truncate text-[12px] text-[var(--text-primary)]">
                 {pendingFile.name}
               </span>
-              <span className="flex-shrink-0 text-[11px] text-[var(--text-muted)]">
-                {formatBytes(pendingFile.size)}
-              </span>
-              <button
-                type="button"
-                aria-label={`Remove attachment ${pendingFile.name}`}
-                onClick={() => setPendingFile(null)}
-                className="flex-shrink-0 rounded p-0.5 text-[var(--text-secondary)] transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-white focus-ring"
-              >
-                <X className="h-3 w-3" />
-              </button>
+              {uploading && uploadProgress !== undefined ? (
+                <div className="flex flex-shrink-0 items-center gap-2">
+                  <div className="h-1 w-20 overflow-hidden rounded-full bg-[var(--border)]">
+                    <div
+                      className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-150"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                  <span className="text-[11px] text-[var(--text-muted)]">{uploadProgress}%</span>
+                </div>
+              ) : (
+                <>
+                  <span className="flex-shrink-0 text-[11px] text-[var(--text-muted)]">
+                    {formatBytes(pendingFile.size)}
+                  </span>
+                  {!uploading && (
+                    <button
+                      type="button"
+                      aria-label={`Remove attachment ${pendingFile.name}`}
+                      onClick={() => setPendingFile(null)}
+                      className="flex-shrink-0 rounded p-0.5 text-[var(--text-secondary)] transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-white focus-ring"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>

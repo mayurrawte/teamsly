@@ -40,6 +40,7 @@ export function ChatView({ chatId }: { chatId: string }) {
   const [forwardMessage, setForwardMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | undefined>(undefined);
   const showToast = useToastStore((state) => state.showToast);
 
   // Typing indicator — heuristic, opt-in via preferences
@@ -179,58 +180,53 @@ export function ChatView({ chatId }: { chatId: string }) {
     }
   }
 
-  async function handleAttachAndSend(content: string, file: File) {
-    setUploading(true);
+  function handleAttachAndSend(content: string, file: File): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      setUploading(true);
+      setUploadProgress(0);
 
-    // Step 1: upload file to OneDrive via /me/drive/root:/Apps/Teamsly/{name}
-    let driveItem: { id: string; name: string; webUrl: string };
-    try {
       const form = new FormData();
       form.append("file", file);
-      const uploadRes = await fetch("/api/files/upload", { method: "POST", body: form });
-      if (!uploadRes.ok) {
-        const err = (await uploadRes.json()) as { error?: string };
-        throw new Error(err.error ?? "Upload failed");
-      }
-      driveItem = (await uploadRes.json()) as { id: string; name: string; webUrl: string };
-    } catch (err) {
-      showToast({ title: err instanceof Error ? err.message : "Upload failed", tone: "error" });
-      setUploading(false);
-      throw err;
-    }
 
-    // Step 2: send chat message with attachment reference — show optimistically
-    const attachmentId = crypto.randomUUID();
-    // Anchor tag lets Teams' renderer render the file card inline
-    const htmlBody = `${content}<attachment id="${attachmentId}"></attachment>`.trim();
-    const tempId = `temp-${crypto.randomUUID()}`;
-    const now = new Date().toISOString();
-    const optimistic: MSMessage = {
-      id: tempId,
-      createdDateTime: now,
-      body: { contentType: "html", content: htmlBody },
-      from: { user: { id: currentUserId, displayName: currentUserName } },
-      reactions: [],
-      attachments: [
-        {
-          id: attachmentId,
-          contentType: "reference",
-          contentUrl: driveItem.webUrl,
-          name: driveItem.name,
-        },
-      ],
-      __pending: true,
-      // Attachment messages: retry is discard-only; upload is already done.
-    };
-    appendPendingMessage(chatId, optimistic);
-    setUploading(false);
+      const xhr = new XMLHttpRequest();
 
-    try {
-      const res = await fetch(`/api/chats/${chatId}/messages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: htmlBody,
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          setUploadProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+
+      xhr.onload = async () => {
+        setUploadProgress(undefined);
+        setUploading(false);
+
+        if (xhr.status < 200 || xhr.status >= 300) {
+          let errMsg = "Upload failed";
+          try {
+            const errBody = JSON.parse(xhr.responseText) as { error?: string };
+            if (errBody.error) errMsg = errBody.error;
+          } catch {
+            // ignore parse errors
+          }
+          showToast({ title: errMsg, tone: "error" });
+          reject(new Error(errMsg));
+          return;
+        }
+
+        const driveItem = JSON.parse(xhr.responseText) as { id: string; name: string; webUrl: string };
+
+        // Step 2: send chat message with attachment reference — show optimistically
+        const attachmentId = crypto.randomUUID();
+        // Anchor tag lets Teams' renderer render the file card inline
+        const htmlBody = `${content}<attachment id="${attachmentId}"></attachment>`.trim();
+        const tempId = `temp-${crypto.randomUUID()}`;
+        const now = new Date().toISOString();
+        const optimistic: MSMessage = {
+          id: tempId,
+          createdDateTime: now,
+          body: { contentType: "html", content: htmlBody },
+          from: { user: { id: currentUserId, displayName: currentUserName } },
+          reactions: [],
           attachments: [
             {
               id: attachmentId,
@@ -239,17 +235,50 @@ export function ChatView({ chatId }: { chatId: string }) {
               name: driveItem.name,
             },
           ],
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to send message with attachment");
-      const serverMsg = (await res.json()) as MSMessage;
-      replaceMessage(chatId, tempId, serverMsg);
-    } catch {
-      // File is already uploaded; mark failed — discard-only (no retry button
-      // since we'd need to re-POST the same driveItem URL which is already there).
-      markMessageFailed(chatId, tempId);
-      showToast({ title: "Could not send message", tone: "error" });
-    }
+          __pending: true,
+          // Attachment messages: retry is discard-only; upload is already done.
+        };
+        appendPendingMessage(chatId, optimistic);
+
+        try {
+          const res = await fetch(`/api/chats/${chatId}/messages`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              content: htmlBody,
+              attachments: [
+                {
+                  id: attachmentId,
+                  contentType: "reference",
+                  contentUrl: driveItem.webUrl,
+                  name: driveItem.name,
+                },
+              ],
+            }),
+          });
+          if (!res.ok) throw new Error("Failed to send message with attachment");
+          const serverMsg = (await res.json()) as MSMessage;
+          replaceMessage(chatId, tempId, serverMsg);
+          resolve();
+        } catch {
+          // File is already uploaded; mark failed — discard-only (no retry button
+          // since we'd need to re-POST the same driveItem URL which is already there).
+          markMessageFailed(chatId, tempId);
+          showToast({ title: "Could not send message", tone: "error" });
+          reject(new Error("Send failed"));
+        }
+      };
+
+      xhr.onerror = () => {
+        setUploadProgress(undefined);
+        setUploading(false);
+        showToast({ title: "Upload failed", tone: "error" });
+        reject(new Error("Upload failed"));
+      };
+
+      xhr.open("POST", "/api/files/upload");
+      xhr.send(form);
+    });
   }
 
   async function handleThreadReply(messageId: string, content: string) {
@@ -446,6 +475,7 @@ export function ChatView({ chatId }: { chatId: string }) {
             onSend={handleSend}
             onAttachAndSend={handleAttachAndSend}
             uploading={uploading}
+            uploadProgress={uploadProgress}
             mentionCandidates={mentionCandidates}
             contextId={chatId}
           />
