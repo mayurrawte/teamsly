@@ -167,18 +167,14 @@ body {
 }
 
 @keyframes skeleton-shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #2c2d30 0%, #383a3e 50%, #2c2d30 100%);
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.5s linear infinite;
+  background: linear-gradient(90deg, #2a2d31 25%, #33373b 50%, #2a2d31 75%);
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.4s infinite linear;
   border-radius: 4px;
 }
 
@@ -272,9 +268,24 @@ body {
   animation: message-anchor-flash 1500ms ease-out forwards;
 }
 
+@keyframes toast-in {
+  from { transform: translateX(calc(100% + 16px)); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toast-out {
+  from { transform: translateY(0); opacity: 1; }
+  to   { transform: translateY(-12px); opacity: 0; }
+}
+
 @keyframes presence-ping {
   75%, 100% {
     transform: scale(2);
     opacity: 0;
   }
+}
+
+@keyframes message-in {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
 }

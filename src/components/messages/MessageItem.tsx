@@ -74,6 +74,16 @@ export function MessageItem({
     contextId && !message.__pending && !message.__failed
   );
 
+  // Animate messages that just arrived (within the last 3s) or are optimistic
+  // sends. This covers real-time inbound messages and the user's own pending
+  // messages without needing an extra prop from the feed.
+  const isNew =
+    message.__pending ||
+    Date.now() - new Date(message.createdDateTime).getTime() < 3000;
+  const animationStyle = isNew
+    ? { animation: "message-in 180ms ease-out both" }
+    : undefined;
+
   const handleSaveToggle = canSave
     ? () => {
         if (!contextId) return;
@@ -220,6 +230,7 @@ export function MessageItem({
     return (
       <div
         data-message-id={message.id}
+        style={animationStyle}
         className={cn(
           "group relative px-4 pl-[60px] transition-colors duration-[80ms] ease-out hover:bg-[var(--message-hover-bg)]",
           density === "compact" ? "py-0" : "py-[2px]",
@@ -271,6 +282,7 @@ export function MessageItem({
   return (
     <div
       data-message-id={message.id}
+      style={animationStyle}
       className={cn(
         "group relative flex gap-2 px-4 transition-colors duration-[80ms] ease-out hover:bg-[var(--message-hover-bg)]",
         density === "compact" ? "pb-0 pt-1" : "pb-[2px] pt-2",
