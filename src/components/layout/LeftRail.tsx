@@ -72,6 +72,14 @@ export function LeftRail() {
 
   const openSearch = useSearchStore((s) => s.open);
 
+  // On macOS the window uses titleBarStyle:'hiddenInset' which removes the
+  // native title bar. We need a CSS drag region at the top and extra clearance
+  // so the Search button doesn't sit behind the traffic light buttons.
+  const isMacDesktop =
+    typeof window !== "undefined" &&
+    window.electron?.isElectron?.() === true &&
+    window.electron?.platform === "darwin";
+
   // Cmd+K global shortcut for search
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -108,8 +116,14 @@ export function LeftRail() {
       aria-label="Primary navigation"
       className="flex w-[56px] flex-shrink-0 flex-col items-center bg-[#19171d] py-2"
     >
+      {/* macOS traffic-light clearance + window drag region.
+          hiddenInset removes the native title bar so we provide a drag handle
+          and enough height to clear the traffic light buttons (~28px). */}
+      {isMacDesktop && (
+        <div className="app-drag w-full" style={{ height: 28 }} />
+      )}
       {/* Top nav items */}
-      <div className="flex flex-1 flex-col items-center gap-1 pt-1">
+      <div className={cn("flex flex-1 flex-col items-center gap-1 pt-1", isMacDesktop && "app-no-drag")}>
         {/* Search button — opens search modal from anywhere */}
         <button
           type="button"

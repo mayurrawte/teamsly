@@ -244,6 +244,14 @@ function createWindow(): void {
 
   void mainWindow.loadURL(TEAMSLY_URL);
 
+  // Suppress the default Chromium context menu in production so users don't
+  // see "Inspect Element" and other devtools options in a packaged build.
+  if (!isDev) {
+    mainWindow.webContents.on('context-menu', (event) => {
+      event.preventDefault();
+    });
+  }
+
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
     return { action: 'deny' };

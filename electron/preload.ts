@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld('electron', {
   },
   /** Renderer can call this to detect it's running inside Electron. */
   isElectron: (): true => true,
+  /** OS platform string so the renderer can adapt layout (e.g. macOS traffic light inset). */
+  platform: process.platform as string,
   /**
    * Synchronous BrowserWindow focus check. Backs the smart-notification
    * de-dupe guard so notifications don't double-fire when the desktop window

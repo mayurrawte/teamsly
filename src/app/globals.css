@@ -312,3 +312,7 @@ body {
 .context-fade-in {
   animation: context-fade-in 120ms ease-out both;
 }
+
+/* Electron macOS drag regions — no-ops in the browser */
+.app-drag    { -webkit-app-region: drag; }
+.app-no-drag { -webkit-app-region: no-drag; }

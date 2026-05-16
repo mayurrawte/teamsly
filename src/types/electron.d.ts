@@ -11,6 +11,8 @@ declare global {
     electron?: {
       setUnreadCount: (n: number) => void;
       isElectron: () => boolean;
+      /** OS platform ('darwin' | 'win32' | 'linux'). */
+      platform?: string;
       /**
        * Synchronous BrowserWindow focus check used by the notification
        * de-dupe guard. Returns `undefined` if the preload doesn't expose it
