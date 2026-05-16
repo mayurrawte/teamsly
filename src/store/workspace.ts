@@ -90,21 +90,6 @@ interface WorkspaceState {
 
 const UNREAD_STORAGE_KEY = "teamsly:unread-counts";
 
-// Graph's `chat.lastUpdatedDateTime` only changes on rename / membership changes,
-// not on new messages. The reliable "most recent activity" field is
-// `lastMessagePreview.createdDateTime`. Fall back to `lastUpdatedDateTime`
-// only when the preview is missing (older persisted state, edge cases).
-function chatActivityTime(chat: MSChat): number {
-  const previewTime = chat.lastMessagePreview?.createdDateTime;
-  if (previewTime) return new Date(previewTime).getTime();
-  if (chat.lastUpdatedDateTime) return new Date(chat.lastUpdatedDateTime).getTime();
-  return 0;
-}
-
-function sortChatsByActivity(chats: MSChat[]): MSChat[] {
-  return [...chats].sort((a, b) => chatActivityTime(b) - chatActivityTime(a));
-}
-
 function sortByCreatedDateTime(messages: MSMessage[]): MSMessage[] {
   return [...messages].sort(
     (a, b) => new Date(a.createdDateTime).getTime() - new Date(b.createdDateTime).getTime()
@@ -137,13 +122,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set((s) => ({ channels: { ...s.channels, [teamId]: channels } })),
       setActiveChannel: (id) => set({ activeChannelId: id, activeChatId: null }),
       setChats: (chats, nextLink = null) =>
-        set({ chats: sortChatsByActivity(chats), chatsNextLink: nextLink }),
+        set({ chats, chatsNextLink: nextLink }),
       appendChats: (incoming, nextLink) =>
         set((s) => {
           const existingIds = new Set(s.chats.map((c) => c.id));
           const deduped = incoming.filter((c) => !existingIds.has(c.id));
           return {
-            chats: sortChatsByActivity([...s.chats, ...deduped]),
+            chats: [...s.chats, ...deduped],
             chatsNextLink: nextLink,
           };
         }),
@@ -398,11 +383,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         delete s.messages;
         if (!s.messagesByContext) s.messagesByContext = {};
         return s as unknown as WorkspaceState;
-      },
-      onRehydrateStorage: () => (state) => {
-        if (state && state.chats.length > 0) {
-          state.chats = sortChatsByActivity(state.chats);
-        }
       },
       partialize: (state) => ({
         teams: state.teams,
