@@ -426,14 +426,16 @@ export function ChatView({ chatId }: { chatId: string }) {
     .map((m) => m.email ?? m.userId ?? "")
     .filter(Boolean);
 
-  // Show call/video buttons immediately for oneOnOne chats so they are always
-  // visible. If identifiers haven't loaded yet (members still fetching) the
-  // handlers are no-ops — they become active once members resolve.
-  const isOneOnOne = chat?.chatType === "oneOnOne";
-  const handleCall = isOneOnOne
+  // Show call/video buttons for oneOnOne chats. While chatType hasn't loaded
+  // yet (chat undefined or chatType null), default to showing them so the
+  // buttons don't disappear and reappear — they become functional once
+  // callIdentifiers resolves. Hide only when confirmed group/meeting.
+  const chatType = chat?.chatType;
+  const showCallButtons = chatType !== "group" && chatType !== "meeting";
+  const handleCall = showCallButtons
     ? () => { if (callIdentifiers.length) openTeamsCall(callIdentifiers); }
     : undefined;
-  const handleVideoCall = isOneOnOne
+  const handleVideoCall = showCallButtons
     ? () => { if (callIdentifiers.length) openTeamsCall(callIdentifiers, { withVideo: true }); }
     : undefined;
 
