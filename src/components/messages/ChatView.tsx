@@ -90,7 +90,7 @@ export function ChatView({ chatId }: { chatId: string }) {
   useEffect(() => {
     if (chat) return;
     let cancelled = false;
-    fetch(`/api/chats/${chatId}`)
+    fetch(`/api/chats/${encodeURIComponent(chatId)}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data: MSChat | null) => { if (!cancelled && data) patchChat(data); })
       .catch(() => {});

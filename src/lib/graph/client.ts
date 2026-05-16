@@ -113,8 +113,10 @@ export async function getChats(
 
 export async function getChat(accessToken: string, chatId: string): Promise<MSChat> {
   const client = getGraphClient(accessToken);
+  // Chat IDs containing '@' (e.g. @unq.gbl.spaces) must be percent-encoded
+  // in the path or Graph returns 400/404.
   return client
-    .api(`/me/chats/${chatId}`)
+    .api(`/me/chats/${encodeURIComponent(chatId)}`)
     .select("id,chatType,topic,lastUpdatedDateTime,lastMessagePreview")
     .expand("members($select=id,displayName,userId,email)")
     .get() as Promise<MSChat>;
