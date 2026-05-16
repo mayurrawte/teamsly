@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { avatarColor, avatarInitials } from "@/lib/utils/avatar";
 
 type AvatarSize = 18 | 20 | 24 | 36;
@@ -29,6 +29,13 @@ const RADIUS: Record<AvatarSize, number> = {
 
 export function Avatar({ userId, displayName, size = 36, photoUrl, className }: AvatarProps) {
   const [imageError, setImageError] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  // Reset when the subject changes so we don't flash stale state
+  useEffect(() => {
+    setLoaded(false);
+    setImageError(false);
+  }, [userId]);
 
   const bg = avatarColor(userId);
   const initials = avatarInitials(displayName);
@@ -56,16 +63,33 @@ export function Avatar({ userId, displayName, size = 36, photoUrl, className }: 
   // photoUrl prop takes priority (legacy support)
   if (photoUrl && !imageError) {
     return (
-      <img
-        src={photoUrl}
-        alt={displayName}
-        width={size}
-        height={size}
-        loading="lazy"
-        style={{ width: px, height: px, borderRadius: radius }}
-        className={`flex-shrink-0 object-cover ${className ?? ""}`}
-        onError={() => setImageError(true)}
-      />
+      <span
+        className="relative flex-shrink-0 inline-flex"
+        style={{ width: px, height: px }}
+      >
+        {!loaded && (
+          <span
+            className="skeleton absolute inset-0"
+            style={{ borderRadius: radius }}
+          />
+        )}
+        <img
+          src={photoUrl}
+          alt={displayName}
+          width={size}
+          height={size}
+          loading="lazy"
+          style={{
+            width: px,
+            height: px,
+            borderRadius: radius,
+            opacity: loaded ? 1 : 0,
+          }}
+          className={`flex-shrink-0 object-cover ${className ?? ""}`}
+          onLoad={() => setLoaded(true)}
+          onError={() => setImageError(true)}
+        />
+      </span>
     );
   }
 
@@ -79,18 +103,33 @@ export function Avatar({ userId, displayName, size = 36, photoUrl, className }: 
 
   if (isGraphId && !imageError) {
     return (
-      <>
+      <span
+        className="relative flex-shrink-0 inline-flex"
+        style={{ width: px, height: px }}
+      >
+        {!loaded && (
+          <span
+            className="skeleton absolute inset-0"
+            style={{ borderRadius: radius }}
+          />
+        )}
         <img
           src={`/api/users/${encodeURIComponent(photoUserId)}/photo`}
           alt={displayName}
           width={size}
           height={size}
           loading="lazy"
-          style={{ width: px, height: px, borderRadius: radius }}
+          style={{
+            width: px,
+            height: px,
+            borderRadius: radius,
+            opacity: loaded ? 1 : 0,
+          }}
           className={`flex-shrink-0 object-cover ${className ?? ""}`}
+          onLoad={() => setLoaded(true)}
           onError={() => setImageError(true)}
         />
-      </>
+      </span>
     );
   }
 
