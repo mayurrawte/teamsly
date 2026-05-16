@@ -7,7 +7,7 @@ export function getChatLabel(
   chat: MSChat | undefined,
   currentUserId: string
 ): string {
-  if (!chat) return "Direct Message";
+  if (!chat) return "";
 
   const members = chat.members ?? [];
   const others = members.filter((m) => (m.userId ?? m.id) !== currentUserId);
@@ -21,7 +21,9 @@ export function getChatLabel(
 
   if (chat.topic) return chat.topic;
 
-  if (members.length === 0) return "Direct Message";
+  // Members haven't loaded yet — return empty string so the header shows
+  // nothing rather than the misleading "Direct Message" placeholder.
+  if (members.length === 0) return "";
 
   if (others.length === 0) {
     const name = members[0]?.displayName ?? "You";

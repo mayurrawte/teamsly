@@ -116,6 +116,7 @@ export async function getChat(accessToken: string, chatId: string): Promise<MSCh
   return client
     .api(`/me/chats/${chatId}`)
     .select("id,chatType,topic,lastUpdatedDateTime,lastMessagePreview")
+    .expand("members($select=id,displayName,userId,email)")
     .get() as Promise<MSChat>;
 }
 
