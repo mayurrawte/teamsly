@@ -289,3 +289,7 @@ body {
   from { transform: translateY(8px); opacity: 0; }
   to   { transform: translateY(0); opacity: 1; }
 }
+
+@keyframes send-ripple {
+  to { transform: scale(4); opacity: 0; }
+}

@@ -266,6 +266,24 @@ export function MessageInput({
   // Counter tracks nested enter/leave events on child elements
   const dragCounterRef = useRef(0);
   const dropZoneRef = useRef<HTMLDivElement>(null);
+  const sendButtonRef = useRef<HTMLButtonElement>(null);
+
+  function triggerRipple() {
+    const btn = sendButtonRef.current;
+    if (!btn) return;
+    const ripple = document.createElement("span");
+    ripple.style.cssText = `
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.35);
+      transform: scale(0);
+      animation: send-ripple 400ms ease-out forwards;
+      pointer-events: none;
+    `;
+    btn.appendChild(ripple);
+    ripple.addEventListener("animationend", () => ripple.remove());
+  }
 
   // ---------------------------------------------------------------------------
   // Mention trigger: re-evaluate on value / cursor change
@@ -290,6 +308,7 @@ export function MessageInput({
   const isBusy = sending || Boolean(uploading);
 
   async function submit() {
+    triggerRipple();
     const trimmed = value.trim();
     // Allow send when there's a pending file even with no text
     if ((!trimmed && !pendingFile) || isBusy) return;
@@ -849,12 +868,13 @@ export function MessageInput({
                 <Smile className="h-4 w-4" />
               </button>
               <button
+                ref={sendButtonRef}
                 type="button"
                 aria-label="Send message"
                 onClick={submit}
                 disabled={!canSend}
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded transition-[background,color] duration-150 ease-out focus-ring",
+                  "relative overflow-hidden flex h-8 w-8 items-center justify-center rounded transition-[background,color] duration-150 ease-out focus-ring",
                   canSend
                     ? "bg-[#007a5a] text-white hover:bg-[#148567]"
                     : "text-[var(--text-muted)]"
