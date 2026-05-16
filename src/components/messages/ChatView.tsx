@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useWorkspaceStore } from "@/store/workspace";
+import { usePreferencesStore } from "@/store/preferences";
 import { MessageFeed } from "./MessageFeed";
 import { MessageInput } from "./MessageInput";
 import { ThreadPanel } from "./ThreadPanel";
@@ -41,6 +42,15 @@ export function ChatView({ chatId }: { chatId: string }) {
   const [uploading, setUploading] = useState(false);
   const showToast = useToastStore((state) => state.showToast);
 
+  // Typing indicator — heuristic, opt-in via preferences
+  const typingEnabled = usePreferencesStore((s) => s.typingIndicator);
+  const [clockNow, setClockNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!typingEnabled) return;
+    const id = setInterval(() => setClockNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [typingEnabled]);
+
   // Search jump-to-message: pull `?anchor=` off the URL and forward to
   // MessageFeed. Cleared via router.replace once consumed so back/forward
   // navigation doesn't re-flash a stale row.
@@ -55,6 +65,22 @@ export function ChatView({ chatId }: { chatId: string }) {
 
   const messages = getMessages(chatId);
   const chat = chats.find((c) => c.id === chatId);
+
+  // Compute typing indicator visibility — recalculates whenever clockNow ticks
+  const { showTypingIndicator, typingPersonName } = useMemo(() => {
+    if (!typingEnabled) return { showTypingIndicator: false, typingPersonName: "" };
+    const last = messages[messages.length - 1];
+    if (!last) return { showTypingIndicator: false, typingPersonName: "" };
+    const senderId = last.from?.user?.id;
+    if (!senderId || senderId === currentUserId) return { showTypingIndicator: false, typingPersonName: "" };
+    const age = clockNow - new Date(last.createdDateTime).getTime();
+    if (age > 30_000) return { showTypingIndicator: false, typingPersonName: "" };
+    return {
+      showTypingIndicator: true,
+      typingPersonName: last.from?.user?.displayName ?? "Someone",
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typingEnabled, messages, currentUserId, clockNow]);
 
   // On-demand members fetch: Graph's $expand=members on the chats list is
   // unreliable (some tenants omit it). Fetch directly via the dedicated
@@ -412,6 +438,9 @@ export function ChatView({ chatId }: { chatId: string }) {
             onRetry={handleRetry}
             onDiscard={handleDiscard}
           />
+          {typingEnabled && showTypingIndicator && (
+            <TypingIndicator name={typingPersonName} />
+          )}
           <MessageInput
             placeholder={`Message ${label}`}
             onSend={handleSend}
@@ -437,6 +466,28 @@ export function ChatView({ chatId }: { chatId: string }) {
         message={forwardMessage}
         onForward={handleForward}
       />
+    </div>
+  );
+}
+
+function TypingIndicator({ name }: { name: string }) {
+  return (
+    <div className="flex items-center gap-2 px-4 pb-1">
+      <div className="flex h-8 items-end gap-1 rounded-2xl bg-[var(--surface)] px-3 py-2">
+        <span
+          className="h-1.5 w-1.5 rounded-full bg-[var(--text-muted)]"
+          style={{ animation: "typing-dot 1.2s ease-in-out infinite" }}
+        />
+        <span
+          className="h-1.5 w-1.5 rounded-full bg-[var(--text-muted)]"
+          style={{ animation: "typing-dot 1.2s ease-in-out 0.2s infinite" }}
+        />
+        <span
+          className="h-1.5 w-1.5 rounded-full bg-[var(--text-muted)]"
+          style={{ animation: "typing-dot 1.2s ease-in-out 0.4s infinite" }}
+        />
+      </div>
+      <span className="text-[12px] text-[var(--text-muted)]">{name}</span>
     </div>
   );
 }

@@ -15,6 +15,7 @@ import { useToastStore } from "@/store/toasts";
 import { textToHtml, messagePlainText } from "@/lib/utils/render-message";
 import { useMemberPanelStore } from "@/store/memberPanel";
 import { openTeamsChannelMeeting } from "@/lib/utils/teams-deeplink";
+import { markdownToHtml } from "@/lib/utils/markdown-to-html";
 
 export function ChannelView({ teamId, channelId }: { teamId: string; channelId: string }) {
   const {
@@ -35,6 +36,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [forwardMessage, setForwardMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
+  const [uploading, setUploading] = useState(false);
   const showToast = useToastStore((state) => state.showToast);
   const openChannelMembers = useMemberPanelStore((s) => s.openChannelMembers);
   const handleOpenMembers = () => openChannelMembers(teamId, channelId);
@@ -130,6 +132,86 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
       markMessageFailed(contextId, tempId);
       showToast({ title: "Could not send message", tone: "error" });
     }
+  }
+
+  function handleAttachAndSend(content: string, file: File): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      setUploading(true);
+
+      const form = new FormData();
+      form.append("file", file);
+
+      const xhr = new XMLHttpRequest();
+
+      xhr.onload = async () => {
+        setUploading(false);
+
+        if (xhr.status < 200 || xhr.status >= 300) {
+          let errMsg = "Upload failed";
+          try {
+            const errBody = JSON.parse(xhr.responseText) as { error?: string };
+            if (errBody.error) errMsg = errBody.error;
+          } catch {
+            // ignore parse errors
+          }
+          showToast({ title: errMsg, tone: "error" });
+          reject(new Error(errMsg));
+          return;
+        }
+
+        const driveItem = JSON.parse(xhr.responseText) as { name: string; webUrl: string };
+
+        // Build an HTML body embedding the file as a clickable link.
+        // Channel attachments via Graph require SharePoint references; we use
+        // the OneDrive sharing link instead to avoid that complexity.
+        const trimmed = content.trim();
+        const fileLink = `<a href="${driveItem.webUrl}">${driveItem.name}</a>`;
+        const htmlBody = trimmed
+          ? `${markdownToHtml(trimmed)}<br/>${fileLink}`
+          : fileLink;
+
+        // Build and register the optimistic message directly (bypassing
+        // handleSend) so the HTML body is stored as-is rather than escaped.
+        const tempId = `temp-${crypto.randomUUID()}`;
+        const now = new Date().toISOString();
+        const optimistic: MSMessage = {
+          id: tempId,
+          createdDateTime: now,
+          body: { contentType: "html", content: htmlBody },
+          from: { user: { id: currentUserId, displayName: currentUserName } },
+          reactions: [],
+          attachments: [],
+          __pending: true,
+        };
+        appendPendingMessage(contextId, optimistic);
+
+        try {
+          const res = await fetch(`/api/messages/${teamId}/${channelId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content: htmlBody }),
+          });
+          if (!res.ok) throw new Error("Failed to send message with attachment");
+          const serverMsg = (await res.json()) as MSMessage;
+          replaceMessage(contextId, tempId, serverMsg);
+          resolve();
+        } catch {
+          // File already uploaded; mark failed (discard-only, no re-upload needed).
+          markMessageFailed(contextId, tempId);
+          showToast({ title: "Could not send message", tone: "error" });
+          reject(new Error("Send failed"));
+        }
+      };
+
+      xhr.onerror = () => {
+        setUploading(false);
+        showToast({ title: "Upload failed", tone: "error" });
+        reject(new Error("Upload failed"));
+      };
+
+      xhr.open("POST", "/api/files/upload");
+      xhr.send(form);
+    });
   }
 
   function handleRetry(originalText: string) {
@@ -269,6 +351,8 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
           <MessageInput
             placeholder={`Message #${channel?.displayName ?? "channel"}`}
             onSend={handleSend}
+            onAttachAndSend={handleAttachAndSend}
+            uploading={uploading}
             contextId={contextId}
             allowEveryone
           />

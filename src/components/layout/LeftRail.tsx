@@ -15,6 +15,7 @@ import {
   Info,
   MessageCircleQuestion,
   LogOut,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
@@ -25,6 +26,7 @@ import { PreferencesModal } from "@/components/modals/PreferencesModal";
 import { FeedbackModal } from "@/components/modals/FeedbackModal";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useBookmarksStore } from "@/store/bookmarks";
+import { useSearchStore } from "@/store/search";
 
 async function handleSignOut() {
   // Drop the IDB caches before redirect so a previous user's messages,
@@ -68,6 +70,20 @@ export function LeftRail() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
+  const openSearch = useSearchStore((s) => s.open);
+
+  // Cmd+K global shortcut for search
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        openSearch();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [openSearch]);
+
   // Unread badge: sum of all unread channels + unread DMs
   const unreadCounts = useWorkspaceStore((s) => s.unreadCounts);
   const totalUnread = Object.values(unreadCounts).reduce((sum, n) => sum + n, 0);
@@ -94,6 +110,20 @@ export function LeftRail() {
     >
       {/* Top nav items */}
       <div className="flex flex-1 flex-col items-center gap-1 pt-1">
+        {/* Search button — opens search modal from anywhere */}
+        <button
+          type="button"
+          onClick={openSearch}
+          aria-label="Search (Cmd+K)"
+          title="Search (Cmd+K)"
+          className="group flex w-full flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-medium transition-colors focus-ring text-[#a0a3a8] hover:text-[#d1d2d3]"
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors group-hover:bg-white/8">
+            <Search size={18} strokeWidth={1.8} className="text-[#a0a3a8] group-hover:text-[#d1d2d3]" />
+          </span>
+          <span className="leading-none text-[#a0a3a8] group-hover:text-[#d1d2d3]">Search</span>
+        </button>
+
         {NAV_ITEMS.map((item) => {
           const active = isActive(pathname, item);
           const Icon = item.icon;

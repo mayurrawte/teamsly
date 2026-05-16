@@ -120,6 +120,8 @@ export function PreferencesModal({ open, onOpenChange }: Props) {
                 <AppearancePanel />
               ) : section === "notifications" ? (
                 <NotificationsPanel />
+              ) : section === "messages" ? (
+                <MessagesPanel />
               ) : (
                 <ComingSoonPanel />
               )}
@@ -345,6 +347,47 @@ function ToggleRow({
           }`}
         />
       </button>
+    </div>
+  );
+}
+
+// ─── Messages panel ──────────────────────────────────────────────────────────
+
+function MessagesPanel() {
+  const typingIndicator = usePreferencesStore((s) => s.typingIndicator);
+  const setTypingIndicator = usePreferencesStore((s) => s.setTypingIndicator);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="mb-4 text-[13px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+          Typing indicator
+        </h3>
+        <label className="flex cursor-pointer items-center justify-between gap-3">
+          <div>
+            <p className="text-[14px] text-[var(--text-primary)]">Show typing bubble</p>
+            <p className="text-[12px] text-[var(--text-muted)]">
+              Display an animated bubble when someone recently sent you a message.
+              Heuristic only — not real-time presence data.
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={typingIndicator}
+            onClick={() => setTypingIndicator(!typingIndicator)}
+            className={`relative h-5 w-9 flex-shrink-0 rounded-full transition-colors duration-150 focus-ring ${
+              typingIndicator ? "bg-[var(--accent)]" : "bg-[var(--border)]"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform duration-150 ${
+                typingIndicator ? "translate-x-4" : "translate-x-0.5"
+              }`}
+            />
+          </button>
+        </label>
+      </div>
     </div>
   );
 }

@@ -27,6 +27,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { PresenceDot } from "@/components/ui/PresenceDot";
 import { useToastStore } from "@/store/toasts";
 import { getChatLabel } from "@/lib/utils/chat-label";
+import { useSearchStore } from "@/store/search";
 
 // localStorage keys for per-section collapsed state
 const COLLAPSE_KEYS = {
@@ -67,7 +68,8 @@ export function Sidebar() {
   const params = useParams();
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const searchOpen = useSearchStore((s) => s.isOpen);
+  const closeSearch = useSearchStore((s) => s.close);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -222,7 +224,7 @@ export function Sidebar() {
     function onKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "f") {
         event.preventDefault();
-        setSearchOpen(true);
+        useSearchStore.getState().open();
       }
     }
 
@@ -465,7 +467,7 @@ export function Sidebar() {
 
       <button
         type="button"
-        onClick={() => setSearchOpen(true)}
+        onClick={() => useSearchStore.getState().open()}
         className="mx-3 my-2 flex h-7 items-center gap-2 rounded-md border border-[var(--border-input)] bg-[var(--reaction-bg)] px-2 text-left text-[13px] text-[var(--text-secondary)] [transition:border-color_150ms_ease,background_150ms_ease] hover:border-white/50 hover:bg-[var(--sidebar-hover)] focus:border-white/50 focus:bg-[var(--sidebar-hover)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
       >
         <Search className="h-3.5 w-3.5 flex-shrink-0" />
@@ -693,7 +695,7 @@ export function Sidebar() {
       <UserFooter />
       <SearchModal
         open={searchOpen}
-        onOpenChange={setSearchOpen}
+        onOpenChange={(v) => { if (!v) closeSearch(); }}
         teamName={activeTeam?.displayName ?? "Teamsly"}
         channels={teamChannels}
         chats={chats}

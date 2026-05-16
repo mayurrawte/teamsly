@@ -39,6 +39,8 @@ export interface Preferences {
   darkInFocusMode: boolean;
   /** Activity hub: when true, filter the feed to items with active unread state. */
   activityUnreadOnly: boolean;
+  /** Show a heuristic typing indicator when another user sent a message in the last 30 s. */
+  typingIndicator: boolean;
 }
 
 interface PreferencesState extends Preferences {
@@ -55,6 +57,7 @@ interface PreferencesState extends Preferences {
   setAccent: (a: AccentTheme) => void;
   setDarkInFocusMode: (v: boolean) => void;
   setActivityUnreadOnly: (v: boolean) => void;
+  setTypingIndicator: (v: boolean) => void;
   reset: () => void;
 }
 
@@ -72,6 +75,7 @@ const DEFAULTS: Preferences = {
   accent: "slate",
   darkInFocusMode: false,
   activityUnreadOnly: true,
+  typingIndicator: false,
 };
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -91,6 +95,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       setAccent: (accent) => set({ accent }),
       setDarkInFocusMode: (darkInFocusMode) => set({ darkInFocusMode }),
       setActivityUnreadOnly: (activityUnreadOnly) => set({ activityUnreadOnly }),
+      setTypingIndicator: (typingIndicator) => set({ typingIndicator }),
       reset: () => set(DEFAULTS),
     }),
     {

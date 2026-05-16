@@ -213,6 +213,11 @@ body {
   100% { transform: scale(1); }
 }
 
+@keyframes typing-dot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30%            { transform: translateY(-4px); opacity: 1; }
+}
+
 /* Message body rendering — scoped so these styles never leak to inputs, sidebar, etc. */
 .message-body {
   white-space: normal;
