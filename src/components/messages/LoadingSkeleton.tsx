@@ -1,12 +1,15 @@
+// Six skeleton rows that mirror the real message layout:
+// [Avatar 36×36]  [Name line ~200px]
+//                 [Text line ~140px]
+// Used by MessageFeed on first load (loading=true, messages.length===0).
+
 const ROWS = [
-  { lines: [60, 85] },
-  { lines: [75, 50] },
-  { lines: [85, 60, 40] },
-  { lines: [55] },
-  { lines: [70, 90, 45] },
-  { lines: [80, 55] },
-  { lines: [65, 85] },
-  { lines: [50, 70, 35] },
+  { line1: "55%", line2: "38%" },
+  { line1: "70%", line2: "50%" },
+  { line1: "48%", line2: "32%" },
+  { line1: "62%", line2: "44%" },
+  { line1: "75%", line2: "55%" },
+  { line1: "52%", line2: "36%" },
 ] as const;
 
 export function LoadingSkeleton() {
@@ -18,18 +21,13 @@ export function LoadingSkeleton() {
       className="flex flex-1 flex-col overflow-hidden py-2"
     >
       {ROWS.map((row, i) => (
-        <div key={i} className="flex gap-3 px-4 pt-2 pb-[2px]">
-          <div className="skeleton h-9 w-9 flex-shrink-0" />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <div className="skeleton h-[14px] w-20" />
-              <div className="skeleton h-[10px] w-12 opacity-60" />
-            </div>
-            <div className="mt-2 flex flex-col gap-[6px]">
-              {row.lines.map((width, j) => (
-                <div key={j} className="skeleton h-3" style={{ width: `${width}%` }} />
-              ))}
-            </div>
+        <div key={i} className="flex gap-3 px-4 py-2">
+          {/* Avatar blob */}
+          <div className="skeleton h-9 w-9 flex-shrink-0 rounded-full" />
+          {/* Text blobs */}
+          <div className="flex flex-col justify-center gap-[8px]">
+            <div className="skeleton h-[14px] rounded-full" style={{ width: row.line1 }} />
+            <div className="skeleton h-[12px] rounded-full" style={{ width: row.line2 }} />
           </div>
         </div>
       ))}

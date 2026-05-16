@@ -198,7 +198,10 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
 
   const meta = useMemo(() => computeMeta(messages), [messages]);
 
-  if (loading) return <LoadingSkeleton />;
+  // Show skeleton only on first load (no messages yet). During background
+  // polling refreshes (loading=true but messages already present) keep the
+  // existing message list visible so the UI doesn't flash.
+  if (loading && messages.length === 0) return <LoadingSkeleton />;
 
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden">
