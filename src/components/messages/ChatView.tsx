@@ -35,6 +35,7 @@ export function ChatView({ chatId }: { chatId: string }) {
     restoreMessage,
     editMessage,
     revertMessageEdit,
+    patchChat,
   } = useWorkspaceStore();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [forwardMessage, setForwardMessage] = useState<MSMessage | null>(null);
@@ -82,6 +83,20 @@ export function ChatView({ chatId }: { chatId: string }) {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [typingEnabled, messages, currentUserId, clockNow]);
+
+  // When the user navigates directly to a chat URL before the sidebar has
+  // polled, `chat` is undefined. Fetch the single chat so we get chatType
+  // (needed for call buttons) and topic (needed for the header label).
+  useEffect(() => {
+    if (chat) return;
+    let cancelled = false;
+    fetch(`/api/chats/${chatId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: MSChat | null) => { if (!cancelled && data) patchChat(data); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatId, chat]);
 
   // On-demand members fetch: Graph's $expand=members on the chats list is
   // unreliable (some tenants omit it). Fetch directly via the dedicated

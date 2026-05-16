@@ -111,6 +111,14 @@ export async function getChats(
   };
 }
 
+export async function getChat(accessToken: string, chatId: string): Promise<MSChat> {
+  const client = getGraphClient(accessToken);
+  return client
+    .api(`/me/chats/${chatId}`)
+    .select("id,chatType,topic,lastUpdatedDateTime,lastMessagePreview")
+    .get() as Promise<MSChat>;
+}
+
 export async function getChatMessages(accessToken: string, chatId: string) {
   const client = getGraphClient(accessToken);
   const res = await client.api(`/me/chats/${chatId}/messages`).top(50).get();

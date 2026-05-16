@@ -52,6 +52,8 @@ interface WorkspaceState {
   setChats: (chats: MSChat[], nextLink?: string | null) => void;
   appendChats: (chats: MSChat[], nextLink: string | null) => void;
   patchChatMembers: (chatId: string, members: MSChatMember[]) => void;
+  /** Upsert a single chat into the store (prepends if not already present). */
+  patchChat: (chat: MSChat) => void;
   setActiveChat: (id: string | null) => void;
   /** Selector — returns the cached message list for a context, or []. */
   getMessages: (contextId: string) => MSMessage[];
@@ -136,6 +138,12 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set((s) => ({
           chats: s.chats.map((c) => (c.id === chatId ? { ...c, members } : c)),
         })),
+      patchChat: (chat) =>
+        set((s) => {
+          const exists = s.chats.some((c) => c.id === chat.id);
+          if (exists) return { chats: s.chats.map((c) => c.id === chat.id ? { ...c, ...chat } : c) };
+          return { chats: [chat, ...s.chats] };
+        }),
       setActiveChat: (id) => set({ activeChatId: id, activeChannelId: null }),
 
       getMessages: (contextId) => get().messagesByContext[contextId] ?? EMPTY_MESSAGES,
