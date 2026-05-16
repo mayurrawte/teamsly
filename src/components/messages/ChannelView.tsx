@@ -222,7 +222,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
   ) : null;
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden">
+    <div key={channelId} className="context-fade-in relative flex h-full flex-col overflow-hidden">
       <ChannelMessageHeader
         name={channel?.displayName}
         description={channel?.description}

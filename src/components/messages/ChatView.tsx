@@ -377,7 +377,7 @@ export function ChatView({ chatId }: { chatId: string }) {
   );
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden">
+    <div key={chatId} className="context-fade-in relative flex h-full flex-col overflow-hidden">
       <DmMessageHeader
         label={label}
         members={members}
