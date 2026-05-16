@@ -482,8 +482,13 @@ export function Sidebar() {
             count={totalUnreads}
             onToggle={toggleUnreads}
           />
-          {unreadsOpen && (
-            <>
+          <div
+            className={cn(
+              "grid transition-[grid-template-rows] duration-200 ease-out",
+              unreadsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+            )}
+          >
+            <div className="overflow-hidden min-h-0">
               {unreadChannelItems.map((ch) => (
                 <SidebarItem
                   key={ch.id}
@@ -513,8 +518,8 @@ export function Sidebar() {
               {totalUnreads === 0 && (
                 <p className="px-4 py-1 text-[12px] text-[var(--text-muted)]">All caught up</p>
               )}
-            </>
-          )}
+            </div>
+          </div>
         </div>
 
         {/* Threads section */}
@@ -526,9 +531,16 @@ export function Sidebar() {
             count={0}
             onToggle={toggleThreads}
           />
-          {threadsOpen && (
-            <p className="px-4 py-1 text-[12px] text-[var(--text-muted)]">Coming soon</p>
-          )}
+          <div
+            className={cn(
+              "grid transition-[grid-template-rows] duration-200 ease-out",
+              threadsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+            )}
+          >
+            <div className="overflow-hidden min-h-0">
+              <p className="px-4 py-1 text-[12px] text-[var(--text-muted)]">Coming soon</p>
+            </div>
+          </div>
         </div>
 
         {/* Starred section */}
@@ -729,6 +741,17 @@ function SidebarItem({
   onClick: () => void;
 }) {
   const unread = unreadCount > 0 && !active;
+  const [pulsing, setPulsing] = useState(false);
+  const prevCountRef = useRef(unreadCount);
+
+  useEffect(() => {
+    if (unreadCount > prevCountRef.current) {
+      setPulsing(true);
+      const t = setTimeout(() => setPulsing(false), 300);
+      return () => clearTimeout(t);
+    }
+    prevCountRef.current = unreadCount;
+  }, [unreadCount]);
 
   return (
     <button
@@ -743,7 +766,10 @@ function SidebarItem({
       <span className="flex-shrink-0 opacity-70">{icon}</span>
       <span className={cn("truncate", unread && "font-bold text-white")}>{label}</span>
       {unread && (
-        <span className="ml-auto flex h-[16px] min-w-[16px] flex-shrink-0 scale-100 items-center justify-center rounded-full bg-[#cd2553] px-[4px] text-[10px] font-bold text-white transition-transform duration-150">
+        <span
+          className="ml-auto flex h-[16px] min-w-[16px] flex-shrink-0 items-center justify-center rounded-full bg-[#cd2553] px-[4px] text-[10px] font-bold text-white"
+          style={pulsing ? { animation: 'badge-pulse 300ms ease-out' } : undefined}
+        >
           {unreadCount > 99 ? "99+" : unreadCount}
         </span>
       )}
