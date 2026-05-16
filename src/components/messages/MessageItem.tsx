@@ -2,6 +2,7 @@
 
 import { format } from "date-fns";
 import { useState, useEffect, useRef, type KeyboardEvent } from "react";
+import { Clock, CheckCheck } from "lucide-react";
 import TextareaAutosize from "react-textarea-autosize";
 import { Avatar } from "@/components/ui/Avatar";
 import { UserProfilePopover } from "@/components/profile/UserProfilePopover";
@@ -251,9 +252,15 @@ export function MessageItem({
           />
         )}
         <span
-          className="pointer-events-none absolute left-4 top-[3px] w-10 select-none text-right text-xs leading-[18px] text-[var(--text-muted)] opacity-0 transition-opacity duration-100 group-hover:opacity-100"
+          className="pointer-events-none absolute left-4 top-[3px] flex w-10 select-none items-center justify-end gap-0.5 text-right text-xs leading-[18px] text-[var(--text-muted)] opacity-0 transition-opacity duration-100 group-hover:opacity-100"
           title={formatFullTimestamp(message.createdDateTime)}
         >
+          {message.__pending && (
+            <Clock size={10} className="shrink-0 opacity-50" />
+          )}
+          {!message.__pending && !message.__failed && isOwn && (
+            <CheckCheck size={10} className="shrink-0 opacity-40" />
+          )}
           {shortTime}
         </span>
         <MessageReferences attachments={referenceAttachments} />
@@ -310,11 +317,19 @@ export function MessageItem({
           <span className="cursor-pointer text-[14px] font-bold text-[var(--text-primary)] hover:underline">
             {author}
           </span>
-          <span
-            className="text-xs text-[var(--text-muted)]"
-            title={formatFullTimestamp(message.createdDateTime)}
-          >
-            {formatMessageTime(message.createdDateTime)}
+          <span className="flex items-center gap-1">
+            <span
+              className="text-xs text-[var(--text-muted)]"
+              title={formatFullTimestamp(message.createdDateTime)}
+            >
+              {formatMessageTime(message.createdDateTime)}
+            </span>
+            {message.__pending && (
+              <Clock size={10} className="text-[var(--text-muted)] opacity-50" />
+            )}
+            {!message.__pending && !message.__failed && isOwn && (
+              <CheckCheck size={10} className="text-[var(--text-muted)] opacity-40" />
+            )}
           </span>
         </div>
         <MessageReferences attachments={referenceAttachments} />
