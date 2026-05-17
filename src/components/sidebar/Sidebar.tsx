@@ -236,13 +236,13 @@ export function Sidebar() {
     if (!activeTeamId) return;
     markRead(channelId);
     setActiveChannel(channelId);
-    router.push(`/app/t/${activeTeamId}/${channelId}`);
+    router.push(`/workspace/t/${activeTeamId}/${channelId}`);
   }
 
   function goToChat(chatId: string) {
     markRead(chatId);
     setActiveChat(chatId);
-    router.push(`/app/dm/${chatId}`);
+    router.push(`/workspace/dm/${chatId}`);
   }
 
   function jumpToMessage(message: MSMessage, origin: SearchMessageOrigin) {
@@ -252,11 +252,11 @@ export function Sidebar() {
     if (origin.kind === "channel") {
       markRead(origin.channelId);
       setActiveChannel(origin.channelId);
-      router.push(`/app/t/${origin.teamId}/${origin.channelId}?anchor=${encodeURIComponent(message.id)}`);
+      router.push(`/workspace/t/${origin.teamId}/${origin.channelId}?anchor=${encodeURIComponent(message.id)}`);
     } else {
       markRead(origin.chatId);
       setActiveChat(origin.chatId);
-      router.push(`/app/dm/${origin.chatId}?anchor=${encodeURIComponent(message.id)}`);
+      router.push(`/workspace/dm/${origin.chatId}?anchor=${encodeURIComponent(message.id)}`);
     }
   }
 
@@ -269,9 +269,9 @@ export function Sidebar() {
     const cached = channels[teamId];
     if (cached && cached.length > 0) {
       setActiveChannel(cached[0].id);
-      router.push(`/app/t/${teamId}/${cached[0].id}`);
+      router.push(`/workspace/t/${teamId}/${cached[0].id}`);
     } else {
-      router.push(`/app`);
+      router.push(`/workspace`);
     }
   }
 

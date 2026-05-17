@@ -34,7 +34,7 @@ export function SignInPage() {
           className="pointer-events-none absolute inset-0"
           style={{
             backgroundImage:
-              "radial-gradient(ellipse 80% 60% at 20% 40%, rgba(15,90,143,0.18) 0%, transparent 70%), radial-gradient(ellipse 60% 80% at 80% 80%, rgba(11,123,168,0.10) 0%, transparent 70%)",
+              "radial-gradient(ellipse 80% 60% at 20% 40%, rgba(99,102,241,0.18) 0%, transparent 70%), radial-gradient(ellipse 60% 80% at 80% 80%, rgba(129,140,248,0.10) 0%, transparent 70%)",
           }}
         />
         {/* Faint dot-grid */}
@@ -51,8 +51,9 @@ export function SignInPage() {
         {/* Wordmark */}
         <div className="relative flex items-center gap-3" style={{ color: "#2E2A6F" }}>
           <Logo size={36} className="text-white" />
-          <span className="text-[17px] font-semibold tracking-tight text-white">
-            Teamsly
+          <span className="text-[17px] font-bold tracking-tight">
+            <span style={{ color: "#818CF8" }}>Teams</span>
+            <span className="text-white">ly</span>
           </span>
         </div>
 
@@ -61,13 +62,13 @@ export function SignInPage() {
           <div className="flex flex-col gap-4">
             <p
               className="text-xs font-semibold uppercase tracking-widest"
-              style={{ color: "#0B7BA8" }}
+              style={{ color: "#818CF8" }}
             >
               Microsoft Teams client
             </p>
             <h1 className="text-4xl font-black leading-[1.15] tracking-tight text-white lg:text-5xl">
               A calmer way to work<br />
-              <span style={{ color: "#0F5A8F" }}>inside Teams.</span>
+              <span style={{ color: "#6366F1" }}>inside Teams.</span>
             </h1>
             <p className="max-w-sm text-[15px] leading-relaxed text-[#8b9ab0]">
               The Microsoft Teams client built for focus — fast navigation, clean
@@ -80,9 +81,9 @@ export function SignInPage() {
               <li key={title} className="flex items-start gap-4">
                 <div
                   className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                  style={{ background: "rgba(15,90,143,0.18)" }}
+                  style={{ background: "rgba(99,102,241,0.18)" }}
                 >
-                  <Icon size={16} style={{ color: "#0B7BA8" }} strokeWidth={1.8} />
+                  <Icon size={16} style={{ color: "#818CF8" }} strokeWidth={1.8} />
                 </div>
                 <div>
                   <p className="text-[13px] font-semibold text-[#e2e8f0]">{title}</p>
@@ -122,11 +123,11 @@ export function SignInPage() {
           </p>
 
           <button
-            onClick={() => signIn("microsoft-entra-id", { callbackUrl: "/app" })}
+            onClick={() => signIn("microsoft-entra-id", { callbackUrl: "/workspace" })}
             className="group flex w-full items-center justify-center gap-3 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98]"
             style={{
-              background: "linear-gradient(135deg, #0F5A8F 0%, #0B7BA8 100%)",
-              boxShadow: "0 0 0 1px rgba(15,90,143,0.6)",
+              background: "linear-gradient(135deg, #6366F1 0%, #818CF8 100%)",
+              boxShadow: "0 0 0 1px rgba(99,102,241,0.6)",
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLButtonElement).style.filter = "brightness(1.1)";
@@ -147,7 +148,7 @@ export function SignInPage() {
 
           <Link
             href="/demo"
-            className="flex w-full items-center justify-center gap-1 rounded-xl border px-5 py-3 text-sm font-medium text-[#8b9ab0] transition-colors duration-150 hover:border-[#0F5A8F] hover:text-white"
+            className="flex w-full items-center justify-center gap-1 rounded-xl border px-5 py-3 text-sm font-medium text-[#8b9ab0] transition-colors duration-150 hover:border-[#6366F1] hover:text-white"
             style={{ borderColor: "rgba(255,255,255,0.09)" }}
           >
             Preview UI without signing in

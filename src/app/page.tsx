@@ -16,7 +16,7 @@ import {
 
 export default async function LandingPage() {
   const session = await auth();
-  if (session) redirect("/app");
+  if (session) redirect("/workspace");
 
   return (
     <div className="min-h-screen bg-[#0d1117] text-white">
@@ -24,7 +24,10 @@ export default async function LandingPage() {
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2.5">
           <Logo size={28} className="text-white" />
-          <span className="text-[15px] font-semibold tracking-tight">Teamsly</span>
+          <span className="text-[15px] font-bold tracking-tight">
+            <span style={{ color: "#818CF8" }}>Teams</span>
+            <span className="text-white">ly</span>
+          </span>
         </div>
         <div className="flex items-center gap-6">
           <a
@@ -46,7 +49,7 @@ export default async function LandingPage() {
             href="/login"
             className="rounded-lg px-4 py-2 text-[13px] font-semibold text-white transition-all hover:brightness-110"
             style={{
-              background: "linear-gradient(135deg, #0F5A8F 0%, #0B7BA8 100%)",
+              background: "linear-gradient(135deg, #6366F1 0%, #818CF8 100%)",
             }}
           >
             Sign in
@@ -61,16 +64,16 @@ export default async function LandingPage() {
           className="pointer-events-none absolute inset-0"
           style={{
             backgroundImage:
-              "radial-gradient(ellipse 70% 50% at 50% 20%, rgba(15,90,143,0.22) 0%, transparent 70%)",
+              "radial-gradient(ellipse 70% 50% at 50% 20%, rgba(99,102,241,0.22) 0%, transparent 70%)",
           }}
         />
         <div className="relative">
           <span
             className="mb-5 inline-block rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-widest"
             style={{
-              borderColor: "rgba(11,123,168,0.4)",
-              color: "#0B7BA8",
-              background: "rgba(11,123,168,0.08)",
+              borderColor: "rgba(129,140,248,0.4)",
+              color: "#818CF8",
+              background: "rgba(129,140,248,0.08)",
             }}
           >
             Open source · AGPL-3.0
@@ -78,7 +81,7 @@ export default async function LandingPage() {
           <h1 className="mx-auto mb-6 max-w-3xl text-5xl font-black leading-[1.1] tracking-tight lg:text-6xl">
             A faster, calmer way to
             <br />
-            <span style={{ color: "#0B7BA8" }}>use Microsoft Teams.</span>
+            <span style={{ color: "#818CF8" }}>use Microsoft Teams.</span>
           </h1>
           <p className="mx-auto mb-10 max-w-xl text-[17px] leading-relaxed text-[#8b9ab0]">
             Teamsly is an open-source Teams client built for focus — clean UI,
@@ -90,8 +93,8 @@ export default async function LandingPage() {
               href="/login"
               className="rounded-xl px-6 py-3 text-[15px] font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98]"
               style={{
-                background: "linear-gradient(135deg, #0F5A8F 0%, #0B7BA8 100%)",
-                boxShadow: "0 0 0 1px rgba(15,90,143,0.5), 0 8px 24px rgba(15,90,143,0.25)",
+                background: "linear-gradient(135deg, #6366F1 0%, #818CF8 100%)",
+                boxShadow: "0 0 0 1px rgba(99,102,241,0.5), 0 8px 24px rgba(99,102,241,0.25)",
               }}
             >
               Get started free →
@@ -100,7 +103,7 @@ export default async function LandingPage() {
               href="https://github.com/mayurrawte/teamsly"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-xl border px-6 py-3 text-[15px] font-semibold text-[#8b9ab0] transition-colors hover:border-[#0F5A8F] hover:text-white"
+              className="flex items-center gap-2 rounded-xl border px-6 py-3 text-[15px] font-semibold text-[#8b9ab0] transition-colors hover:border-[#6366F1] hover:text-white"
               style={{ borderColor: "rgba(255,255,255,0.1)" }}
             >
               <GitFork size={16} />
@@ -108,7 +111,7 @@ export default async function LandingPage() {
             </a>
             <Link
               href="/demo"
-              className="rounded-xl border px-6 py-3 text-[15px] font-semibold text-[#8b9ab0] transition-colors hover:border-[#0F5A8F] hover:text-white"
+              className="rounded-xl border px-6 py-3 text-[15px] font-semibold text-[#8b9ab0] transition-colors hover:border-[#6366F1] hover:text-white"
               style={{ borderColor: "rgba(255,255,255,0.1)" }}
             >
               Live demo
@@ -160,9 +163,9 @@ export default async function LandingPage() {
               {["Alice Chen", "Bob Kumar", "Sarah Lee"].map((name, i) => (
                 <div
                   key={name}
-                  className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-[12px] ${i === 0 ? "bg-[#0F5A8F22] text-white" : "text-[#4a5568]"}`}
+                  className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-[12px] ${i === 0 ? "bg-[#6366F122] text-white" : "text-[#4a5568]"}`}
                 >
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1e3a5f] text-[9px] text-[#0B7BA8]">
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1e3a5f] text-[9px] text-[#818CF8]">
                     {name[0]}
                   </div>
                   {name}
@@ -172,10 +175,10 @@ export default async function LandingPage() {
             <div className="flex flex-1 flex-col">
               <div
                 className="mx-3 mt-3 rounded-md border px-3 py-2 text-[11px]"
-                style={{ borderColor: "#3f4144", background: "rgba(15,90,143,0.1)" }}
+                style={{ borderColor: "#3f4144", background: "rgba(99,102,241,0.1)" }}
               >
                 <div className="mb-0.5 flex items-center gap-1.5 font-semibold text-white">
-                  <span style={{ color: "#1d9bd1" }}>✦</span> AI unread summary
+                  <span style={{ color: "#38BDF8" }}>✦</span> AI unread summary
                 </div>
                 <p className="text-[#ababad]">
                   • Alice shared the Q2 design specs — review requested by EOD
@@ -190,7 +193,7 @@ export default async function LandingPage() {
                   { name: "Alice Chen", msg: "Thanks! No rush 🙏", time: "10:35 AM" },
                 ].map((m) => (
                   <div key={m.time} className="flex items-start gap-2.5">
-                    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#1e3a5f] text-[11px] text-[#0B7BA8]">
+                    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#1e3a5f] text-[11px] text-[#818CF8]">
                       {m.name[0]}
                     </div>
                     <div>
@@ -288,15 +291,15 @@ export default async function LandingPage() {
               <div className="mb-3 flex items-center gap-2">
                 <div
                   className="flex h-8 w-8 items-center justify-center rounded-lg"
-                  style={{ background: "rgba(15,90,143,0.18)" }}
+                  style={{ background: "rgba(99,102,241,0.18)" }}
                 >
-                  <Icon size={16} style={{ color: "#0B7BA8" }} strokeWidth={1.8} />
+                  <Icon size={16} style={{ color: "#818CF8" }} strokeWidth={1.8} />
                 </div>
                 <span className="text-[13px] font-semibold text-white">{title}</span>
                 {badge && (
                   <span
                     className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-                    style={{ background: "rgba(11,123,168,0.15)", color: "#0B7BA8" }}
+                    style={{ background: "rgba(129,140,248,0.15)", color: "#818CF8" }}
                   >
                     {badge}
                   </span>
@@ -313,15 +316,15 @@ export default async function LandingPage() {
         <div
           className="rounded-2xl p-8 lg:p-12"
           style={{
-            background: "linear-gradient(135deg, rgba(15,90,143,0.15) 0%, rgba(11,123,168,0.08) 100%)",
-            border: "1px solid rgba(15,90,143,0.25)",
+            background: "linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(129,140,248,0.08) 100%)",
+            border: "1px solid rgba(99,102,241,0.25)",
           }}
         >
           <div className="lg:flex lg:items-center lg:gap-12">
             <div className="lg:flex-1">
               <span
                 className="mb-4 inline-block rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-widest"
-                style={{ background: "rgba(11,123,168,0.15)", color: "#0B7BA8" }}
+                style={{ background: "rgba(129,140,248,0.15)", color: "#818CF8" }}
               >
                 MCP Integration
               </span>
@@ -340,7 +343,7 @@ export default async function LandingPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-[13px] font-semibold transition-colors hover:text-white"
-                style={{ color: "#0B7BA8" }}
+                style={{ color: "#818CF8" }}
               >
                 View MCP server code →
               </a>
@@ -389,7 +392,7 @@ export default async function LandingPage() {
                 "MCP server included",
               ].map((f) => (
                 <li key={f} className="flex items-center gap-2">
-                  <span style={{ color: "#0B7BA8" }}>✓</span> {f}
+                  <span style={{ color: "#818CF8" }}>✓</span> {f}
                 </li>
               ))}
             </ul>
@@ -397,7 +400,7 @@ export default async function LandingPage() {
               href="https://github.com/mayurrawte/teamsly"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex w-full items-center justify-center rounded-xl border py-2.5 text-[13px] font-semibold text-[#8b9ab0] transition-colors hover:border-[#0F5A8F] hover:text-white"
+              className="flex w-full items-center justify-center rounded-xl border py-2.5 text-[13px] font-semibold text-[#8b9ab0] transition-colors hover:border-[#6366F1] hover:text-white"
               style={{ borderColor: "rgba(255,255,255,0.1)" }}
             >
               View on GitHub
@@ -406,17 +409,17 @@ export default async function LandingPage() {
           <div
             className="rounded-2xl p-6"
             style={{
-              background: "linear-gradient(135deg, rgba(15,90,143,0.2) 0%, rgba(11,123,168,0.1) 100%)",
-              border: "1px solid rgba(15,90,143,0.35)",
+              background: "linear-gradient(135deg, rgba(99,102,241,0.2) 0%, rgba(129,140,248,0.1) 100%)",
+              border: "1px solid rgba(99,102,241,0.35)",
             }}
           >
-            <div className="mb-1 text-[13px] font-semibold" style={{ color: "#0B7BA8" }}>
+            <div className="mb-1 text-[13px] font-semibold" style={{ color: "#818CF8" }}>
               Hosted
             </div>
             <div className="mb-1 flex items-end gap-1">
               <span className="text-4xl font-black text-white">Free</span>
             </div>
-            <p className="mb-4 text-[11px]" style={{ color: "#0B7BA8" }}>Free trial · no credit card needed</p>
+            <p className="mb-4 text-[11px]" style={{ color: "#818CF8" }}>Free trial · no credit card needed</p>
             <ul className="mb-6 flex flex-col gap-2 text-[13px] text-[#8b9ab0]">
               {[
                 "Sign in with Microsoft in one click",
@@ -426,14 +429,14 @@ export default async function LandingPage() {
                 "Supports the project",
               ].map((f) => (
                 <li key={f} className="flex items-center gap-2">
-                  <span style={{ color: "#0B7BA8" }}>✓</span> {f}
+                  <span style={{ color: "#818CF8" }}>✓</span> {f}
                 </li>
               ))}
             </ul>
             <Link
               href="/login"
               className="flex w-full items-center justify-center rounded-xl py-2.5 text-[13px] font-semibold text-white transition-all hover:brightness-110"
-              style={{ background: "linear-gradient(135deg, #0F5A8F 0%, #0B7BA8 100%)" }}
+              style={{ background: "linear-gradient(135deg, #6366F1 0%, #818CF8 100%)" }}
             >
               Get started free →
             </Link>
@@ -458,15 +461,15 @@ export default async function LandingPage() {
               href="/login"
               className="rounded-xl px-6 py-3 text-[15px] font-semibold text-white transition-all hover:brightness-110"
               style={{
-                background: "linear-gradient(135deg, #0F5A8F 0%, #0B7BA8 100%)",
-                boxShadow: "0 8px 24px rgba(15,90,143,0.25)",
+                background: "linear-gradient(135deg, #6366F1 0%, #818CF8 100%)",
+                boxShadow: "0 8px 24px rgba(99,102,241,0.25)",
               }}
             >
               Get started free →
             </Link>
             <Link
               href="/demo"
-              className="rounded-xl border px-6 py-3 text-[15px] font-semibold text-[#8b9ab0] transition-colors hover:border-[#0F5A8F] hover:text-white"
+              className="rounded-xl border px-6 py-3 text-[15px] font-semibold text-[#8b9ab0] transition-colors hover:border-[#6366F1] hover:text-white"
               style={{ borderColor: "rgba(255,255,255,0.1)" }}
             >
               Live demo

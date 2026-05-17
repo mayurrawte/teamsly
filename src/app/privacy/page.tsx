@@ -48,7 +48,7 @@ export default function PrivacyPage() {
                 "Your Microsoft 365 credentials or access tokens (beyond the session cookie described below).",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2">
-                  <span className="mt-1 text-[#0B7BA8]">•</span>
+                  <span className="mt-1 text-[#818CF8]">•</span>
                   {item}
                 </li>
               ))}
@@ -63,7 +63,7 @@ export default function PrivacyPage() {
                 href="https://authjs.dev"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#0B7BA8] hover:text-white transition-colors"
+                className="text-[#818CF8] hover:text-white transition-colors"
               >
                 Auth.js (NextAuth)
               </a>{" "}
@@ -77,7 +77,7 @@ export default function PrivacyPage() {
                 "Signing out clears the session cookie immediately.",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2">
-                  <span className="mt-1 text-[#0B7BA8]">•</span>
+                  <span className="mt-1 text-[#818CF8]">•</span>
                   {item}
                 </li>
               ))}
@@ -96,7 +96,7 @@ export default function PrivacyPage() {
                 href="https://privacy.microsoft.com/en-us/privacystatement"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#0B7BA8] hover:text-white transition-colors"
+                className="text-[#818CF8] hover:text-white transition-colors"
               >
                 microsoft.com/privacy
               </a>
@@ -116,14 +116,14 @@ export default function PrivacyPage() {
           <section>
             <h2 className="mb-3 text-[16px] font-bold text-white">5. AI Features</h2>
             <p>
-              If AI message summaries are enabled (via <code className="rounded bg-[#1a1d21] px-1 py-0.5 text-[#0B7BA8]">NEXT_PUBLIC_AI_ENABLED</code>),
+              If AI message summaries are enabled (via <code className="rounded bg-[#1a1d21] px-1 py-0.5 text-[#818CF8]">NEXT_PUBLIC_AI_ENABLED</code>),
               the last 30 messages from the active chat are sent to the Anthropic API to generate
               a summary. This data is subject to{" "}
               <a
                 href="https://www.anthropic.com/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#0B7BA8] hover:text-white transition-colors"
+                className="text-[#818CF8] hover:text-white transition-colors"
               >
                 Anthropic&apos;s privacy policy
               </a>
@@ -141,7 +141,7 @@ export default function PrivacyPage() {
                 href="https://policies.google.com/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#0B7BA8] hover:text-white transition-colors"
+                className="text-[#818CF8] hover:text-white transition-colors"
               >
                 Google&apos;s privacy policy
               </a>
@@ -181,7 +181,7 @@ export default function PrivacyPage() {
                 "We will respond within 30 days.",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2">
-                  <span className="mt-1 text-[#0B7BA8]">•</span>
+                  <span className="mt-1 text-[#818CF8]">•</span>
                   {item}
                 </li>
               ))}
@@ -196,7 +196,7 @@ export default function PrivacyPage() {
                 href="https://github.com/mayurrawte/teamsly"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#0B7BA8] hover:text-white transition-colors"
+                className="text-[#818CF8] hover:text-white transition-colors"
               >
                 GitHub repository
               </a>
@@ -210,7 +210,7 @@ export default function PrivacyPage() {
               Privacy questions or concerns? Email{" "}
               <a
                 href="mailto:mayur@shipthis.co"
-                className="text-[#0B7BA8] hover:text-white transition-colors"
+                className="text-[#818CF8] hover:text-white transition-colors"
               >
                 mayur@shipthis.co
               </a>{" "}
@@ -219,7 +219,7 @@ export default function PrivacyPage() {
                 href="https://github.com/mayurrawte/teamsly/issues"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#0B7BA8] hover:text-white transition-colors"
+                className="text-[#818CF8] hover:text-white transition-colors"
               >
                 GitHub
               </a>

@@ -218,7 +218,7 @@ export async function GET(request: NextRequest) {
       continue;
     }
     const { chat, messages } = settled.value;
-    const chatHref = `/app/dm/${chat.id}`;
+    const chatHref = `/workspace/dm/${chat.id}`;
 
     for (const msg of messages) {
       if (msg.deletedDateTime) continue;
@@ -310,7 +310,7 @@ export async function GET(request: NextRequest) {
         continue;
       }
       const { channel, messages } = settled.value;
-      const channelHref = `/app/t/${teamId}/${channel.id}`;
+      const channelHref = `/workspace/t/${teamId}/${channel.id}`;
 
       for (const msg of messages) {
         if (msg.deletedDateTime) continue;
@@ -398,7 +398,7 @@ export async function GET(request: NextRequest) {
         continue;
       }
       const { channel, parent, replies } = settled.value;
-      const channelHref = `/app/t/${teamId}/${channel.id}`;
+      const channelHref = `/workspace/t/${teamId}/${channel.id}`;
       const parentSummary = truncate(
         bodyText(parent) || "(no content)",
         80

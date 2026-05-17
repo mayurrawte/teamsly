@@ -23,7 +23,7 @@ button:disabled,
   /* Backgrounds */
   --sidebar-bg: #19171d;
   --sidebar-hover: #27242c;
-  --sidebar-active-bg: #0F5A8F;
+  --sidebar-active-bg: #6366F1;
   --content-bg: #1a1d21;
   --message-bg: #222529;
   --message-hover-bg: #27292d;
@@ -44,7 +44,7 @@ button:disabled,
   --text-primary: #d1d2d3;
   --text-secondary: #ababad;
   --text-muted: #6c6f75;
-  --text-link: #1d9bd1;
+  --text-link: #818CF8;
   --text-mention: #cd2553;
   --text-white: #ffffff;
 
@@ -53,9 +53,9 @@ button:disabled,
   --border-input: #565856;
 
   /* Accent — overridden at runtime by ThemeSync / localStorage */
-  --accent: #0F5A8F;
-  --accent-hover: #0A4571;
-  --accent-light: rgba(15, 90, 143, 0.15);
+  --accent: #6366F1;
+  --accent-hover: #4F46E5;
+  --accent-light: rgba(129, 140, 248, 0.15);
 
   /* Status */
   --status-online: #2bac76;
@@ -66,8 +66,8 @@ button:disabled,
   /* Reactions */
   --reaction-bg: #2c2d30;
   --reaction-border: #3f4144;
-  --reaction-active-bg: rgba(15, 90, 143, 0.2);
-  --reaction-active-border: #0F5A8F;
+  --reaction-active-bg: rgba(99, 102, 241, 0.2);
+  --reaction-active-border: #6366F1;
 }
 
 /* ─── Dark mode (explicit or inherited default) ─────────────────────────── */
@@ -114,7 +114,7 @@ button:disabled,
 
   --reaction-bg: #e8eaed;
   --reaction-border: #c7c9cc;
-  --reaction-active-bg: rgba(15, 90, 143, 0.12);
+  --reaction-active-bg: rgba(99, 102, 241, 0.12);
   --reaction-active-border: var(--accent);
 }
 

@@ -44,18 +44,18 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Home", href: "/app", icon: Home, matchPrefix: "/app/t" },
-  { label: "DMs", href: "/app/dm", icon: MessageSquare, matchPrefix: "/app/dm" },
-  { label: "Activity", href: "/app/activity", icon: Bell, matchPrefix: "/app/activity" },
-  { label: "Calendar", href: "/app/meetings", icon: Calendar, matchPrefix: "/app/meetings" },
-  { label: "Files", href: "/app/files", icon: FolderOpen, matchPrefix: "/app/files" },
-  { label: "Later", href: "/app/later", icon: Clock, matchPrefix: "/app/later" },
+  { label: "Home", href: "/workspace", icon: Home, matchPrefix: "/workspace/t" },
+  { label: "DMs", href: "/workspace/dm", icon: MessageSquare, matchPrefix: "/workspace/dm" },
+  { label: "Activity", href: "/workspace/activity", icon: Bell, matchPrefix: "/workspace/activity" },
+  { label: "Calendar", href: "/workspace/meetings", icon: Calendar, matchPrefix: "/workspace/meetings" },
+  { label: "Files", href: "/workspace/files", icon: FolderOpen, matchPrefix: "/workspace/files" },
+  { label: "Later", href: "/workspace/later", icon: Clock, matchPrefix: "/workspace/later" },
 ];
 
 function isActive(pathname: string, item: NavItem): boolean {
   if (item.label === "Home") {
     // Active on /app exactly or /app/t/... (channel routes)
-    return pathname === "/app" || pathname.startsWith("/app/t");
+    return pathname === "/workspace" || pathname.startsWith("/workspace/t");
   }
   if (item.matchPrefix) {
     return pathname.startsWith(item.matchPrefix);

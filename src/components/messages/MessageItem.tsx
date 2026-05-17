@@ -28,7 +28,7 @@ interface Props {
    */
   contextId?: string;
   /**
-   * Human-readable label for where the message lives, shown in `/app/later`.
+   * Human-readable label for where the message lives, shown in `/workspace/later`.
    * E.g. `#general` for a channel or the chat partner's display name for a DM.
    */
   contextLabel?: string;

@@ -3,7 +3,7 @@
  *
  * Why this exists: "Saved Messages" was removed in New Teams and users
  * miss it. We surface a Bookmark button on the message hover toolbar and
- * render the saved entries under `/app/later`. The data lives entirely
+ * render the saved entries under `/workspace/later`. The data lives entirely
  * client-side — Graph doesn't expose a savedMessages API and we don't
  * want to spin up our own backend just for this.
  *

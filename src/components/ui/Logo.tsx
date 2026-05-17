@@ -1,25 +1,18 @@
 import React from "react";
 
 export interface LogoProps {
-  /** Rendered width and height in px. Default: 32 */
   size?: number;
   className?: string;
-  /** Accessible label. Default: "Teamsly" */
   title?: string;
 }
 
-/**
- * Teamsly logomark — git-branch graph with four nodes.
- * Three branch nodes (left, right, bottom) connect to a central hub node,
- * evoking open-source collaboration and the Teams graph topology.
- * Colors use Teamsly's blue palette + Microsoft Teams purple (#5B5FC7).
- */
 export function Logo({ size = 32, className, title = "Teamsly" }: LogoProps) {
-  const id = React.useId();
-  const titleId = `logo-title-${id}`;
-  const gLeft = `logo-gl-${id}`;
-  const gRight = `logo-gr-${id}`;
-  const gBottom = `logo-gb-${id}`;
+  const raw = React.useId();
+  const uid = raw.replace(/:/g, "");
+  const titleId = `lt-${uid}`;
+  const gL = `gl-${uid}`;
+  const gR = `gr-${uid}`;
+  const gB = `gb-${uid}`;
 
   return (
     <svg
@@ -33,32 +26,35 @@ export function Logo({ size = 32, className, title = "Teamsly" }: LogoProps) {
     >
       <title id={titleId}>{title}</title>
       <defs>
-        <linearGradient id={gLeft} x1="0" y1="0" x2="1" y2="0">
+        {/* gradientUnits="userSpaceOnUse" so gradients work on zero-height lines */}
+        <linearGradient id={gL} x1="2.5" y1="7" x2="12" y2="7" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#38BDF8" />
           <stop offset="100%" stopColor="#818CF8" />
         </linearGradient>
-        <linearGradient id={gRight} x1="0" y1="0" x2="1" y2="0">
+        <linearGradient id={gR} x1="12" y1="7" x2="21.5" y2="7" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#818CF8" />
           <stop offset="100%" stopColor="#22D3EE" />
         </linearGradient>
-        <linearGradient id={gBottom} x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={gB} x1="12" y1="7" x2="12" y2="21.5" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#818CF8" />
-          <stop offset="100%" stopColor="#38BDF8" />
+          <stop offset="100%" stopColor="#60A5FA" />
         </linearGradient>
       </defs>
 
-      {/* Branch lines */}
-      <line x1="4.8" y1="5.7" x2="12" y2="5.7" stroke={`url(#${gLeft})`} strokeWidth="2.2" strokeLinecap="round" />
-      <line x1="12" y1="5.7" x2="19.2" y2="5.7" stroke={`url(#${gRight})`} strokeWidth="2.2" strokeLinecap="round" />
-      <line x1="12" y1="18.3" x2="12" y2="5.7" stroke={`url(#${gBottom})`} strokeWidth="2.2" strokeLinecap="round" />
+      {/* Horizontal bar: left node → center → right node */}
+      <line x1="2.5" y1="7" x2="12" y2="7" stroke={`url(#${gL})`} strokeWidth="3" strokeLinecap="round" />
+      <line x1="12" y1="7" x2="21.5" y2="7" stroke={`url(#${gR})`} strokeWidth="3" strokeLinecap="round" />
+
+      {/* Vertical bar: center → bottom node */}
+      <line x1="12" y1="7" x2="12" y2="21.5" stroke={`url(#${gB})`} strokeWidth="3" strokeLinecap="round" />
 
       {/* Outer nodes */}
-      <circle cx="4.8" cy="5.7" r="2" fill="#38BDF8" />
-      <circle cx="19.2" cy="5.7" r="2" fill="#22D3EE" />
-      <circle cx="12" cy="18.3" r="2" fill="#38BDF8" />
+      <circle cx="2.5" cy="7" r="2.5" fill="#38BDF8" />
+      <circle cx="21.5" cy="7" r="2.5" fill="#22D3EE" />
+      <circle cx="12" cy="21.5" r="2.5" fill="#60A5FA" />
 
-      {/* Central hub node */}
-      <circle cx="12" cy="5.7" r="2.6" fill="#818CF8" />
+      {/* Central hub — larger, purple */}
+      <circle cx="12" cy="7" r="3.5" fill="#818CF8" />
     </svg>
   );
 }
@@ -89,7 +85,8 @@ export function LogoWithWordmark({
           lineHeight: 1,
         }}
       >
-        {title}
+        <span style={{ color: "#818CF8" }}>Teams</span>
+        <span style={{ color: "white" }}>ly</span>
       </span>
     </span>
   );

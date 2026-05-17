@@ -53,7 +53,7 @@ export default function TermsPage() {
                 href="https://www.gnu.org/licenses/agpl-3.0.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#0B7BA8] hover:text-white transition-colors"
+                className="text-[#818CF8] hover:text-white transition-colors"
               >
                 GNU Affero General Public License v3.0 (AGPL-3.0)
               </a>
@@ -77,7 +77,7 @@ export default function TermsPage() {
                 "Understand that the service may be modified, suspended, or discontinued with reasonable notice.",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2">
-                  <span className="mt-1 text-[#0B7BA8]">•</span>
+                  <span className="mt-1 text-[#818CF8]">•</span>
                   {item}
                 </li>
               ))}
@@ -93,7 +93,7 @@ export default function TermsPage() {
                 href="https://www.microsoft.com/en-us/servicesagreement"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#0B7BA8] hover:text-white transition-colors"
+                className="text-[#818CF8] hover:text-white transition-colors"
               >
                 Microsoft&apos;s Services Agreement
               </a>{" "}
@@ -102,7 +102,7 @@ export default function TermsPage() {
                 href="https://learn.microsoft.com/en-us/graph/overview"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#0B7BA8] hover:text-white transition-colors"
+                className="text-[#818CF8] hover:text-white transition-colors"
               >
                 Microsoft Graph API terms
               </a>
@@ -121,7 +121,7 @@ export default function TermsPage() {
                 "Attempt to gain unauthorised access to any system or network.",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2">
-                  <span className="mt-1 text-[#0B7BA8]">•</span>
+                  <span className="mt-1 text-[#818CF8]">•</span>
                   {item}
                 </li>
               ))}
@@ -163,14 +163,14 @@ export default function TermsPage() {
                 href="https://github.com/mayurrawte/teamsly/issues"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#0B7BA8] hover:text-white transition-colors"
+                className="text-[#818CF8] hover:text-white transition-colors"
               >
                 GitHub
               </a>{" "}
               or email{" "}
               <a
                 href="mailto:mayur@shipthis.co"
-                className="text-[#0B7BA8] hover:text-white transition-colors"
+                className="text-[#818CF8] hover:text-white transition-colors"
               >
                 mayur@shipthis.co
               </a>

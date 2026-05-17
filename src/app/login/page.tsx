@@ -4,6 +4,6 @@ import { SignInPage } from "@/components/layout/SignInPage";
 
 export default async function LoginPage() {
   const session = await auth();
-  if (session) redirect("/app");
+  if (session) redirect("/workspace");
   return <SignInPage />;
 }

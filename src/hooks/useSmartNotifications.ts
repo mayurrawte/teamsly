@@ -143,9 +143,9 @@ function isViewingContext(contextId?: string, contextKind?: "chat" | "channel"):
   if (!contextId || !contextKind) return false;
   if (typeof window === "undefined") return false;
   const path = window.location.pathname;
-  if (contextKind === "chat") return path === `/app/dm/${contextId}`;
+  if (contextKind === "chat") return path === `/workspace/dm/${contextId}`;
   // channel contextId is "{teamId}/{channelId}"
-  return path === `/app/t/${contextId}`;
+  return path === `/workspace/t/${contextId}`;
 }
 
 /**

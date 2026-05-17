@@ -160,7 +160,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         if (!activeTeamId) return;
         markRead(channel.id);
         setActiveChannel(channel.id);
-        router.push(`/app/t/${activeTeamId}/${channel.id}`);
+        router.push(`/workspace/t/${activeTeamId}/${channel.id}`);
       },
     }));
     const chatItems = chats.map((chat) => ({
@@ -171,7 +171,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       onSelect: () => {
         markRead(chat.id);
         setActiveChat(chat.id);
-        router.push(`/app/dm/${chat.id}`);
+        router.push(`/workspace/dm/${chat.id}`);
       },
     }));
     return [...channelItems, ...chatItems];
@@ -184,13 +184,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (!activeTeamId) return;
     markRead(channelId);
     setActiveChannel(channelId);
-    router.push(`/app/t/${activeTeamId}/${channelId}`);
+    router.push(`/workspace/t/${activeTeamId}/${channelId}`);
   }
 
   function handleSelectChat(chatId: string) {
     markRead(chatId);
     setActiveChat(chatId);
-    router.push(`/app/dm/${chatId}`);
+    router.push(`/workspace/dm/${chatId}`);
   }
 
   // Compute SearchModal context — group name + origin used when a message
@@ -215,11 +215,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (origin.kind === "channel") {
       markRead(origin.channelId);
       setActiveChannel(origin.channelId);
-      router.push(`/app/t/${origin.teamId}/${origin.channelId}?anchor=${encodeURIComponent(message.id)}`);
+      router.push(`/workspace/t/${origin.teamId}/${origin.channelId}?anchor=${encodeURIComponent(message.id)}`);
     } else {
       markRead(origin.chatId);
       setActiveChat(origin.chatId);
-      router.push(`/app/dm/${origin.chatId}?anchor=${encodeURIComponent(message.id)}`);
+      router.push(`/workspace/dm/${origin.chatId}?anchor=${encodeURIComponent(message.id)}`);
     }
   }
 
