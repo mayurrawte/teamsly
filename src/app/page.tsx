@@ -371,7 +371,7 @@ export default async function LandingPage() {
       <section className="mx-auto max-w-6xl px-6 pb-24">
         <h2 className="mb-3 text-center text-3xl font-black tracking-tight">Simple pricing</h2>
         <p className="mb-12 text-center text-[15px] text-[#8b9ab0]">
-          Free forever for self-hosters. Hosted version coming soon.
+          Free forever for self-hosters. Hosted version free during the launch trial.
         </p>
         <div className="mx-auto grid max-w-2xl gap-4 sm:grid-cols-2">
           <div
@@ -414,10 +414,9 @@ export default async function LandingPage() {
               Hosted
             </div>
             <div className="mb-1 flex items-end gap-1">
-              <span className="text-4xl font-black text-white">$2</span>
-              <span className="mb-1.5 text-[13px] text-[#8b9ab0]">/month</span>
+              <span className="text-4xl font-black text-white">Free</span>
             </div>
-            <p className="mb-4 text-[11px] text-[#4a5568]">Coming soon</p>
+            <p className="mb-4 text-[11px]" style={{ color: "#0B7BA8" }}>Free trial · no credit card needed</p>
             <ul className="mb-6 flex flex-col gap-2 text-[13px] text-[#8b9ab0]">
               {[
                 "Sign in with Microsoft in one click",
@@ -431,13 +430,13 @@ export default async function LandingPage() {
                 </li>
               ))}
             </ul>
-            <button
-              disabled
-              className="flex w-full cursor-not-allowed items-center justify-center rounded-xl py-2.5 text-[13px] font-semibold text-white opacity-60"
+            <Link
+              href="/login"
+              className="flex w-full items-center justify-center rounded-xl py-2.5 text-[13px] font-semibold text-white transition-all hover:brightness-110"
               style={{ background: "linear-gradient(135deg, #0F5A8F 0%, #0B7BA8 100%)" }}
             >
-              Notify me →
-            </button>
+              Get started free →
+            </Link>
           </div>
         </div>
       </section>
