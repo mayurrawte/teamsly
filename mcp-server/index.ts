@@ -5,34 +5,48 @@
  * Exposes Microsoft Teams messaging as MCP tools so any AI assistant
  * (Claude Desktop, Cursor, etc.) can read and send Teams messages.
  *
- * Auth: piggybacks on the Teamsly web session — no separate OAuth needed.
- * The server calls Teamsly's own API routes using a shared secret
- * (TEAMSLY_MCP_SECRET) that must match the value in Teamsly's .env.local.
+ * Auth:
+ *   1. Sign in at teamsly.app (or your self-hosted URL).
+ *   2. Visit <your-url>/api/mcp/token — copy the token (valid ~1 hour).
+ *   3. Set TEAMSLY_ACCESS_TOKEN to that value in your MCP client config.
+ *   4. Set TEAMSLY_MCP_SECRET to the shared secret configured on the server.
  *
- * Usage (stdio, add to Claude Desktop config):
+ * Claude Desktop — ~/Library/Application Support/Claude/claude_desktop_config.json:
  * {
  *   "mcpServers": {
  *     "teamsly": {
  *       "command": "npx",
  *       "args": ["tsx", "/path/to/teamsly/mcp-server/index.ts"],
  *       "env": {
- *         "TEAMSLY_URL": "http://localhost:3000",
- *         "TEAMSLY_MCP_SECRET": "your-secret-here"
+ *         "TEAMSLY_BASE_URL": "https://teamsly.app",
+ *         "TEAMSLY_MCP_SECRET": "your-server-secret",
+ *         "TEAMSLY_ACCESS_TOKEN": "token-from-api-mcp-token"
  *       }
  *     }
  *   }
  * }
+ *
+ * Cursor / Windsurf: add same env block under Settings → MCP Servers.
+ * Claude Code CLI: claude mcp add teamsly npx tsx /path/to/mcp-server/index.ts
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
-const BASE_URL = process.env.TEAMSLY_URL ?? "http://localhost:3000";
+const BASE_URL = process.env.TEAMSLY_BASE_URL ?? process.env.TEAMSLY_URL ?? "https://teamsly.app";
 const SECRET = process.env.TEAMSLY_MCP_SECRET ?? "";
+const ACCESS_TOKEN = process.env.TEAMSLY_ACCESS_TOKEN ?? "";
 
 if (!SECRET) {
   process.stderr.write("TEAMSLY_MCP_SECRET is not set\n");
+  process.exit(1);
+}
+if (!ACCESS_TOKEN) {
+  process.stderr.write(
+    "TEAMSLY_ACCESS_TOKEN is not set.\n" +
+    "Visit " + BASE_URL + "/api/mcp/token (while signed in) to get your token.\n"
+  );
   process.exit(1);
 }
 
@@ -41,6 +55,7 @@ async function api(path: string, options: RequestInit = {}) {
     ...options,
     headers: {
       "x-mcp-secret": SECRET,
+      "Authorization": `Bearer ${ACCESS_TOKEN}`,
       "Content-Type": "application/json",
       ...(options.headers ?? {}),
     },
