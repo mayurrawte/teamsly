@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSession, signIn } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { Search, HelpCircle, RotateCw } from "lucide-react";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { LeftRail } from "@/components/layout/LeftRail";
@@ -50,6 +50,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const sessionError =
     (session.data as { error?: string } | null | undefined)?.error;
   const needsReauth = sessionError === "RefreshAccessTokenError";
+
+  // Session expired mid-use: sign out so the user lands on a clean login page
+  // rather than seeing cascading API errors.
+  useEffect(() => {
+    if (session.status === "unauthenticated") {
+      signOut({ callbackUrl: "/login" });
+    }
+  }, [session.status]);
   const { teams, activeTeamId, activeChannelId, activeChatId, channels, chats, currentUserId, setTeams, setActiveTeam, setChannels, setActiveChannel, setActiveChat, markRead, setCurrentUser, hydrateMessageCache } = useWorkspaceStore();
   const unreadCounts = useWorkspaceStore((s) => s.unreadCounts);
   // Pull the active context's messages so SearchModal can find matches in the
