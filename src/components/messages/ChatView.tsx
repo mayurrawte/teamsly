@@ -108,7 +108,7 @@ export function ChatView({ chatId }: { chatId: string }) {
   useEffect(() => {
     if (storeMembers.length > 0) return;
     let cancelled = false;
-    fetch(`/api/chats/${chatId}/members`)
+    fetch(`/api/chats/${encodeURIComponent(chatId)}/members`)
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then((data: MSChatMember[]) => { if (!cancelled) setLocalMembers(data); })
       .catch(() => {});

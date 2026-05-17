@@ -156,7 +156,7 @@ export function Sidebar() {
     );
     for (const chat of toFetch) {
       membersFetchedRef.current.add(chat.id);
-      fetch(`/api/chats/${chat.id}/members`)
+      fetch(`/api/chats/${encodeURIComponent(chat.id)}/members`)
         .then((r) => (r.ok ? r.json() : Promise.reject()))
         .then((members: MSChatMember[]) => {
           if (members.length > 0) patchChatMembers(chat.id, members);

@@ -123,8 +123,17 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       setChannels: (teamId, channels) =>
         set((s) => ({ channels: { ...s.channels, [teamId]: channels } })),
       setActiveChannel: (id) => set({ activeChannelId: id, activeChatId: null }),
-      setChats: (chats, nextLink = null) =>
-        set({ chats, chatsNextLink: nextLink }),
+      setChats: (incoming, nextLink = null) =>
+        set((s) => {
+          const existingById = new Map(s.chats.map((c) => [c.id, c]));
+          // Graph list endpoint doesn't return members — preserve any already
+          // fetched via the per-chat /members lazy load so they survive polling.
+          const merged = incoming.map((c) => {
+            const existing = existingById.get(c.id);
+            return existing?.members?.length ? { ...c, members: existing.members } : c;
+          });
+          return { chats: merged, chatsNextLink: nextLink };
+        }),
       appendChats: (incoming, nextLink) =>
         set((s) => {
           const existingIds = new Set(s.chats.map((c) => c.id));

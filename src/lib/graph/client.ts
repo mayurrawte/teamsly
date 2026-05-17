@@ -27,9 +27,9 @@ export async function getChannelMembers(
   channelId: string
 ) {
   const client = getGraphClient(accessToken);
+  // No $select — userId is on the derived type; selecting it causes 400 on some tenants.
   const res = await client
     .api(`/teams/${teamId}/channels/${channelId}/members`)
-    .select("id,displayName,email,userId,roles")
     .get();
   return res.value as MSChannelMember[];
 }
@@ -112,26 +112,31 @@ export async function getChats(
 
 export async function getChat(accessToken: string, chatId: string): Promise<MSChat> {
   const client = getGraphClient(accessToken);
-  // Chat IDs containing '@' (e.g. @unq.gbl.spaces) must be percent-encoded
-  // in the path or Graph returns 400/404.
+  // Chat IDs containing '@' (e.g. @unq.gbl.spaces) must be percent-encoded.
+  // $expand=members with $select fails on some tenants (Graph rejects userId as
+  // a property on the base conversationMember type), so we skip the expand here
+  // and let the sidebar fetch members separately via /members.
   return client
     .api(`/me/chats/${encodeURIComponent(chatId)}`)
     .select("id,chatType,topic,lastUpdatedDateTime,lastMessagePreview")
-    .expand("members($select=id,displayName,userId,email)")
     .get() as Promise<MSChat>;
 }
 
 export async function getChatMessages(accessToken: string, chatId: string) {
   const client = getGraphClient(accessToken);
-  const res = await client.api(`/me/chats/${chatId}/messages`).top(50).get();
+  const res = await client
+    .api(`/me/chats/${encodeURIComponent(chatId)}/messages`)
+    .top(50)
+    .get();
   return res.value as MSMessage[];
 }
 
 export async function getChatMembers(accessToken: string, chatId: string) {
   const client = getGraphClient(accessToken);
+  // Don't use $select — userId/email are on the derived aadUserConversationMember
+  // type, not the base conversationMember, so selecting them causes a 400.
   const res = await client
-    .api(`/me/chats/${chatId}/members`)
-    .select("id,displayName,userId,email")
+    .api(`/me/chats/${encodeURIComponent(chatId)}/members`)
     .get();
   return res.value as MSChatMember[];
 }
