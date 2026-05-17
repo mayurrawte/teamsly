@@ -28,12 +28,15 @@ export function GifPicker({ children, onSelect }: Props) {
   const debouncedQuery = useDebounce(query, 400);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const [keyMissing, setKeyMissing] = useState(false);
+
   const fetchGifs = useCallback(async (q: string) => {
     setLoading(true);
     try {
       const res = await fetch(
         `/api/gifs/search?q=${encodeURIComponent(q || "trending")}&limit=20`
       );
+      if (res.status === 503) { setKeyMissing(true); return; }
       if (!res.ok) return;
       const data = await res.json();
       setGifs(data.results ?? []);
@@ -85,7 +88,12 @@ export function GifPicker({ children, onSelect }: Props) {
 
           {/* Grid */}
           <div className="h-[320px] overflow-y-auto p-2">
-            {loading ? (
+            {keyMissing ? (
+              <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
+                <p className="text-[13px] text-[#ababad]">GIFs need a Tenor API key.</p>
+                <p className="text-[11px] text-[#6c6f75]">Add <code className="rounded bg-[#2c2d30] px-1 py-0.5">TENOR_API_KEY</code> to <code className="rounded bg-[#2c2d30] px-1 py-0.5">.env.local</code></p>
+              </div>
+            ) : loading ? (
               <div className="flex h-full items-center justify-center">
                 <Loader2 className="h-5 w-5 animate-spin text-[#ababad]" />
               </div>

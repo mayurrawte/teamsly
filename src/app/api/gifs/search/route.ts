@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const TENOR_KEY = process.env.TENOR_API_KEY ?? "AIzaSyC9OFiRl9rVMhq7R40MYDdFdSnlUKrpiGQ";
+const TENOR_KEY = process.env.TENOR_API_KEY;
 
 export async function GET(req: NextRequest) {
+  if (!TENOR_KEY) {
+    return NextResponse.json({ error: "TENOR_API_KEY not configured" }, { status: 503 });
+  }
+
   const q = req.nextUrl.searchParams.get("q") ?? "trending";
   const limit = Math.min(Number(req.nextUrl.searchParams.get("limit") ?? "20"), 50);
   const pos = req.nextUrl.searchParams.get("pos") ?? "";
