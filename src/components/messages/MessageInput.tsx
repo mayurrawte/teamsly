@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, KeyboardEvent, useEffect, useCallback, ClipboardEvent, DragEvent } from "react";
+import dynamic from "next/dynamic";
 import TextareaAutosize from "react-textarea-autosize";
 import {
   Send,
@@ -23,6 +24,13 @@ import { markdownToHtml } from "@/lib/utils/markdown-to-html";
 import { Avatar } from "@/components/ui/Avatar";
 import { useToastStore } from "@/store/toasts";
 import { useDraftsStore } from "@/store/drafts";
+import { GifPicker } from "./GifPicker";
+
+// emoji-mart ships a heavy data bundle — load lazily to keep the initial JS small
+const EmojiMartPicker = dynamic(() => import("@emoji-mart/react"), {
+  ssr: false,
+  loading: () => null,
+});
 
 // ---------------------------------------------------------------------------
 // Types
@@ -166,6 +174,9 @@ export function MessageInput({
   const [value, setValue] = useState("");
   const [sending, setSending] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const emojiAnchorRef = useRef<HTMLButtonElement>(null);
+  const emojiContainerRef = useRef<HTMLDivElement>(null);
   // Mentions the user has accepted via the autocomplete (or `@everyone`).
   // Reset on send. Kept parallel to the plain `@Display Name` text in the
   // textarea so the parent can build a structured Graph `mentions[]`.
@@ -309,6 +320,54 @@ export function MessageInput({
   );
 
   const isBusy = sending || Boolean(uploading);
+
+  // Close emoji picker on outside click
+  useEffect(() => {
+    if (!emojiOpen) return;
+    function handler(e: MouseEvent) {
+      if (
+        emojiContainerRef.current &&
+        !emojiContainerRef.current.contains(e.target as Node) &&
+        emojiAnchorRef.current &&
+        !emojiAnchorRef.current.contains(e.target as Node)
+      ) {
+        setEmojiOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [emojiOpen]);
+
+  function insertEmoji(emoji: { native: string }) {
+    const ta = textareaRef.current;
+    const inserted = emoji.native;
+    if (!ta) {
+      setValue((v) => v + inserted);
+      return;
+    }
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const next = value.slice(0, start) + inserted + value.slice(end);
+    setValue(next);
+    const newCursor = start + inserted.length;
+    requestAnimationFrame(() => {
+      ta.focus();
+      ta.setSelectionRange(newCursor, newCursor);
+    });
+    setEmojiOpen(false);
+  }
+
+  async function sendGif(url: string, title: string) {
+    if (isBusy) return;
+    setSending(true);
+    try {
+      await onSend(`<img src="${url}" alt="${title.replace(/"/g, "&quot;")}" style="max-width:300px;border-radius:4px" />`);
+    } catch {
+      // ignore — parent handles errors
+    } finally {
+      setSending(false);
+    }
+  }
 
   async function submit() {
     triggerRipple();
@@ -863,13 +922,49 @@ export function MessageInput({
               className="flex-1 resize-none bg-transparent text-[14px] text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none disabled:opacity-50"
             />
             <div className="flex flex-shrink-0 items-center gap-1">
-              <button
-                type="button"
-                aria-label="Insert emoji"
-                className="rounded p-1 text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-white focus-ring"
-              >
-                <Smile className="h-4 w-4" />
-              </button>
+              {/* Emoji picker */}
+              <div className="relative">
+                <button
+                  ref={emojiAnchorRef}
+                  type="button"
+                  aria-label="Insert emoji"
+                  onClick={() => setEmojiOpen((o) => !o)}
+                  className={cn(
+                    "rounded p-1 transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-white focus-ring",
+                    emojiOpen ? "bg-[var(--surface-hover)] text-white" : "text-[var(--text-secondary)]"
+                  )}
+                >
+                  <Smile className="h-4 w-4" />
+                </button>
+                {emojiOpen && (
+                  <div
+                    ref={emojiContainerRef}
+                    className="absolute bottom-full right-0 z-[120] mb-2"
+                  >
+                    <EmojiMartPicker
+                      data={async () => (await import("@emoji-mart/data")).default}
+                      onEmojiSelect={insertEmoji}
+                      theme="dark"
+                      previewPosition="none"
+                      skinTonePosition="none"
+                      perLine={9}
+                      maxFrequentRows={2}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* GIF picker */}
+              <GifPicker onSelect={sendGif}>
+                <button
+                  type="button"
+                  aria-label="Send a GIF"
+                  disabled={isBusy}
+                  className="rounded px-1.5 py-0.5 text-[10px] font-bold text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-white focus-ring disabled:opacity-40"
+                >
+                  GIF
+                </button>
+              </GifPicker>
               <button
                 ref={sendButtonRef}
                 type="button"
