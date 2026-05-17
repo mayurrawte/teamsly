@@ -64,14 +64,19 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
   "mcpServers": {
     "teamsly": {
       "command": "npx",
-      "args": ["-y", "teamsly-mcp"],
-      "env": {
-        "TEAMSLY_BASE_URL": "https://teamsly.app",
-        "TEAMSLY_MCP_SECRET": "your-secret-here"
-      }
+      "args": ["tsx", "/path/to/teamsly/mcp-server/index.ts"]
     }
   }
 }
+```
+
+On first run, the server prints a URL and short code to the Claude Desktop logs. Open the URL, enter the code, sign in with Microsoft. Tokens are saved to `~/.config/teamsly-mcp/tokens.json` and auto-refresh — no repeat setup needed.
+
+**Cursor / Windsurf:** same config under Settings → MCP Servers.
+
+**Claude Code CLI:**
+```bash
+claude mcp add teamsly -- npx tsx /path/to/teamsly/mcp-server/index.ts
 ```
 
 ### Available tools
