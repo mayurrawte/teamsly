@@ -34,16 +34,16 @@ export function Logo({ size = 32, className, title = "Teamsly" }: LogoProps) {
       <title id={titleId}>{title}</title>
       <defs>
         <linearGradient id={gLeft} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#0F5A8F" />
-          <stop offset="100%" stopColor="#5B5FC7" />
+          <stop offset="0%" stopColor="#38BDF8" />
+          <stop offset="100%" stopColor="#818CF8" />
         </linearGradient>
         <linearGradient id={gRight} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#5B5FC7" />
-          <stop offset="100%" stopColor="#0B7BA8" />
+          <stop offset="0%" stopColor="#818CF8" />
+          <stop offset="100%" stopColor="#22D3EE" />
         </linearGradient>
         <linearGradient id={gBottom} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#5B5FC7" />
-          <stop offset="100%" stopColor="#1d9bd1" />
+          <stop offset="0%" stopColor="#818CF8" />
+          <stop offset="100%" stopColor="#38BDF8" />
         </linearGradient>
       </defs>
 
@@ -53,12 +53,12 @@ export function Logo({ size = 32, className, title = "Teamsly" }: LogoProps) {
       <line x1="12" y1="18.3" x2="12" y2="5.7" stroke={`url(#${gBottom})`} strokeWidth="2.2" strokeLinecap="round" />
 
       {/* Outer nodes */}
-      <circle cx="4.8" cy="5.7" r="2" fill="#0F5A8F" />
-      <circle cx="19.2" cy="5.7" r="2" fill="#0B7BA8" />
-      <circle cx="12" cy="18.3" r="2" fill="#1d9bd1" />
+      <circle cx="4.8" cy="5.7" r="2" fill="#38BDF8" />
+      <circle cx="19.2" cy="5.7" r="2" fill="#22D3EE" />
+      <circle cx="12" cy="18.3" r="2" fill="#38BDF8" />
 
-      {/* Central hub node — Teams purple */}
-      <circle cx="12" cy="5.7" r="2.6" fill="#5B5FC7" />
+      {/* Central hub node */}
+      <circle cx="12" cy="5.7" r="2.6" fill="#818CF8" />
     </svg>
   );
 }

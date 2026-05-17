@@ -22,17 +22,17 @@ export default function Icon() {
           height="30"
         >
           {/* Branch lines */}
-          <line x1="4.8" y1="5.7" x2="12" y2="5.7" stroke="#0F5A8F" strokeWidth="2.2" strokeLinecap="round" />
-          <line x1="12" y1="5.7" x2="19.2" y2="5.7" stroke="#0B7BA8" strokeWidth="2.2" strokeLinecap="round" />
-          <line x1="12" y1="18.3" x2="12" y2="5.7" stroke="#1d9bd1" strokeWidth="2.2" strokeLinecap="round" />
+          <line x1="4.8" y1="5.7" x2="12" y2="5.7" stroke="#38BDF8" strokeWidth="2.2" strokeLinecap="round" />
+          <line x1="12" y1="5.7" x2="19.2" y2="5.7" stroke="#22D3EE" strokeWidth="2.2" strokeLinecap="round" />
+          <line x1="12" y1="18.3" x2="12" y2="5.7" stroke="#38BDF8" strokeWidth="2.2" strokeLinecap="round" />
 
           {/* Outer nodes */}
-          <circle cx="4.8" cy="5.7" r="2" fill="#0F5A8F" />
-          <circle cx="19.2" cy="5.7" r="2" fill="#0B7BA8" />
-          <circle cx="12" cy="18.3" r="2" fill="#1d9bd1" />
+          <circle cx="4.8" cy="5.7" r="2" fill="#38BDF8" />
+          <circle cx="19.2" cy="5.7" r="2" fill="#22D3EE" />
+          <circle cx="12" cy="18.3" r="2" fill="#38BDF8" />
 
-          {/* Central hub — Teams purple */}
-          <circle cx="12" cy="5.7" r="2.6" fill="#5B5FC7" />
+          {/* Central hub */}
+          <circle cx="12" cy="5.7" r="2.6" fill="#818CF8" />
         </svg>
       </div>
     ),
