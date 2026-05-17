@@ -500,16 +500,14 @@ export default async function LandingPage() {
             >
               Issues
             </a>
-            <a
-              href="https://github.com/mayurrawte/teamsly/blob/main/CONTRIBUTING.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="transition-colors hover:text-white"
-            >
-              Contributing
-            </a>
             <Link href="/demo" className="transition-colors hover:text-white">
               Demo
+            </Link>
+            <Link href="/privacy" className="transition-colors hover:text-white">
+              Privacy
+            </Link>
+            <Link href="/terms" className="transition-colors hover:text-white">
+              Terms
             </Link>
           </div>
         </div>
