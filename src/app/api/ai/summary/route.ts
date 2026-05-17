@@ -2,9 +2,6 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  if (process.env.NEXT_PUBLIC_PRO !== "true") {
-    return NextResponse.json({ error: "Pro features are disabled" }, { status: 404 });
-  }
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: "ANTHROPIC_API_KEY is not configured" }, { status: 503 });
   }

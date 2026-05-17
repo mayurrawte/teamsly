@@ -9,7 +9,7 @@ interface AiSummaryBannerProps {
 }
 
 export function AiSummaryBanner({ messages }: AiSummaryBannerProps) {
-  const enabled = process.env.NEXT_PUBLIC_PRO === "true";
+  const enabled = process.env.NEXT_PUBLIC_AI_ENABLED === "true";
   const [summary, setSummary] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
