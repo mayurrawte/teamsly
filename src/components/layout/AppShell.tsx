@@ -18,6 +18,7 @@ import { ToastViewport } from "@/components/ui/ToastViewport";
 import { useToastStore } from "@/store/toasts";
 import { sendUnreadCount } from "@/lib/electron-bridge";
 import { getChatLabel } from "@/lib/utils/chat-label";
+import { RealtimeEventsMount } from "@/hooks/useRealtimeEvents";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -358,6 +359,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         onSelectMessage={handleSelectMessage}
       />
       <ToastViewport />
+      <RealtimeEventsMount />
     </div>
   );
 }

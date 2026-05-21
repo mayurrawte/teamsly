@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useWorkspaceStore } from "@/store/workspace";
 import { MessageFeed } from "./MessageFeed";
@@ -17,6 +17,7 @@ import { useMemberPanelStore } from "@/store/memberPanel";
 import { openTeamsChannelMeeting } from "@/lib/utils/teams-deeplink";
 import { markdownToHtml } from "@/lib/utils/markdown-to-html";
 import { VoiceTrigger } from "@/components/voice/VoiceTrigger";
+import { useRealtimeEvents } from "@/hooks/useRealtimeEvents";
 
 export function ChannelView({ teamId, channelId }: { teamId: string; channelId: string }) {
   const {
@@ -66,6 +67,10 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
     setActiveTab("messages");
   }, [channelId]);
 
+  // loadRef lets the realtime handler trigger a fetch without becoming a
+  // dependency of the SSE event callback (which would re-register on every render).
+  const loadRef = useRef<() => Promise<void>>(async () => {});
+
   useEffect(() => {
     let cancelled = false;
     const cached = getMessages(contextId);
@@ -86,9 +91,20 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
       }
     }
 
+    loadRef.current = load;
     load();
 
-    const interval = setInterval(load, 4000);
+    // Webhook push is primary; poll kept at 30s as safety net for missed events.
+    const interval = setInterval(load, 30_000);
+
+    // Fire-and-forget: create a Graph change notification subscription so the
+    // webhook endpoint can push new messages via SSE instead of waiting for poll.
+    fetch("/api/realtime/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ teamId, channelId }),
+    }).catch(() => { /* subscription is best-effort; poll is the fallback */ });
+
     return () => {
       cancelled = true;
       clearInterval(interval);
@@ -96,6 +112,21 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
     // getMessages is a stable selector — intentionally not in deps to avoid re-running on cache updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [teamId, channelId, contextId, setLoadingMessages, setMessages, showToast]);
+
+  useRealtimeEvents(
+    useCallback(
+      (event) => {
+        if (
+          event.type === "channel_message" &&
+          event.teamId === teamId &&
+          event.channelId === channelId
+        ) {
+          void loadRef.current();
+        }
+      },
+      [teamId, channelId]
+    )
+  );
 
   async function handleSend(
     content: string,
