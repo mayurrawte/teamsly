@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
-import { Search, HelpCircle, RotateCw } from "lucide-react";
+import { Search, HelpCircle, RotateCw, Sparkles } from "lucide-react";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { LeftRail } from "@/components/layout/LeftRail";
 import { MemberPanel } from "@/components/layout/MemberPanel";
@@ -19,6 +19,8 @@ import { useToastStore } from "@/store/toasts";
 import { sendUnreadCount } from "@/lib/electron-bridge";
 import { getChatLabel } from "@/lib/utils/chat-label";
 import { RealtimeEventsMount } from "@/hooks/useRealtimeEvents";
+import { CatchUpPanel } from "@/components/ai/CatchUpPanel";
+import { useCatchUpStore } from "@/store/catchUp";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -69,6 +71,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const activeMessages = useWorkspaceStore((s) =>
     activeContextId ? (s.messagesByContext[activeContextId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES
   );
+  const openCatchUp = useCatchUpStore((s) => s.setOpen);
   const showToast = useToastStore((state) => state.showToast);
   const [jumpToOpen, setJumpToOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -320,8 +323,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
         </div>
 
-        {/* Right: help affordance placeholder */}
-        <div className="flex w-[56px] flex-shrink-0 items-center justify-end">
+        {/* Right: catch-up button + help */}
+        <div className="flex flex-shrink-0 items-center gap-2">
+          <button
+            type="button"
+            aria-label="Open catch-up digest"
+            onClick={() => openCatchUp(true)}
+            className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)]/15 px-3 py-1.5 text-[13px] font-medium text-[var(--accent)] transition-colors hover:bg-[var(--accent)]/25"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Catch up
+          </button>
           <button
             type="button"
             aria-label="Help"
@@ -360,6 +372,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       />
       <ToastViewport />
       <RealtimeEventsMount />
+      <CatchUpPanel />
     </div>
   );
 }

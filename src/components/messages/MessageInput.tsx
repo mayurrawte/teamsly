@@ -28,6 +28,7 @@ import { useDraftsStore } from "@/store/drafts";
 import { GifPicker } from "./GifPicker";
 import { SlashCommandMenu, useSlashMenu } from "./SlashCommandMenu";
 import { parseSlashCommand, type SlashCommand } from "@/lib/slash-commands";
+import { useCatchUpStore } from "@/store/catchUp";
 
 // emoji-mart ships a heavy data bundle — load lazily to keep the initial JS small
 const EmojiMartPicker = dynamic(() => import("@emoji-mart/react"), {
@@ -198,6 +199,7 @@ export function MessageInput({
   const showToast = useToastStore((state) => state.showToast);
   const setDraft = useDraftsStore((s) => s.setDraft);
   const clearDraftInStore = useDraftsStore((s) => s.clearDraft);
+  const openCatchUp = useCatchUpStore((s) => s.setOpen);
 
   // ---------------------------------------------------------------------------
   // Draft seed + debounced write-back
@@ -346,6 +348,12 @@ export function MessageInput({
     }
     if (result.kind === "gif") {
       await sendGifByQuery(result.query);
+      return;
+    }
+    if (result.kind === "action") {
+      setValue("");
+      if (contextId) clearDraftInStore(contextId);
+      if (result.action === "open_catch_up") openCatchUp(true);
       return;
     }
     // kind === "text"
@@ -531,6 +539,10 @@ export function MessageInput({
         }
         if (result.kind === "gif") {
           await sendGifByQuery(result.query);
+          return;
+        }
+        if (result.kind === "action") {
+          if (result.action === "open_catch_up") openCatchUp(true);
           return;
         }
         await doSend(result.text);

@@ -7,7 +7,8 @@ export interface SlashCommandContext {
 export type SlashCommandResult =
   | { kind: "text"; text: string; italic?: boolean }
   | { kind: "gif"; query: string }
-  | { kind: "error"; message: string };
+  | { kind: "error"; message: string }
+  | { kind: "action"; action: string };
 
 export interface SlashCommand {
   name: string;
@@ -200,6 +201,16 @@ export const SLASH_COMMANDS: SlashCommand[] = [
         return { kind: "error", message: "Provide a search term: /giphy <query>" };
       }
       return { kind: "gif", query };
+    },
+  },
+  {
+    name: "tldr",
+    aliases: ["catchup", "summary"],
+    description: "Open the AI catch-up digest",
+    usage: "/tldr",
+    requiresArgs: false,
+    execute() {
+      return { kind: "action", action: "open_catch_up" };
     },
   },
 ];
