@@ -8,6 +8,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { PresenceDot } from "@/components/ui/PresenceDot";
 import { UserProfilePopover } from "@/components/profile/UserProfilePopover";
 import { useWorkspaceStore } from "@/store/workspace";
+import { usePreferencesStore } from "@/store/preferences";
 import { clearAll as clearMessageCache } from "@/lib/storage/message-cache";
 import { clearAll as clearDraftsCache } from "@/lib/storage/drafts";
 import { clearAll as clearBookmarksCache } from "@/lib/storage/bookmarks";
@@ -28,6 +29,9 @@ export function UserFooter() {
   const statusText = useWorkspaceStore(
     (state) => state.statusMessageMap[state.currentUserId]?.message?.content ?? ""
   );
+  const autoStatusEnabled = usePreferencesStore((s) => s.autoStatusEnabled);
+  const autoStatusSig = usePreferencesStore((s) => s.autoStatusLastSetSignature);
+  const autoActive = autoStatusEnabled && autoStatusSig !== null && autoStatusSig !== "none||";
 
   const name = session?.user?.name ?? "User";
   const email = session?.user?.email ?? undefined;
@@ -45,7 +49,14 @@ export function UserFooter() {
           <div className="min-w-0 overflow-hidden">
             <p className="truncate text-[13px] font-semibold text-white">{name}</p>
             {statusText ? (
-              <p className="truncate text-[11px] italic text-[var(--text-muted)]">{statusText}</p>
+              <p className="flex items-center gap-1 truncate text-[11px] italic text-[var(--text-muted)]">
+                <span className="truncate">{statusText}</span>
+                {autoActive && (
+                  <span className="flex-shrink-0 rounded bg-[var(--accent)] px-[4px] py-[1px] text-[9px] font-bold not-italic text-white">
+                    AUTO
+                  </span>
+                )}
+              </p>
             ) : (
               <p className="text-[11px] text-[var(--status-online)]">Active</p>
             )}

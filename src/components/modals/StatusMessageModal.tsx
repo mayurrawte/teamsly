@@ -6,6 +6,7 @@ import TextareaAutosize from "react-textarea-autosize";
 import { X } from "lucide-react";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useToastStore } from "@/store/toasts";
+import { usePreferencesStore } from "@/store/preferences";
 
 const MAX_CHARS = 280;
 
@@ -55,6 +56,7 @@ export function StatusMessageModal({ open, onOpenChange }: Props) {
   );
   const setStatusMessage = useWorkspaceStore((s) => s.setStatusMessage);
   const showToast = useToastStore((s) => s.showToast);
+  const setManualOverrideUntil = usePreferencesStore((s) => s.setManualOverrideUntil);
 
   const existingContent = existingStatusMessage?.message?.content ?? "";
   const hasExisting = existingContent.length > 0;
@@ -101,6 +103,7 @@ export function StatusMessageModal({ open, onOpenChange }: Props) {
           : undefined,
       });
 
+      setManualOverrideUntil(Date.now() + 60 * 60_000);
       showToast({ title: "Status set" });
       onOpenChange(false);
     } finally {
@@ -123,6 +126,7 @@ export function StatusMessageModal({ open, onOpenChange }: Props) {
       }
 
       setStatusMessage(currentUserId, null);
+      setManualOverrideUntil(null);
       showToast({ title: "Status cleared" });
       onOpenChange(false);
     } finally {

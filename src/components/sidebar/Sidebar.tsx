@@ -81,6 +81,7 @@ export function Sidebar() {
   const [unreadsOpen, toggleUnreads] = useCollapsible(COLLAPSE_KEYS.unreads, true);
   const [threadsOpen, toggleThreads] = useCollapsible(COLLAPSE_KEYS.threads, true);
   const [starredOpen, toggleStarred] = useCollapsible(COLLAPSE_KEYS.starred, true);
+  const [voiceCounts, setVoiceCounts] = useState<Record<string, number>>({});
 
   const activeTeam = teams.find((t) => t.id === activeTeamId);
   const teamChannels = activeTeamId ? (channels[activeTeamId] ?? []) : [];
@@ -219,6 +220,49 @@ export function Sidebar() {
       window.clearInterval(interval);
     };
   }, [chats, currentUserId, setPresenceMap, showToast]);
+
+  useEffect(() => {
+    const channelRooms = activeTeamId
+      ? teamChannels.map((ch) => ({ id: ch.id, room: `channel-${activeTeamId}-${ch.id}` }))
+      : [];
+    const chatRooms = chats.map((chat) => ({
+      id: chat.id,
+      room: `chat-${chat.id.replace(/[^a-zA-Z0-9_-]/g, "-")}`,
+    }));
+    const allRooms = [...channelRooms, ...chatRooms];
+    if (allRooms.length === 0) return;
+
+    let cancelled = false;
+
+    async function pollVoice() {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      try {
+        const res = await fetch("/api/voice/active-batch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ roomNames: allRooms.map((r) => r.room) }),
+        });
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as { counts: Record<string, number> };
+        if (cancelled) return;
+        const mapped: Record<string, number> = {};
+        for (const { id, room } of allRooms) {
+          const n = data.counts[room] ?? 0;
+          if (n > 0) mapped[id] = n;
+        }
+        setVoiceCounts(mapped);
+      } catch {
+        // ignore — voice service may be unavailable
+      }
+    }
+
+    pollVoice();
+    const id = window.setInterval(pollVoice, 30_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [activeTeamId, teamChannels, chats]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -504,6 +548,7 @@ export function Sidebar() {
                   }
                   active={params?.channelId === ch.id}
                   unreadCount={unreadCounts[ch.id] ?? 0}
+                  voiceCount={voiceCounts[ch.id] ?? 0}
                   onClick={() => goToChannel(ch.id)}
                 />
               ))}
@@ -514,6 +559,7 @@ export function Sidebar() {
                   icon={<ChatAvatar chat={chat} presenceMap={presenceMap} currentUserId={currentUserId} />}
                   active={params?.chatId === chat.id}
                   unreadCount={unreadCounts[chat.id] ?? 0}
+                  voiceCount={voiceCounts[chat.id] ?? 0}
                   onClick={() => goToChat(chat.id)}
                 />
               ))}
@@ -574,6 +620,7 @@ export function Sidebar() {
                   }
                   active={params?.channelId === ch.id}
                   unreadCount={unreadCounts[ch.id] ?? 0}
+                  voiceCount={voiceCounts[ch.id] ?? 0}
                   onClick={() => goToChannel(ch.id)}
                 />
               ))}
@@ -584,6 +631,7 @@ export function Sidebar() {
                   icon={<ChatAvatar chat={chat} presenceMap={presenceMap} currentUserId={currentUserId} />}
                   active={params?.chatId === chat.id}
                   unreadCount={unreadCounts[chat.id] ?? 0}
+                  voiceCount={voiceCounts[chat.id] ?? 0}
                   onClick={() => goToChat(chat.id)}
                 />
               ))}
@@ -634,6 +682,7 @@ export function Sidebar() {
                   }
                   active={params?.channelId === ch.id}
                   unreadCount={unreadCounts[ch.id] ?? 0}
+                  voiceCount={voiceCounts[ch.id] ?? 0}
                   onClick={() => goToChannel(ch.id)}
                 />
               ))}
@@ -673,6 +722,7 @@ export function Sidebar() {
                   icon={<ChatAvatar chat={chat} presenceMap={presenceMap} currentUserId={currentUserId} />}
                   active={params?.chatId === chat.id}
                   unreadCount={unreadCounts[chat.id] ?? 0}
+                  voiceCount={voiceCounts[chat.id] ?? 0}
                   onClick={() => goToChat(chat.id)}
                 />
               ))}
@@ -754,12 +804,14 @@ function SidebarItem({
   icon,
   active,
   unreadCount = 0,
+  voiceCount = 0,
   onClick,
 }: {
   label: string;
   icon: React.ReactNode;
   active: boolean;
   unreadCount?: number;
+  voiceCount?: number;
   onClick: () => void;
 }) {
   const unread = unreadCount > 0 && !active;
@@ -787,9 +839,22 @@ function SidebarItem({
     >
       <span className="flex-shrink-0 opacity-70">{icon}</span>
       <span className={cn("truncate", unread && "font-bold text-white")}>{label}</span>
+      {voiceCount > 0 && (
+        <span className={cn(
+          "ml-auto inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium",
+          active
+            ? "bg-white/20 text-white"
+            : "bg-emerald-500/15 text-emerald-400"
+        )}>
+          🎙 {voiceCount}
+        </span>
+      )}
       {unread && (
         <span
-          className="ml-auto flex h-[16px] min-w-[16px] flex-shrink-0 items-center justify-center rounded-full bg-[#cd2553] px-[4px] text-[10px] font-bold text-white"
+          className={cn(
+            "flex h-[16px] min-w-[16px] flex-shrink-0 items-center justify-center rounded-full bg-[#cd2553] px-[4px] text-[10px] font-bold text-white",
+            voiceCount > 0 ? "ml-1" : "ml-auto"
+          )}
           style={pulsing ? { animation: 'badge-pulse 300ms ease-out' } : undefined}
         >
           {unreadCount > 99 ? "99+" : unreadCount}

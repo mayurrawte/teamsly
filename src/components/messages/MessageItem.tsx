@@ -16,6 +16,8 @@ import { usePreferencesStore } from "@/store/preferences";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useBookmarksStore } from "@/store/bookmarks";
 import { cn } from "@/lib/utils";
+import { detectGitHubLinks } from "@/lib/integrations/github-detect";
+import { GitHubCard } from "./GitHubCard";
 
 interface Props {
   message: MSMessage;
@@ -135,6 +137,15 @@ export function MessageItem({
   // Drop rows with no body, no reply quote, and no other attachments to render
   if (!hasBody && referenceAttachments.length === 0 && otherAttachments.length === 0) return null;
 
+  // Slash-command result heuristic: messages starting with a result emoji that arrived
+  // in the last 10 s get a pop-in animation. Capped to recent messages to avoid
+  // animating historical slash results in the backlog.
+  const SLASH_RESULT_EMOJIS = ["🪙", "🎲", "🎯", "🎱", "🃏", "✏️", "🗓️"];
+  const isRecentSlashResult =
+    isNew &&
+    Date.now() - new Date(message.createdDateTime).getTime() < 10000 &&
+    SLASH_RESULT_EMOJIS.some((e) => content.trimStart().startsWith(e));
+
   // Inline retry/discard row for failed optimistic messages.
   const failedBanner = message.__failed ? (
     <div className="mt-1 flex items-center gap-3">
@@ -233,10 +244,10 @@ export function MessageItem({
         data-message-id={message.id}
         style={animationStyle}
         className={cn(
-          "group relative px-4 pl-[60px] transition-colors duration-[80ms] ease-out hover:bg-[var(--message-hover-bg)]",
+          "group relative flex px-4 transition-colors duration-[80ms] ease-out hover:bg-[var(--message-hover-bg)]",
           density === "compact" ? "py-0" : "py-[2px]",
           message.__pending && "opacity-60",
-          message.__failed && "border-l-2 border-red-500/60 pl-2"
+          message.__failed && "border-l-2 border-red-500/60"
         )}
       >
         {!isEditing && !message.__pending && !message.__failed && (
@@ -251,8 +262,9 @@ export function MessageItem({
             onDelete={deleteHandler}
           />
         )}
+        {/* Fixed-width gutter matching the head row's avatar column (w-9 + gap-2 = ~44px → rounded to 60px to include avatar margin) */}
         <span
-          className="pointer-events-none absolute left-4 top-[3px] flex w-10 select-none items-center justify-end gap-0.5 text-right text-xs leading-[18px] text-[var(--text-muted)] opacity-0 transition-opacity duration-100 group-hover:opacity-100"
+          className="flex w-[60px] flex-shrink-0 select-none items-start justify-end gap-0.5 pr-3 pt-[3px] text-right text-[11px] tabular-nums leading-[18px] text-[var(--text-muted)] opacity-0 transition-opacity duration-100 group-hover:opacity-100"
           title={formatFullTimestamp(message.createdDateTime)}
         >
           {message.__pending && (
@@ -263,25 +275,30 @@ export function MessageItem({
           )}
           {shortTime}
         </span>
-        <MessageReferences attachments={referenceAttachments} />
-        {isEditing ? (
-          editingArea
-        ) : (
-          hasBody && (
-            <div className="message-body break-words text-[14px] leading-[1.5] text-[var(--text-primary)]">
-              {renderMessageBody(message.body.content, message.body.contentType)}
-            </div>
-          )
-        )}
-        <Attachments attachments={otherAttachments} />
-        {!message.__pending && !message.__failed && (
-          <ReactionsRow
-            messageId={message.id}
-            reactions={message.reactions ?? []}
-            onToggleReaction={onToggleReaction}
-          />
-        )}
-        {failedBanner}
+        <div className="min-w-0 flex-1">
+          <MessageReferences attachments={referenceAttachments} />
+          {isEditing ? (
+            editingArea
+          ) : (
+            hasBody && (
+              <>
+                <div className={`message-body break-words text-[14px] leading-[1.5] text-[var(--text-primary)]${isRecentSlashResult ? " slash-fx-pop" : ""}`}>
+                  {renderMessageBody(message.body.content, message.body.contentType)}
+                </div>
+                <GitHubCards text={content} />
+              </>
+            )
+          )}
+          <Attachments attachments={otherAttachments} />
+          {!message.__pending && !message.__failed && (
+            <ReactionsRow
+              messageId={message.id}
+              reactions={message.reactions ?? []}
+              onToggleReaction={onToggleReaction}
+            />
+          )}
+          {failedBanner}
+        </div>
       </div>
     );
   }
@@ -337,9 +354,12 @@ export function MessageItem({
           editingArea
         ) : (
           hasBody && (
-            <div className="message-body break-words text-[14px] leading-[1.5] text-[var(--text-primary)]">
-              {renderMessageBody(message.body.content, message.body.contentType)}
-            </div>
+            <>
+              <div className="message-body break-words text-[14px] leading-[1.5] text-[var(--text-primary)]">
+                {renderMessageBody(message.body.content, message.body.contentType)}
+              </div>
+              <GitHubCards text={content} />
+            </>
           )
         )}
         <Attachments attachments={otherAttachments} />
@@ -352,6 +372,16 @@ export function MessageItem({
         )}
         {failedBanner}
       </div>
+    </div>
+  );
+}
+
+function GitHubCards({ text }: { text: string }) {
+  const links = detectGitHubLinks(text);
+  if (links.length === 0) return null;
+  return (
+    <div className="mt-1 flex flex-col gap-2">
+      {links.map((link) => <GitHubCard key={link.url} link={link} />)}
     </div>
   );
 }

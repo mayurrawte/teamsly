@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Download } from "lucide-react";
 import { getFileIcon } from "@/lib/utils/file-icon";
 import { useFilePreviewStore } from "@/store/filePreview";
@@ -21,6 +22,12 @@ export function AttachmentCard({ attachment }: AttachmentCardProps) {
   // Adaptive Card path
   if (attachment.contentType === "application/vnd.microsoft.card.adaptive") {
     return <AdaptiveCardAttachment attachment={attachment} />;
+  }
+
+  // Inline image path — render image directly instead of a file card.
+  // Graph URLs aren't in next.config's image whitelist so we use a plain <img>.
+  if (attachment.contentType?.startsWith("image/")) {
+    return <InlineImageAttachment attachment={attachment} />;
   }
 
   const href = safeAttachmentHref(attachment.contentUrl);
@@ -76,6 +83,64 @@ export function AttachmentCard({ attachment }: AttachmentCardProps) {
       className="mt-2 flex max-w-[420px] cursor-pointer items-center gap-3 rounded-md border border-[#3f4144] bg-[#1a1d21] px-3 py-2 text-left transition-colors duration-150 hover:border-[#565856] hover:bg-[#27292d]"
     >
       {content}
+    </a>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Inline image attachment renderer
+// ---------------------------------------------------------------------------
+
+function InlineImageAttachment({ attachment }: { attachment: MSAttachment }) {
+  const [loadError, setLoadError] = useState(false);
+  const href = safeAttachmentHref(attachment.contentUrl);
+  const label = attachment.name || "Image";
+
+  // If the URL is missing or the image fails to load, fall through to the
+  // generic file card so the user still has a download affordance.
+  if (!href || loadError) {
+    const FileIcon = getFileIcon(attachment.contentType, false, attachment.name ?? undefined);
+    const contentType = attachment.contentType || "File";
+    const content = (
+      <>
+        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[#2c2d30] text-[#ababad]">
+          <FileIcon size={18} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[13px] font-bold text-[#d1d2d3]">{label}</span>
+          <span className="block truncate text-[12px] text-[#6c6f75]">{contentType}</span>
+        </span>
+        <Download className="h-4 w-4 flex-shrink-0 text-[#ababad]" />
+      </>
+    );
+    if (!href) {
+      return (
+        <div className="mt-2 flex max-w-[420px] items-center gap-3 rounded-md border border-[#3f4144] bg-[#1a1d21] px-3 py-2 text-left opacity-70">
+          {content}
+        </div>
+      );
+    }
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-2 flex max-w-[420px] cursor-pointer items-center gap-3 rounded-md border border-[#3f4144] bg-[#1a1d21] px-3 py-2 text-left transition-colors duration-150 hover:border-[#565856] hover:bg-[#27292d]"
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={href}
+        alt={label}
+        onError={() => setLoadError(true)}
+        className="mt-2 max-h-[400px] max-w-[420px] rounded-md object-contain"
+      />
     </a>
   );
 }

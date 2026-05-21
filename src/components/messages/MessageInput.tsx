@@ -18,6 +18,7 @@ import {
   Code2,
   X,
   Upload,
+  Slash,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { markdownToHtml } from "@/lib/utils/markdown-to-html";
@@ -25,6 +26,8 @@ import { Avatar } from "@/components/ui/Avatar";
 import { useToastStore } from "@/store/toasts";
 import { useDraftsStore } from "@/store/drafts";
 import { GifPicker } from "./GifPicker";
+import { SlashCommandMenu, useSlashMenu } from "./SlashCommandMenu";
+import { parseSlashCommand, type SlashCommand } from "@/lib/slash-commands";
 
 // emoji-mart ships a heavy data bundle — load lazily to keep the initial JS small
 const EmojiMartPicker = dynamic(() => import("@emoji-mart/react"), {
@@ -83,6 +86,12 @@ interface Props {
    * (e.g. thread reply composer), nothing is persisted.
    */
   contextId?: string;
+  /** Current user's display name — used by slash commands like /me and /draw. */
+  currentUserName?: string;
+  /** Current user's AAD id — used to exclude self from /draw pool. */
+  currentUserId?: string;
+  /** Channel/chat members available for /draw with no args. */
+  channelMembers?: Array<{ id: string; displayName: string }>;
 }
 
 // Sentinel mention id for `@everyone`. The chat/channel API routes turn
@@ -170,6 +179,9 @@ export function MessageInput({
   mentionCandidates,
   allowEveryone,
   contextId,
+  currentUserName = "",
+  currentUserId = "",
+  channelMembers,
 }: Props) {
   const [value, setValue] = useState("");
   const [sending, setSending] = useState(false);
@@ -282,6 +294,109 @@ export function MessageInput({
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const sendButtonRef = useRef<HTMLButtonElement>(null);
 
+  // ---------------------------------------------------------------------------
+  // Slash-command menu state
+  // ---------------------------------------------------------------------------
+  const [slashMenuOpen, setSlashMenuOpen] = useState(false);
+  const [slashQuery, setSlashQuery] = useState("");
+  const [slashError, setSlashError] = useState<string | null>(null);
+
+  function detectSlashTrigger(text: string) {
+    // Only trigger when the entire value is a /word (no spaces after the word yet)
+    const m = text.match(/^\/(\w*)$/);
+    if (m) {
+      setSlashMenuOpen(true);
+      setSlashQuery(m[1]);
+    } else {
+      setSlashMenuOpen(false);
+      setSlashQuery("");
+    }
+  }
+
+  const slashMenu = useSlashMenu({
+    open: slashMenuOpen,
+    query: slashQuery,
+    onSelect: handleSlashSelect,
+    onClose: () => setSlashMenuOpen(false),
+  });
+
+  function handleSlashSelect(cmd: SlashCommand) {
+    setSlashMenuOpen(false);
+    if (cmd.requiresArgs) {
+      // Drop the user into "/{name} " so they can type args
+      setValue(`/${cmd.name} `);
+      requestAnimationFrame(() => textareaRef.current?.focus());
+    } else {
+      // Execute immediately and submit
+      void executeAndSubmit(`/${cmd.name}`);
+    }
+  }
+
+  async function executeAndSubmit(input: string) {
+    const parsed = parseSlashCommand(input.trim());
+    if (!parsed) {
+      await doSend(input.trim());
+      return;
+    }
+    const ctx = { currentUserName, currentUserId, channelMembers };
+    const result = await parsed.command.execute(parsed.args, ctx);
+    if (result.kind === "error") {
+      setSlashError(result.message);
+      return;
+    }
+    if (result.kind === "gif") {
+      await sendGifByQuery(result.query);
+      return;
+    }
+    // kind === "text"
+    await doSend(result.text);
+  }
+
+  async function sendGifByQuery(query: string) {
+    if (isBusy) return;
+    setSending(true);
+    setValue("");
+    if (contextId) clearDraftInStore(contextId);
+    try {
+      const res = await fetch(`/api/gifs/search?q=${encodeURIComponent(query)}&limit=1`);
+      if (!res.ok) throw new Error("fetch failed");
+      const data = await res.json();
+      const gif = data.results?.[0];
+      if (!gif) {
+        setSlashError(`No GIFs found for "${query}"`);
+        return;
+      }
+      const media = gif.media[0];
+      const url = media?.gif?.url ?? media?.tinygif?.url;
+      if (!url) {
+        setSlashError(`No GIFs found for "${query}"`);
+        return;
+      }
+      await onSend(
+        `<img src="${url}" alt="${gif.title.replace(/"/g, "&quot;")}" style="max-width:300px;border-radius:4px" />`
+      );
+    } catch {
+      setSlashError(`Couldn't fetch a GIF for "${query}"`);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function doSend(text: string) {
+    if (!text || isBusy) return;
+    setSending(true);
+    setValue("");
+    if (contextId) clearDraftInStore(contextId);
+    try {
+      await onSend(markdownToHtml(text));
+      setPendingMentions([]);
+    } catch {
+      setValue(text);
+    } finally {
+      setSending(false);
+    }
+  }
+
   function triggerRipple() {
     const btn = sendButtonRef.current;
     if (!btn) return;
@@ -371,6 +486,7 @@ export function MessageInput({
 
   async function submit() {
     triggerRipple();
+    setSlashError(null);
     const trimmed = value.trim();
     // Allow send when there's a pending file even with no text
     if ((!trimmed && !pendingFile) || isBusy) return;
@@ -399,6 +515,30 @@ export function MessageInput({
     }
 
     if (!trimmed) return;
+
+    // If the message starts with a slash, attempt slash-command execution
+    if (trimmed.startsWith("/")) {
+      const parsed = parseSlashCommand(trimmed);
+      if (parsed) {
+        setValue("");
+        if (contextId) clearDraftInStore(contextId);
+        const ctx = { currentUserName, currentUserId, channelMembers };
+        const result = await parsed.command.execute(parsed.args, ctx);
+        if (result.kind === "error") {
+          setValue(trimmed);
+          setSlashError(result.message);
+          return;
+        }
+        if (result.kind === "gif") {
+          await sendGifByQuery(result.query);
+          return;
+        }
+        await doSend(result.text);
+        return;
+      }
+      // Unrecognised command — send as plain text (strip the slash prefix feeling)
+    }
+
     setSending(true);
     setValue("");
     if (contextId) clearDraftInStore(contextId);
@@ -464,6 +604,9 @@ export function MessageInput({
   // ---------------------------------------------------------------------------
 
   function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+    // Slash-command menu takes priority over mention menu
+    if (slashMenuOpen && slashMenu.handleKey(e)) return;
+
     // When mention popover is open, intercept navigation keys
     if (mentionOpen) {
       if (e.key === "ArrowDown") {
@@ -810,6 +953,15 @@ export function MessageInput({
           </div>
         )}
 
+        {/* Slash-command menu */}
+        <SlashCommandMenu
+          open={slashMenuOpen && slashMenu.filtered.length > 0}
+          filtered={slashMenu.filtered}
+          selectedIdx={slashMenu.selectedIdx}
+          onHover={slashMenu.setSelectedIdx}
+          onPick={handleSlashSelect}
+        />
+
         {/* @mention popover — positioned above the composer */}
         {mentionOpen && (
           <div
@@ -852,7 +1004,7 @@ export function MessageInput({
           </div>
         )}
 
-        <div className="rounded-lg border border-[var(--border-input)] bg-[var(--surface)] transition-colors duration-150 focus-within:border-[var(--text-secondary)]">
+        <div className="rounded-lg border border-[var(--border-input)] bg-[var(--surface)] transition-[border-color,box-shadow] duration-200 focus-within:border-[var(--accent)] focus-within:shadow-[0_0_0_3px_var(--accent-light)]">
           {/* Formatting toolbar */}
           <div className="flex items-center gap-0.5 border-b border-[var(--border)] px-2 py-1">
             {toolbarButtons.map((item, idx) => {
@@ -903,6 +1055,8 @@ export function MessageInput({
               value={value}
               onChange={(e) => {
                 setValue(e.target.value);
+                setSlashError(null);
+                detectSlashTrigger(e.target.value);
                 updateMentionTrigger(e.target.value, e.target.selectionStart);
               }}
               onKeyDown={onKeyDown}
@@ -954,6 +1108,29 @@ export function MessageInput({
                 )}
               </div>
 
+              {/* Slash commands trigger */}
+              <button
+                type="button"
+                aria-label="Slash commands"
+                title="Commands (/)"
+                onClick={() => {
+                  if (!value) {
+                    setValue("/");
+                    setSlashMenuOpen(true);
+                    setSlashQuery("");
+                    requestAnimationFrame(() => textareaRef.current?.focus());
+                  } else {
+                    textareaRef.current?.focus();
+                  }
+                }}
+                className={cn(
+                  "rounded px-1.5 py-0.5 transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-white focus-ring",
+                  slashMenuOpen ? "bg-[var(--surface-hover)] text-white" : "text-[var(--text-secondary)]"
+                )}
+              >
+                <Slash className="h-4 w-4" />
+              </button>
+
               {/* GIF picker */}
               <GifPicker onSelect={sendGif}>
                 <button
@@ -972,9 +1149,9 @@ export function MessageInput({
                 onClick={submit}
                 disabled={!canSend}
                 className={cn(
-                  "relative overflow-hidden flex h-8 w-8 items-center justify-center rounded transition-[background,color] duration-150 ease-out focus-ring",
+                  "relative overflow-hidden flex h-8 w-8 items-center justify-center rounded transition-[background,color,transform] duration-150 ease-out focus-ring",
                   canSend
-                    ? "bg-[#007a5a] text-white hover:bg-[#148567]"
+                    ? "bg-[#007a5a] text-white hover:bg-[#148567] hover:scale-105 active:scale-95"
                     : "text-[var(--text-muted)]"
                 )}
               >
@@ -982,6 +1159,14 @@ export function MessageInput({
               </button>
             </div>
           </div>
+
+          {/* Slash-command error */}
+          {slashError && (
+            <div className="flex items-center gap-1.5 border-t border-[var(--border)] px-3 py-1.5 text-[12px] text-red-400">
+              <span className="font-mono">/</span>
+              {slashError}
+            </div>
+          )}
 
           {/* Pending attachment chip — sits between textarea and bottom hint */}
           {pendingFile && (

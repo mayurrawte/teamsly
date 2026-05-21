@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Plus } from "lucide-react";
 import { EmojiPicker } from "./EmojiPicker";
 import { reactionEmoji, type ReactionType } from "@/lib/utils/reactions";
@@ -13,29 +13,73 @@ interface ReactionPillProps {
 }
 
 export function ReactionPill({ reactionType, count, active, onClick }: ReactionPillProps) {
-  const [animating, setAnimating] = useState(false);
+  const [bursting, setBursting] = useState(false);
+  const [showPlusOne, setShowPlusOne] = useState(false);
+  const prevCountRef = useRef(count);
+  const prevActiveRef = useRef(active);
+  const burstTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const plusOneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const countIncreased = count > prevCountRef.current;
+    const justActivated = active && !prevActiveRef.current;
+
+    if (countIncreased || justActivated) {
+      setBursting(false);
+      // Force a re-render cycle so re-adding the class re-triggers the animation
+      requestAnimationFrame(() => {
+        setBursting(true);
+        if (burstTimerRef.current) clearTimeout(burstTimerRef.current);
+        burstTimerRef.current = setTimeout(() => setBursting(false), 360);
+      });
+
+      if (justActivated) {
+        setShowPlusOne(true);
+        if (plusOneTimerRef.current) clearTimeout(plusOneTimerRef.current);
+        plusOneTimerRef.current = setTimeout(() => setShowPlusOne(false), 620);
+      }
+    }
+
+    prevCountRef.current = count;
+    prevActiveRef.current = active;
+  }, [count, active]);
+
+  useEffect(() => {
+    return () => {
+      if (burstTimerRef.current) clearTimeout(burstTimerRef.current);
+      if (plusOneTimerRef.current) clearTimeout(plusOneTimerRef.current);
+    };
+  }, []);
 
   function handleClick() {
-    setAnimating(true);
-    setTimeout(() => setAnimating(false), 200);
     onClick();
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      style={{ animation: animating ? "reaction-pop 200ms ease-out" : undefined }}
-      className={[
-        "inline-flex h-[24px] items-center gap-1 rounded-full border px-2 text-[12px] transition-colors duration-150 focus-ring",
-        active
-          ? "border-[var(--accent)] bg-[var(--reaction-active-bg)] text-[var(--text-primary)]"
-          : "border-[var(--reaction-border)] bg-[var(--reaction-bg)] text-[var(--text-secondary)] hover:border-[var(--accent)] hover:bg-[var(--reaction-active-bg)]",
-      ].join(" ")}
-    >
-      <span>{reactionEmoji(reactionType)}</span>
-      <span>{count}</span>
-    </button>
+    <span className="relative inline-flex">
+      {showPlusOne && (
+        <span
+          aria-hidden="true"
+          className="react-plus-one pointer-events-none absolute bottom-full left-1/2 z-10 text-[11px] font-bold text-[var(--accent)]"
+        >
+          +1
+        </span>
+      )}
+      <button
+        type="button"
+        onClick={handleClick}
+        className={[
+          "inline-flex h-[24px] items-center gap-1 rounded-full border px-2 text-[12px] transition-colors duration-150 focus-ring",
+          bursting ? "react-burst" : "",
+          active
+            ? "border-[var(--accent)] bg-[var(--reaction-active-bg)] text-[var(--text-primary)]"
+            : "border-[var(--reaction-border)] bg-[var(--reaction-bg)] text-[var(--text-secondary)] hover:border-[var(--accent)] hover:bg-[var(--reaction-active-bg)]",
+        ].join(" ")}
+      >
+        <span>{reactionEmoji(reactionType)}</span>
+        <span>{count}</span>
+      </button>
+    </span>
   );
 }
 

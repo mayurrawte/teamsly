@@ -30,12 +30,7 @@ export function ToastViewport() {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          style={{
-            animation: exiting.has(toast.id)
-              ? `toast-out ${EXIT_DURATION}ms ease-in forwards`
-              : "toast-in 200ms ease-out both",
-          }}
-          className="rounded-md border border-[#3f4144] bg-[#1a1d21] p-3 text-[#d1d2d3] shadow-[0_8px_32px_rgba(0,0,0,0.45)]"
+          className={`rounded-md border border-[#3f4144] bg-[#1a1d21] p-3 text-[#d1d2d3] shadow-[0_8px_32px_rgba(0,0,0,0.45)] ${exiting.has(toast.id) ? "toast-exit" : "toast-enter"}`}
         >
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">

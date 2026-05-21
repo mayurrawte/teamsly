@@ -55,6 +55,28 @@ export function SearchModal({
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const currentUserId = useWorkspaceStore((s) => s.currentUserId);
+  const patchChatMembers = useWorkspaceStore((s) => s.patchChatMembers);
+  const membersFetchedRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!open) return;
+    const toFetch = chats.filter(
+      (chat) =>
+        (!chat.members || chat.members.length === 0) &&
+        !membersFetchedRef.current.has(chat.id)
+    );
+    for (const chat of toFetch) {
+      membersFetchedRef.current.add(chat.id);
+      fetch(`/api/chats/${encodeURIComponent(chat.id)}/members`)
+        .then((r) => (r.ok ? r.json() : Promise.reject()))
+        .then((members: MSChatMember[]) => {
+          if (members.length > 0) patchChatMembers(chat.id, members);
+        })
+        .catch(() => {
+          membersFetchedRef.current.delete(chat.id);
+        });
+    }
+  }, [open, chats, patchChatMembers]);
 
   useEffect(() => {
     const handle = window.setTimeout(() => setDebouncedQuery(query), 120);

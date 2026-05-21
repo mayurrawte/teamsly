@@ -16,6 +16,7 @@ import { textToHtml, messagePlainText } from "@/lib/utils/render-message";
 import { useToastStore } from "@/store/toasts";
 import { openTeamsCall } from "@/lib/utils/teams-deeplink";
 import { getChatLabel } from "@/lib/utils/chat-label";
+import { VoiceTrigger } from "@/components/voice/VoiceTrigger";
 
 export function ChatView({ chatId }: { chatId: string }) {
   const {
@@ -117,6 +118,7 @@ export function ChatView({ chatId }: { chatId: string }) {
   }, [chatId, storeMembers.length]);
 
   const label = getChatLabel(chat ? { ...chat, members } : undefined, currentUserId);
+  const voiceRoomName = `chat-${chatId.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
 
   // Reset tab when chat changes
   useEffect(() => {
@@ -459,6 +461,12 @@ export function ChatView({ chatId }: { chatId: string }) {
         onOpenMembers={undefined}
         onCall={handleCall}
         onVideoCall={handleVideoCall}
+        voiceTrigger={
+          <VoiceTrigger
+            roomName={voiceRoomName}
+            displayName={label}
+          />
+        }
       />
       {activeTab === "files" ? (
         <ContextFilesTab mode={{ kind: "chat", chatId }} />
@@ -495,6 +503,9 @@ export function ChatView({ chatId }: { chatId: string }) {
             uploadProgress={uploadProgress}
             mentionCandidates={mentionCandidates}
             contextId={chatId}
+            currentUserId={currentUserId}
+            currentUserName={currentUserName}
+            channelMembers={mentionCandidates}
           />
         </>
       ) : (

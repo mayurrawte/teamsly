@@ -41,6 +41,9 @@ export interface Preferences {
   activityUnreadOnly: boolean;
   /** Show a heuristic typing indicator when another user sent a message in the last 30 s. */
   typingIndicator: boolean;
+  autoStatusEnabled: boolean;
+  autoStatusLastSetSignature: string | null;
+  manualStatusOverrideUntil: number | null;
 }
 
 interface PreferencesState extends Preferences {
@@ -58,6 +61,9 @@ interface PreferencesState extends Preferences {
   setDarkInFocusMode: (v: boolean) => void;
   setActivityUnreadOnly: (v: boolean) => void;
   setTypingIndicator: (v: boolean) => void;
+  setAutoStatusEnabled: (v: boolean) => void;
+  setAutoStatusSignature: (sig: string | null) => void;
+  setManualOverrideUntil: (ts: number | null) => void;
   reset: () => void;
 }
 
@@ -76,6 +82,9 @@ const DEFAULTS: Preferences = {
   darkInFocusMode: false,
   activityUnreadOnly: true,
   typingIndicator: false,
+  autoStatusEnabled: false,
+  autoStatusLastSetSignature: null,
+  manualStatusOverrideUntil: null,
 };
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -96,6 +105,9 @@ export const usePreferencesStore = create<PreferencesState>()(
       setDarkInFocusMode: (darkInFocusMode) => set({ darkInFocusMode }),
       setActivityUnreadOnly: (activityUnreadOnly) => set({ activityUnreadOnly }),
       setTypingIndicator: (typingIndicator) => set({ typingIndicator }),
+      setAutoStatusEnabled: (autoStatusEnabled) => set({ autoStatusEnabled }),
+      setAutoStatusSignature: (autoStatusLastSetSignature) => set({ autoStatusLastSetSignature }),
+      setManualOverrideUntil: (manualStatusOverrideUntil) => set({ manualStatusOverrideUntil }),
       reset: () => set(DEFAULTS),
     }),
     {

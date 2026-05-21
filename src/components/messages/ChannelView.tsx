@@ -16,6 +16,7 @@ import { textToHtml, messagePlainText } from "@/lib/utils/render-message";
 import { useMemberPanelStore } from "@/store/memberPanel";
 import { openTeamsChannelMeeting } from "@/lib/utils/teams-deeplink";
 import { markdownToHtml } from "@/lib/utils/markdown-to-html";
+import { VoiceTrigger } from "@/components/voice/VoiceTrigger";
 
 export function ChannelView({ teamId, channelId }: { teamId: string; channelId: string }) {
   const {
@@ -325,6 +326,12 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
               : team?.displayName ?? "Meeting"
           )
         }
+        voiceTrigger={
+          <VoiceTrigger
+            roomName={`channel-${teamId}-${channelId}`}
+            displayName={channel?.displayName ? `#${channel.displayName}` : "Channel voice"}
+          />
+        }
       />
       {activeTab === "files" ? (
         <ContextFilesTab mode={{ kind: "channel", teamId, channelId }} />
@@ -355,6 +362,8 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
             uploading={uploading}
             contextId={contextId}
             allowEveryone
+            currentUserId={currentUserId}
+            currentUserName={currentUserName}
           />
         </>
       ) : (

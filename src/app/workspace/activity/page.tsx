@@ -9,6 +9,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
 import { formatMessageTime } from "@/lib/utils/dates";
 import { getChatLabel, getFirstOtherMember } from "@/lib/utils/chat-label";
+import { useActivityNotifications } from "@/hooks/useActivityNotifications";
 import {
   MessageSquare,
   CheckCheck,
@@ -298,6 +299,8 @@ export default function ActivityPage() {
   const [scanData, setScanData] = useState<ScanResponse | null>(null);
   const [scanLoading, setScanLoading] = useState(false);
   const scanLoadedRef = useRef(false);
+
+  useActivityNotifications(scanData ?? undefined);
 
   // Reset cached state when the active team changes so the next visit
   // refetches against the new scope.

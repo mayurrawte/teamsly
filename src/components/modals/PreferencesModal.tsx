@@ -122,6 +122,8 @@ export function PreferencesModal({ open, onOpenChange }: Props) {
                 <NotificationsPanel />
               ) : section === "messages" ? (
                 <MessagesPanel />
+              ) : section === "availability" ? (
+                <AvailabilityPanel />
               ) : (
                 <ComingSoonPanel />
               )}
@@ -388,6 +390,24 @@ function MessagesPanel() {
           </button>
         </label>
       </div>
+    </div>
+  );
+}
+
+// ─── Availability panel ──────────────────────────────────────────────────────
+
+function AvailabilityPanel() {
+  const autoStatusEnabled = usePreferencesStore((s) => s.autoStatusEnabled);
+  const setAutoStatusEnabled = usePreferencesStore((s) => s.setAutoStatusEnabled);
+
+  return (
+    <div className="flex flex-col gap-6">
+      <ToggleRow
+        label="Auto status from calendar"
+        hint="Sets your status to 'In a meeting' / 'Heads-down' / 'Out of office' based on your Outlook calendar. Clears automatically when each event ends. Manual status changes pause auto-status for 1 hour."
+        value={autoStatusEnabled}
+        onChange={setAutoStatusEnabled}
+      />
     </div>
   );
 }

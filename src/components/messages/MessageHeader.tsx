@@ -12,6 +12,7 @@ interface ChannelHeaderProps {
   activeTab: Tab;
   onTabChange: (tab: Tab) => void;
   onOpenMembers?: () => void;
+  voiceTrigger?: React.ReactNode;
 }
 
 interface DmHeaderProps {
@@ -24,6 +25,7 @@ interface DmHeaderProps {
   onOpenMembers?: () => void;
   onCall?: () => void;
   onVideoCall?: () => void;
+  voiceTrigger?: React.ReactNode;
 }
 
 const TAB_LABELS: { id: Tab; label: string }[] = [
@@ -168,6 +170,7 @@ export function ChannelMessageHeader({
   onOpenMembers,
   onMeetNow,
   onVideoMeetNow,
+  voiceTrigger,
 }: ChannelHeaderProps & {
   onSearchClick?: () => void;
   onMeetNow?: () => void;
@@ -188,8 +191,9 @@ export function ChannelMessageHeader({
             </>
           )}
         </div>
-        {/* Right: icon cluster */}
-        <div className="flex flex-shrink-0 items-center">
+        {/* Right: voice trigger + icon cluster */}
+        <div className="flex flex-shrink-0 items-center gap-0.5">
+          {voiceTrigger}
           <IconCluster
             onSearchClick={onSearchClick}
             onOpenMembers={onOpenMembers}
@@ -216,6 +220,7 @@ export function DmMessageHeader({
   onOpenMembers,
   onCall,
   onVideoCall,
+  voiceTrigger,
 }: DmHeaderProps) {
   const otherMembers = members.filter(
     (m) => (m.userId ?? m.id) !== currentUserId
@@ -237,8 +242,9 @@ export function DmMessageHeader({
           ) : null}
           <span className="truncate text-[17px] font-bold text-white">{label}</span>
         </div>
-        {/* Right: icon cluster */}
-        <div className="flex flex-shrink-0 items-center">
+        {/* Right: voice trigger + icon cluster */}
+        <div className="flex flex-shrink-0 items-center gap-0.5">
+          {voiceTrigger}
           <IconCluster
             onSearchClick={onSearchClick}
             onOpenMembers={onOpenMembers}
