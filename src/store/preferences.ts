@@ -3,12 +3,33 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-export type Density = "comfortable" | "compact";
+export type Density = "comfortable" | "compact" | "cozy";
 export type ColorMode = "light" | "dark" | "system";
 export type AccentTheme = "slate" | "ocean" | "forest" | "ember" | "graphite" | "mist" | "plum" | "sand" | "custom";
 export type FontFamily = "plex" | "inter" | "atkinson" | "jetbrains" | "lora";
 export type FontScale = "sm" | "md" | "lg";
 export type SoundTheme = "off" | "subtle" | "playful";
+/**
+ * Palette is the *background + neutrals* dimension of the theme system.
+ * Independent from accent (highlight color) and font (typography). Some
+ * palettes are mode-locked: midnight → dark only, sepia → light only.
+ * The ThemeApplier resolves any conflicts so the user can't end up with
+ * "sepia + dark" rendering as a broken hybrid.
+ */
+export type Palette = "slate" | "midnight" | "sepia" | "forest";
+
+export const PALETTES: Record<Palette, { label: string; description: string; lockedMode: "light" | "dark" | null; swatch: string[] }> = {
+  slate:    { label: "Slate",    description: "Calm, professional. Works in light + dark.", lockedMode: null,    swatch: ["#19171d", "#1a1d21", "#222529", "#d1d2d3"] },
+  midnight: { label: "Midnight", description: "True-black OLED. Always dark.",              lockedMode: "dark",  swatch: ["#000000", "#060608", "#141416", "#e8e8ea"] },
+  sepia:    { label: "Sepia",    description: "Warm cream. Easier on the eyes.",            lockedMode: "light", swatch: ["#e8dec7", "#efe8d4", "#f5efe2", "#3d2c20"] },
+  forest:   { label: "Forest",   description: "Low-saturation greens. Both modes.",         lockedMode: null,    swatch: ["#131816", "#1c241f", "#232c26", "#d8dcd6"] },
+};
+
+export const DENSITY_LABELS: Record<Density, { label: string; hint: string }> = {
+  comfortable: { label: "Comfortable", hint: "Spacious — Slack-feeling. Default." },
+  compact:     { label: "Compact",     hint: "Tighter rows, smaller avatars — Linear/Discord-feeling." },
+  cozy:        { label: "Cozy",        hint: "Generous padding, larger text — Notion-feeling." },
+};
 
 export const ACCENT_THEMES: Record<Exclude<AccentTheme, "custom">, { label: string; hex: string }> = {
   slate:    { label: "Slate",    hex: "#0F5A8F" },
@@ -54,6 +75,9 @@ export interface Preferences {
   /** HH:MM 24-hour. Wraps around midnight when start > end (e.g. 22:00 → 08:00). */
   quietHoursEnd: string;
   colorMode: ColorMode;
+  /** Background + neutrals choice. Orthogonal to accent. Some palettes
+   *  force a specific color mode (see PALETTES.lockedMode). */
+  palette: Palette;
   accent: AccentTheme;
   /** Required when accent === 'custom'. Hex like '#aabbcc'. Ignored otherwise. */
   customAccentHex: string;
@@ -100,6 +124,7 @@ interface PreferencesState extends Preferences {
   setQuietHoursStart: (v: string) => void;
   setQuietHoursEnd: (v: string) => void;
   setColorMode: (m: ColorMode) => void;
+  setPalette: (p: Palette) => void;
   setAccent: (a: AccentTheme) => void;
   setCustomAccentHex: (hex: string) => void;
   setFont: (f: FontFamily) => void;
@@ -136,6 +161,7 @@ const DEFAULTS: Preferences = {
   quietHoursStart: "22:00",
   quietHoursEnd: "08:00",
   colorMode: "dark",
+  palette: "slate",
   accent: "slate",
   customAccentHex: "#6366F1",
   font: "plex",
@@ -173,6 +199,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       setQuietHoursStart: (quietHoursStart) => set({ quietHoursStart }),
       setQuietHoursEnd: (quietHoursEnd) => set({ quietHoursEnd }),
       setColorMode: (colorMode) => set({ colorMode }),
+      setPalette: (palette) => set({ palette }),
       setAccent: (accent) => set({ accent }),
       setCustomAccentHex: (customAccentHex) => set({ customAccentHex }),
       setFont: (font) => set({ font }),
@@ -216,9 +243,13 @@ export const usePreferencesStore = create<PreferencesState>()(
       name: "teamsly:prefs",
       // v2 (2026-05-26): adds font/fontScale/customAccentHex/soundTheme/soundVolume,
       // focusMode, snoozedContexts, quickReactEmojis, customSlashCommands,
-      // morningBrief*, lastNudgeDay. Zustand's persist default merge grafts new
-      // fields from in-code DEFAULTS, so no explicit migrate is required.
-      version: 2,
+      // morningBrief*, lastNudgeDay.
+      // v3 (2026-05-26 later): adds palette field, extends density to 3 values
+      // (comfortable | compact | cozy). Zustand's persist default merge grafts
+      // new fields from in-code DEFAULTS, so no explicit migrate is required;
+      // existing `density: "comfortable" | "compact"` values remain valid under
+      // the wider union.
+      version: 3,
       storage: createJSONStorage(() => (typeof window !== "undefined" ? localStorage : undefined as unknown as Storage)),
     },
   ),

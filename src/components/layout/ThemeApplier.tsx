@@ -2,25 +2,32 @@
 
 /**
  * Side-effect-only component that reflects the user's preferences onto the
- * documentElement as inline CSS custom properties:
+ * documentElement as inline CSS custom properties + data-attributes:
  *
- *   --font-sans   ← the active Google Font (Plex / Inter / Atkinson / JetBrains / Lora)
- *   --font-scale  ← reading-zoom multiplier (0.92 / 1 / 1.1)
- *   --accent      ← active accent color (preset or custom hex)
+ *   --font-sans       ← active Google Font CSS-var pointer
+ *   --font-scale      ← 0.92 / 1 / 1.1 reading-zoom multiplier
+ *   --accent          ← active accent color (preset or custom hex)
+ *   --accent-light    ← derived 15%-alpha tint of the accent
  *
- * Why inline-style on documentElement instead of body className: it composes
- * with the persisted hydration without flashing the wrong font/color before
- * the store rehydrates, and it works regardless of whether the user is on
- * the marketing page (no Sidebar) or the workspace (full shell).
+ *   data-color-mode   ← "light" | "dark" — drives the globals.css light block
+ *   data-palette      ← "slate" | "midnight" | "sepia" | "forest" — palette overlay
+ *   data-density      ← "comfortable" | "compact" | "cozy" — drives density vars
  *
- * Also wires the color-mode preference to the `data-theme` attribute that
- * globals.css's light-theme block keys off of.
+ *   body.focus-mode   ← class toggled by Cmd+Shift+F. Components opt into
+ *                       hiding chrome via the `.focus-mode-hide` utility.
+ *
+ * Palette / color-mode interaction: some palettes are mode-locked (midnight
+ * is always dark, sepia is always light). When the user picks one, the
+ * effective color-mode is overridden to match — preserves the user's
+ * preferred mode for other palettes (slate, forest) but keeps mode-locked
+ * palettes from rendering as broken hybrids.
  */
 
 import { useEffect } from "react";
 import {
   FONT_OPTIONS,
   FONT_SCALES,
+  PALETTES,
   resolveAccentHex,
   usePreferencesStore,
 } from "@/store/preferences";
@@ -29,8 +36,10 @@ export function ThemeApplier() {
   const font = usePreferencesStore((s) => s.font);
   const fontScale = usePreferencesStore((s) => s.fontScale);
   const colorMode = usePreferencesStore((s) => s.colorMode);
+  const palette = usePreferencesStore((s) => s.palette);
   const accent = usePreferencesStore((s) => s.accent);
   const customAccentHex = usePreferencesStore((s) => s.customAccentHex);
+  const density = usePreferencesStore((s) => s.density);
   const focusMode = usePreferencesStore((s) => s.focusMode);
   const darkInFocusMode = usePreferencesStore((s) => s.darkInFocusMode);
 
@@ -49,15 +58,16 @@ export function ThemeApplier() {
     // Accent — preset or custom hex. resolveAccentHex hardens the custom path.
     const hex = resolveAccentHex(accent, customAccentHex);
     root.style.setProperty("--accent", hex);
-    // Lighter alpha tint for selected backgrounds, derived from the accent
-    // hex; keeps the 'subtle accent surface' affordance consistent.
     root.style.setProperty("--accent-light", `${hex}26`);
 
-    // Color mode — light variant lives behind [data-theme="light"] in globals.css.
-    // When focus mode is on and the user asked to force dark, keep dark even
-    // if their global preference is light.
-    let effectiveMode: "light" | "dark" = "dark";
-    if (focusMode && darkInFocusMode) {
+    // Color mode. The user's pref is the baseline, but:
+    //   - if the active palette is mode-locked, force its mode
+    //   - if focus mode is on and the user asked to force dark, use dark
+    let effectiveMode: "light" | "dark";
+    const locked = PALETTES[palette]?.lockedMode ?? null;
+    if (locked) {
+      effectiveMode = locked;
+    } else if (focusMode && darkInFocusMode) {
       effectiveMode = "dark";
     } else if (colorMode === "system") {
       effectiveMode =
@@ -68,18 +78,16 @@ export function ThemeApplier() {
       effectiveMode = colorMode;
     }
 
-    // globals.css keys color overrides off [data-color-mode="light|dark"].
     root.setAttribute("data-color-mode", effectiveMode);
+    root.setAttribute("data-palette", palette);
+    root.setAttribute("data-density", density);
 
-    // Focus mode is exposed as a body class so components can hide secondary
-    // chrome via Tailwind's `[body.focus-mode_&]:hidden` arbitrary selectors
-    // without each one wiring its own subscription to the store.
     if (focusMode) {
       document.body.classList.add("focus-mode");
     } else {
       document.body.classList.remove("focus-mode");
     }
-  }, [font, fontScale, colorMode, accent, customAccentHex, focusMode, darkInFocusMode]);
+  }, [font, fontScale, colorMode, palette, accent, customAccentHex, density, focusMode, darkInFocusMode]);
 
   return null;
 }

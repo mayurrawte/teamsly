@@ -12,7 +12,6 @@ import { AddReactionPill, ReactionPill } from "./ReactionPill";
 import { formatMessageTime, formatFullTimestamp } from "@/lib/utils/dates";
 import { messagePlainText, renderMessageBody } from "@/lib/utils/render-message";
 import type { ReactionType } from "@/lib/utils/reactions";
-import { usePreferencesStore } from "@/store/preferences";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useBookmarksStore } from "@/store/bookmarks";
 import { cn } from "@/lib/utils";
@@ -59,7 +58,6 @@ export function MessageItem({
   onRetry,
   onDiscard,
 }: Props) {
-  const density = usePreferencesStore((state) => state.density);
   const currentUserId = useWorkspaceStore((state) => state.currentUserId);
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState("");
@@ -94,9 +92,31 @@ export function MessageItem({
   const isNew =
     message.__pending ||
     Date.now() - new Date(message.createdDateTime).getTime() < 3000;
-  const animationStyle = isNew
-    ? { animation: "message-in 180ms ease-out both" }
-    : undefined;
+  // Density vars drive padding via inline style so the density preset is the
+  // single source of truth — no more 2-branch ternary that ignores "cozy".
+  // The group-head row (`isGroupHead`) gets extra top spacing so groups
+  // separate visually; the continuation row keeps padding symmetric.
+  const densityRowStyle: React.CSSProperties = isGroupHead
+    ? {
+        paddingTop: "calc(var(--density-row-py) * 2 + 2px)",
+        paddingBottom: "var(--density-row-py)",
+      }
+    : {
+        paddingTop: "var(--density-row-py)",
+        paddingBottom: "var(--density-row-py)",
+      };
+  const animationStyle: React.CSSProperties = {
+    ...densityRowStyle,
+    ...(isNew
+      ? { animation: "message-in var(--motion-base) var(--ease-out-soft) both" }
+      : {}),
+  };
+  // Density-driven body typography for the message-body div. Kept separate
+  // so the row chrome stays themable independently from text rendering.
+  const bodyDensityStyle: React.CSSProperties = {
+    fontSize: "var(--density-message-font-size)",
+    lineHeight: "var(--density-message-line-height)",
+  };
 
   const handleSaveToggle = canSave
     ? () => {
@@ -258,7 +278,6 @@ export function MessageItem({
         onMouseLeave={quickReact.onMouseLeave}
         className={cn(
           "group relative flex px-4 transition-colors duration-[80ms] ease-out hover:bg-[var(--message-hover-bg)]",
-          density === "compact" ? "py-0" : "py-[2px]",
           message.__pending && "opacity-60",
           message.__failed && "border-l-2 border-red-500/60"
         )}
@@ -295,7 +314,10 @@ export function MessageItem({
           ) : (
             hasBody && (
               <>
-                <div className={`message-body break-words text-[14px] leading-[1.5] text-[var(--text-primary)]${isRecentSlashResult ? " slash-fx-pop" : ""}`}>
+                <div
+                  style={bodyDensityStyle}
+                  className={`message-body break-words text-[var(--text-primary)]${isRecentSlashResult ? " slash-fx-pop" : ""}`}
+                >
                   {renderMessageBody(message.body.content, message.body.contentType)}
                 </div>
                 <GitHubCards text={content} />
@@ -325,7 +347,6 @@ export function MessageItem({
       onMouseLeave={quickReact.onMouseLeave}
       className={cn(
         "group relative flex gap-2 px-4 transition-colors duration-[80ms] ease-out hover:bg-[var(--message-hover-bg)]",
-        density === "compact" ? "pb-0 pt-1" : "pb-[2px] pt-2",
         message.__pending && "opacity-60",
         message.__failed && "border-l-2 border-red-500/60 pl-2"
       )}

@@ -780,11 +780,16 @@ function SidebarItem({
   return (
     <button
       onClick={onClick}
+      style={{
+        paddingTop: "var(--density-sidebar-row-py)",
+        paddingBottom: "var(--density-sidebar-row-py)",
+        fontSize: "var(--density-sidebar-font-size)",
+      }}
       className={cn(
-        "mx-2 flex h-[28px] w-[calc(100%-16px)] items-center gap-2 rounded-md px-2 text-[13px] transition-colors duration-[80ms] ease-out focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
+        "press-snap mx-2 flex w-[calc(100%-16px)] items-center gap-2 rounded-md px-2 transition-colors [transition-duration:var(--motion-fast)] [transition-timing-function:var(--ease-out-soft)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
         active
-          ? "bg-[var(--accent)] text-white"
-          : "text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-white"
+          ? "bg-[var(--accent)] text-[var(--text-white)]"
+          : "text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-primary)]"
       )}
     >
       <span className="flex-shrink-0 opacity-70">{icon}</span>

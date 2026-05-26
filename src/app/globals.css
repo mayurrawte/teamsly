@@ -76,6 +76,65 @@ button:disabled,
   /* Reading-zoom multiplier driven by the prefs font-size scale (sm/md/lg).
      Components that opt in use clamp(...) * var(--font-scale) on their text. */
   --font-scale: 1;
+
+  /* ─── Motion language ─────────────────────────────────────────────────
+     A coherent set of easing curves + durations applied across modals,
+     sidebar items, message arrival, reactions, and toast. The goal: every
+     transition in the app shares timing fingerprints so the whole product
+     feels like it was animated by one person. Components opt in by
+     referencing these vars instead of hand-rolled values. */
+  --ease-snap: cubic-bezier(0.32, 0.72, 0, 1);        /* iOS-style snappy */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);       /* gentle overshoot-free spring */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);    /* fade-in default */
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --motion-slow: 320ms;
+
+  /* ─── Density (defaults: comfortable) ──────────────────────────────────
+     Components use these vars in place of hardcoded padding/avatar sizes.
+     A [data-density="…"] attribute on documentElement overrides them. */
+  --density-row-py: 4px;
+  --density-row-px: 16px;
+  --density-message-gap: 8px;
+  --density-message-font-size: 14px;
+  --density-message-line-height: 1.5;
+  --density-avatar-size: 36px;
+  --density-sidebar-row-py: 4px;
+  --density-sidebar-font-size: 14px;
+}
+
+/* Reduce motion when the user (or their OS) asks for it. Components must
+   keep using the vars; this just zeroes out the timing so nothing animates. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+}
+
+/* ─── Density: compact ────────────────────────────────────────────────── */
+[data-density="compact"] {
+  --density-row-py: 1px;
+  --density-row-px: 12px;
+  --density-message-gap: 6px;
+  --density-message-font-size: 13.5px;
+  --density-message-line-height: 1.38;
+  --density-avatar-size: 28px;
+  --density-sidebar-row-py: 1px;
+  --density-sidebar-font-size: 13px;
+}
+
+/* ─── Density: cozy ───────────────────────────────────────────────────── */
+[data-density="cozy"] {
+  --density-row-py: 8px;
+  --density-row-px: 20px;
+  --density-message-gap: 10px;
+  --density-message-font-size: 15px;
+  --density-message-line-height: 1.65;
+  --density-avatar-size: 40px;
+  --density-sidebar-row-py: 6px;
+  --density-sidebar-font-size: 14.5px;
 }
 
 /* ─── Dark mode (explicit or inherited default) ─────────────────────────── */
@@ -124,6 +183,136 @@ button:disabled,
   --reaction-border: #c7c9cc;
   --reaction-active-bg: rgba(99, 102, 241, 0.12);
   --reaction-active-border: var(--accent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Palette overlays
+   ───────────────────────────────────────────────────────────────────────
+   A *palette* swaps the background + neutral text palette without
+   touching layout, accent, font, or density. Cascade order means these
+   blocks come AFTER the color-mode blocks, so they win. Each palette
+   re-declares only the vars it diverges on; everything else inherits.
+
+   Mode-locked palettes (midnight = dark, sepia = light) declare their
+   colors unconditionally because the ThemeApplier forces the matching
+   color-mode attribute when the user picks them.
+   ═════════════════════════════════════════════════════════════════════ */
+
+/* Midnight — true black, OLED-friendly, dark only. */
+[data-palette="midnight"] {
+  --sidebar-bg: #000000;
+  --sidebar-hover: #141416;
+  --sidebar-active-bg: var(--accent);
+  --content-bg: #000000;
+  --message-bg: #060608;
+  --message-hover-bg: #101013;
+  --input-bg: #0a0a0c;
+  --input-border: #1f1f24;
+  --modal-bg: #08080a;
+  --modal-overlay: rgba(0, 0, 0, 0.85);
+  --bg: #000000;
+  --surface: #060608;
+  --surface-raised: #141416;
+  --surface-hover: #101013;
+  --text: #e8e8ea;
+  --text-subtle: #a5a5a8;
+  --text-primary: #e8e8ea;
+  --text-secondary: #a5a5a8;
+  --text-muted: #6a6a6e;
+  --text-link: #a5b4fc;
+  --text-mention: #ef4d6d;
+  --text-white: #ffffff;
+  --border: #1f1f24;
+  --border-input: #2c2c30;
+  --reaction-bg: #101013;
+  --reaction-border: #1f1f24;
+}
+
+/* Sepia — warm cream, easier on the eyes, light only. */
+[data-palette="sepia"] {
+  --sidebar-bg: #e8dec7;
+  --sidebar-hover: #ddd1b5;
+  --sidebar-active-bg: var(--accent);
+  --content-bg: #f5efe2;
+  --message-bg: #efe8d4;
+  --message-hover-bg: #e6dcc1;
+  --input-bg: #faf5e9;
+  --input-border: #c8b896;
+  --modal-bg: #f5efe2;
+  --modal-overlay: rgba(60, 40, 20, 0.55);
+  --bg: #f5efe2;
+  --surface: #efe8d4;
+  --surface-raised: #e6dcc1;
+  --surface-hover: #ddd1b5;
+  --text: #3d2c20;
+  --text-subtle: #6a5640;
+  --text-primary: #3d2c20;
+  --text-secondary: #6a5640;
+  --text-muted: #9b8a73;
+  --text-link: #8b4513;
+  --text-mention: #a8324a;
+  --text-white: #f5efe2;
+  --border: #c8b896;
+  --border-input: #b09a76;
+  --status-online: #4d7c0f;
+  --status-away: #b45309;
+  --status-busy: #b91c1c;
+  --status-offline: #9b8a73;
+  --reaction-bg: #e6dcc1;
+  --reaction-border: #c8b896;
+}
+
+/* Forest — low-saturation greens, both modes. Dark variant first. */
+[data-palette="forest"] {
+  --sidebar-bg: #131816;
+  --sidebar-hover: #1c2521;
+  --sidebar-active-bg: var(--accent);
+  --content-bg: #161c19;
+  --message-bg: #1c241f;
+  --message-hover-bg: #232c26;
+  --input-bg: #1c241f;
+  --input-border: #2e3a32;
+  --modal-bg: #161c19;
+  --modal-overlay: rgba(8, 14, 11, 0.7);
+  --bg: #161c19;
+  --surface: #1c241f;
+  --surface-raised: #232c26;
+  --surface-hover: #2c372f;
+  --text-primary: #d8dcd6;
+  --text-secondary: #a8aea7;
+  --text-muted: #717673;
+  --border: #2e3a32;
+  --border-input: #3e4f44;
+  --reaction-bg: #232c26;
+  --reaction-border: #2e3a32;
+}
+
+/* Forest, light variant. */
+[data-palette="forest"][data-color-mode="light"] {
+  --sidebar-bg: #ecf1ea;
+  --sidebar-hover: #dde5da;
+  --sidebar-active-bg: var(--accent);
+  --content-bg: #f5f8f3;
+  --message-bg: #ecf1ea;
+  --message-hover-bg: #e0e8dc;
+  --input-bg: #ffffff;
+  --input-border: #c5d2c1;
+  --modal-bg: #f5f8f3;
+  --modal-overlay: rgba(30, 50, 35, 0.45);
+  --bg: #f5f8f3;
+  --surface: #ecf1ea;
+  --surface-raised: #e0e8dc;
+  --surface-hover: #d3ddce;
+  --text-primary: #1c2820;
+  --text-secondary: #4a5a4e;
+  --text-muted: #7a8a7d;
+  --text-link: #2d6a4f;
+  --text-mention: #a8324a;
+  --text-white: #f5f8f3;
+  --border: #c5d2c1;
+  --border-input: #a7b5a3;
+  --reaction-bg: #e0e8dc;
+  --reaction-border: #c5d2c1;
 }
 
 * {
@@ -187,18 +376,14 @@ body {
 }
 
 @keyframes search-modal-overlay-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 @keyframes search-modal-content-in {
   from {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.96);
+    transform: translate(-50%, calc(-50% + 6px)) scale(0.97);
   }
   to {
     opacity: 1;
@@ -207,7 +392,7 @@ body {
 }
 
 .search-modal-overlay[data-state="open"] {
-  animation: search-modal-overlay-in 200ms ease;
+  animation: search-modal-overlay-in var(--motion-base) var(--ease-out-soft);
 }
 
 .search-modal-content {
@@ -215,7 +400,43 @@ body {
 }
 
 .search-modal-content[data-state="open"] {
-  animation: search-modal-content-in 200ms ease forwards;
+  animation: search-modal-content-in var(--motion-base) var(--ease-spring) forwards;
+}
+
+/* ─── Motion language utility classes ──────────────────────────────────
+   Apply these on any element that needs the standard app entrance/feel.
+   They share timing tokens with every other animated element, so the
+   whole product feels like a single coherent motion system. */
+
+@keyframes motion-fade-up {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.motion-fade-up {
+  animation: motion-fade-up var(--motion-base) var(--ease-out-soft) both;
+}
+
+@keyframes motion-pop-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.motion-pop-in {
+  animation: motion-pop-in var(--motion-base) var(--ease-spring) both;
+}
+
+@keyframes motion-slide-in-right {
+  from { opacity: 0; transform: translateX(8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.motion-slide-in-right {
+  animation: motion-slide-in-right var(--motion-base) var(--ease-spring) both;
+}
+
+/* Press-feedback utility — drop opacity + tiny scale on :active.
+   Apply alongside `transition-transform transition-opacity duration-100`. */
+.press-snap:active {
+  transform: scale(0.96);
+  opacity: 0.85;
 }
 
 @keyframes reaction-pop {
@@ -231,11 +452,7 @@ body {
 }
 
 .boot-nudge {
-  animation: boot-nudge-in 320ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .boot-nudge { animation: none; }
+  animation: boot-nudge-in var(--motion-slow) var(--ease-spring);
 }
 
 /* Focus mode utility — components opt in via `[body.focus-mode_&]:hidden`

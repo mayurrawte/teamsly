@@ -359,7 +359,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             type="button"
             aria-label="Open search"
             onClick={() => useSearchStore.getState().open()}
-            className="flex h-8 w-full max-w-[480px] items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface-raised)] px-3 text-[13px] text-[var(--text-muted)] transition-colors hover:border-[var(--text-muted)] hover:bg-[var(--surface-hover)] focus-ring"
+            className="press-snap flex h-8 w-full max-w-[480px] items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface-raised)] px-3 text-[13px] text-[var(--text-muted)] transition-colors [transition-duration:var(--motion-fast)] hover:border-[var(--text-muted)] hover:bg-[var(--surface-hover)] focus-ring"
           >
             <Search className="h-3.5 w-3.5 flex-shrink-0 text-[var(--text-muted)]" />
             <span className="flex-1 text-left">Search Teamsly</span>
@@ -372,7 +372,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             type="button"
             aria-label="Open catch-up digest"
             onClick={() => openCatchUp(true)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)]/15 px-3 py-1.5 text-[13px] font-medium text-[var(--accent)] transition-colors hover:bg-[var(--accent)]/25"
+            className="press-snap inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)]/15 px-3 py-1.5 text-[13px] font-medium text-[var(--accent)] transition-colors [transition-duration:var(--motion-fast)] hover:bg-[var(--accent)]/25"
           >
             <Sparkles className="h-3.5 w-3.5" />
             Catch up

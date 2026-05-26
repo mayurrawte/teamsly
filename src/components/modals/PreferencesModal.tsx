@@ -9,7 +9,7 @@ import {
   Laptop,
   User,
   Bell,
-  Palette,
+  Palette as PaletteIcon,
   MessageSquare,
   Keyboard,
   Accessibility,
@@ -25,12 +25,16 @@ import {
   ACCENT_THEMES,
   FONT_OPTIONS,
   FONT_SCALES,
+  PALETTES,
+  DENSITY_LABELS,
   isValidHex,
   type ColorMode,
   type AccentTheme,
   type FontFamily,
   type FontScale,
   type SoundTheme,
+  type Palette,
+  type Density,
 } from "@/store/preferences";
 import { playNotificationTone } from "@/lib/utils/sound";
 
@@ -54,7 +58,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { key: "availability",   label: "Availability",     icon: User },
   { key: "notifications",  label: "Notifications",    icon: Bell },
-  { key: "appearance",     label: "Appearance",       icon: Palette },
+  { key: "appearance",     label: "Appearance",       icon: PaletteIcon },
   { key: "messages",       label: "Messages & media", icon: MessageSquare },
   { key: "shortcuts",      label: "Keyboard",         icon: Keyboard },
   { key: "accessibility",  label: "Accessibility",    icon: Accessibility },
@@ -150,12 +154,16 @@ export function PreferencesModal({ open, onOpenChange }: Props) {
 
 function AppearancePanel() {
   const colorMode = usePreferencesStore((s) => s.colorMode);
+  const palette = usePreferencesStore((s) => s.palette);
+  const density = usePreferencesStore((s) => s.density);
   const accent = usePreferencesStore((s) => s.accent);
   const customAccentHex = usePreferencesStore((s) => s.customAccentHex);
   const font = usePreferencesStore((s) => s.font);
   const fontScale = usePreferencesStore((s) => s.fontScale);
   const darkInFocusMode = usePreferencesStore((s) => s.darkInFocusMode);
   const setColorMode = usePreferencesStore((s) => s.setColorMode);
+  const setPalette = usePreferencesStore((s) => s.setPalette);
+  const setDensity = usePreferencesStore((s) => s.setDensity);
   const setAccent = usePreferencesStore((s) => s.setAccent);
   const setCustomAccentHex = usePreferencesStore((s) => s.setCustomAccentHex);
   const setFont = usePreferencesStore((s) => s.setFont);
@@ -164,6 +172,74 @@ function AppearancePanel() {
 
   return (
     <div className="flex flex-col gap-7">
+      <FieldGroup
+        label="Theme"
+        hint="Background palette. Mode-locked themes force light or dark — your color-mode preference applies to Slate and Forest."
+      >
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          {(Object.entries(PALETTES) as [Palette, (typeof PALETTES)[Palette]][]).map(
+            ([key, info]) => {
+              const active = palette === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setPalette(key)}
+                  aria-pressed={active}
+                  title={info.description}
+                  className={`group flex flex-col gap-2 rounded-md border p-2 text-left transition-colors focus-ring press-snap ${
+                    active
+                      ? "border-[var(--accent)] bg-[var(--accent-light)]"
+                      : "border-[var(--border)] bg-[var(--surface)] hover:border-[var(--border-input)]"
+                  }`}
+                >
+                  <div className="flex h-10 overflow-hidden rounded">
+                    {info.swatch.map((c, i) => (
+                      <span key={i} className="flex-1" style={{ backgroundColor: c }} aria-hidden />
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[13px] font-semibold text-[var(--text-primary)]">{info.label}</p>
+                    {info.lockedMode && (
+                      <span className="rounded-sm bg-[var(--surface-raised)] px-1 text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                        {info.lockedMode}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            }
+          )}
+        </div>
+      </FieldGroup>
+
+      <FieldGroup label="Density" hint="How tightly the app packs information.">
+        <div className="flex flex-wrap gap-2">
+          {(Object.entries(DENSITY_LABELS) as [Density, (typeof DENSITY_LABELS)[Density]][]).map(
+            ([key, info]) => {
+              const active = density === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setDensity(key)}
+                  aria-pressed={active}
+                  title={info.hint}
+                  className={`flex flex-col items-start rounded-md border px-3 py-2 text-left transition-colors focus-ring press-snap ${
+                    active
+                      ? "border-[var(--accent)] bg-[var(--accent-light)]"
+                      : "border-[var(--border)] bg-[var(--surface)] hover:border-[var(--border-input)]"
+                  }`}
+                >
+                  <span className="text-[13px] font-semibold text-[var(--text-primary)]">{info.label}</span>
+                  <span className="text-[11px] text-[var(--text-muted)]">{info.hint}</span>
+                </button>
+              );
+            }
+          )}
+        </div>
+      </FieldGroup>
+
       <FieldGroup label="Font" hint="Used everywhere in the app. Live preview updates as you switch.">
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           {(Object.entries(FONT_OPTIONS) as [FontFamily, (typeof FONT_OPTIONS)[FontFamily]][]).map(
@@ -175,7 +251,7 @@ function AppearancePanel() {
                   type="button"
                   onClick={() => setFont(key)}
                   aria-pressed={active}
-                  className={`flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-left transition-colors focus-ring ${
+                  className={`flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-left transition-colors focus-ring press-snap ${
                     active
                       ? "border-[var(--accent)] bg-[var(--accent-light)]"
                       : "border-[var(--border)] bg-[var(--surface)] hover:border-[var(--border-input)]"
