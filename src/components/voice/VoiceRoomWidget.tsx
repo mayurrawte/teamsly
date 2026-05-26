@@ -9,7 +9,7 @@ import {
   useParticipants,
 } from "@livekit/components-react";
 import { ConnectionState } from "livekit-client";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle, Loader2, Mic, MicOff, PhoneOff, RotateCw } from "lucide-react";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { useToastStore } from "@/store/toasts";
@@ -22,15 +22,41 @@ import { useToastStore } from "@/store/toasts";
  * Connecting / Live / Reconnecting / Failed states so problems are visible,
  * and "Failed" gives the user a retry button instead of forcing them back
  * through the trigger.
+ *
+ * Defensive styling: we force `background-color` via inline style and bump
+ * the z-index above everything (z-[100]) because LiveKit's components-styles
+ * import can leak its own --lk-* vars onto the page; an inline opaque bg is
+ * the simplest belt-and-braces against a transparent widget. Esc anywhere
+ * cuts the call — important when the LiveKit signaling stalls and the
+ * PhoneOff button has stopped responding.
  */
 export function VoiceRoomWidget() {
   const { active, token, url, leave, rejoin } = useVoiceRoom();
   const [fatalError, setFatalError] = useState<string | null>(null);
 
+  // Global Esc → leave. Skip when the user is typing somewhere (e.g.
+  // dismissing a modal) so we don't yank them out of a call mid-edit.
+  useEffect(() => {
+    if (!active) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      const tgt = e.target as HTMLElement | null;
+      if (tgt && (tgt.isContentEditable || tgt.tagName === "INPUT" || tgt.tagName === "TEXTAREA")) return;
+      leave();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [active, leave]);
+
   if (!active || !token || !url) return null;
 
   return (
-    <div className="pointer-events-auto fixed bottom-4 right-4 z-50 w-80 rounded-lg border border-[var(--border)] bg-[var(--modal-bg)] shadow-[0_8px_32px_rgba(0,0,0,0.45)]">
+    <div
+      role="dialog"
+      aria-label={`Voice room: ${active.displayName}`}
+      style={{ backgroundColor: "var(--modal-bg)" }}
+      className="pointer-events-auto fixed bottom-4 right-4 z-[100] w-80 rounded-lg border border-[var(--border)] shadow-[0_12px_48px_rgba(0,0,0,0.55)] motion-pop-in"
+    >
       {fatalError ? (
         <FailedState
           message={fatalError}

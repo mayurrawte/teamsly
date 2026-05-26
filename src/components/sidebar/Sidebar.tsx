@@ -199,13 +199,21 @@ export function Sidebar() {
     };
   }, [chats, currentUserId, setPresenceMap, showToast]);
 
+  // Previous voiceCounts kept in a ref so we can detect 0→N+ transitions
+  // and fire a "voice room just opened" toast without re-toasting on every
+  // poll. Updated *after* each successful poll. First poll seeds the ref
+  // without any notifications so we don't surface rooms that were already
+  // active before the user opened the app.
+  const prevVoiceCountsRef = useRef<Record<string, number> | null>(null);
+
   useEffect(() => {
     const channelRooms = activeTeamId
-      ? teamChannels.map((ch) => ({ id: ch.id, room: `channel-${activeTeamId}-${ch.id}` }))
+      ? teamChannels.map((ch) => ({ id: ch.id, room: `channel-${activeTeamId}-${ch.id}`, label: `#${ch.displayName}` }))
       : [];
     const chatRooms = chats.map((chat) => ({
       id: chat.id,
       room: `chat-${chat.id.replace(/[^a-zA-Z0-9_-]/g, "-")}`,
+      label: getChatLabel(chat, currentUserId),
     }));
     const allRooms = [...channelRooms, ...chatRooms];
     if (allRooms.length === 0) return;
@@ -228,6 +236,24 @@ export function Sidebar() {
           const n = data.counts[room] ?? 0;
           if (n > 0) mapped[id] = n;
         }
+        // Detect 0→N transitions and notify. Skip on the very first poll
+        // (prev ref is null) so we don't toast every pre-existing room
+        // when the user first lands.
+        const prev = prevVoiceCountsRef.current;
+        if (prev) {
+          for (const { id, label } of allRooms) {
+            const before = prev[id] ?? 0;
+            const after = mapped[id] ?? 0;
+            if (before === 0 && after > 0) {
+              showToast({
+                title: `Voice room active in ${label}`,
+                description: `${after} ${after === 1 ? "person" : "people"} talking`,
+                tone: "info",
+              });
+            }
+          }
+        }
+        prevVoiceCountsRef.current = mapped;
         setVoiceCounts(mapped);
       } catch {
         // ignore — voice service may be unavailable
@@ -240,7 +266,7 @@ export function Sidebar() {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [activeTeamId, teamChannels, chats]);
+  }, [activeTeamId, teamChannels, chats, currentUserId, showToast]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
