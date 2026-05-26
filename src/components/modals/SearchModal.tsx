@@ -143,28 +143,32 @@ export function SearchModal({
       }}
     >
       <Dialog.Portal>
-        <Dialog.Overlay className="search-modal-overlay fixed inset-0 z-[60] bg-[rgba(0,0,0,0.7)] backdrop-blur-[2px]" />
+        <Dialog.Overlay className="search-modal-overlay fixed inset-0 z-[60] bg-[var(--modal-overlay)] backdrop-blur-[2px]" />
         <Dialog.Content
           aria-describedby={undefined}
           onOpenAutoFocus={(event) => {
             event.preventDefault();
             inputRef.current?.focus();
           }}
-          className="search-modal-content fixed top-1/2 z-[70] flex max-h-[70vh] w-[640px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-[#3f4144] bg-[#1a1d21] text-[#d1d2d3] shadow-[0_16px_64px_rgba(0,0,0,0.6)] outline-none" style={{ left: "calc(50% + 158px)" }}
+          className="search-modal-content fixed top-1/2 z-[70] flex max-h-[70vh] w-[640px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--modal-bg)] text-[var(--text-primary)] shadow-[0_16px_64px_rgba(0,0,0,0.6)] outline-none"
+          style={{ left: "calc(50% + var(--sidebar-offset) / 2)" }}
         >
           <Dialog.Title className="sr-only">Search</Dialog.Title>
-          <div className="flex items-center border-b border-[#3f4144]">
-            <Search className="ml-5 h-5 w-5 flex-shrink-0 text-[#ababad]" />
+          <div className="flex items-center border-b border-[var(--border)]">
+            <Search className="ml-5 h-5 w-5 flex-shrink-0 text-[var(--text-secondary)]" />
             <input
               ref={inputRef}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search..."
-              className="h-[58px] min-w-0 flex-1 bg-transparent px-3 text-[18px] text-[#d1d2d3] outline-none placeholder:text-[#6c6f75]"
+              placeholder="Search channels, DMs, messages…"
+              className="h-[58px] min-w-0 flex-1 bg-transparent px-3 text-[18px] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
             />
+            <kbd className="mr-3 hidden flex-shrink-0 items-center rounded border border-[var(--border)] bg-[var(--surface-raised)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--text-muted)] md:inline-flex">
+              esc
+            </kbd>
             <Dialog.Close
               aria-label="Close search"
-              className="mr-3 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-[#ababad] transition-colors duration-150 hover:bg-[#27292d] hover:text-white"
+              className="mr-3 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
             >
               <X size={16} />
             </Dialog.Close>
@@ -172,8 +176,8 @@ export function SearchModal({
 
           <div className="flex-1 overflow-y-auto px-3 py-3">
             {!hasResults ? (
-              <div className="px-3 py-10 text-center text-[13px] text-[#6c6f75]">
-                No results for <span className="font-bold text-[#ababad]">{query}</span>
+              <div className="px-3 py-10 text-center text-[13px] text-[var(--text-muted)]">
+                No results for <span className="font-bold text-[var(--text-secondary)]">{query}</span>
               </div>
             ) : (
               <div className="flex flex-col gap-4">
@@ -232,7 +236,7 @@ export function SearchModal({
 function ResultSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h3 className="px-3 pb-1 text-[12px] font-bold uppercase tracking-wide text-[#6c6f75]">{title}</h3>
+      <h3 className="px-3 pb-1 text-[12px] font-bold uppercase tracking-wide text-[var(--text-muted)]">{title}</h3>
       <div className="flex flex-col gap-1">{children}</div>
     </section>
   );
@@ -252,19 +256,19 @@ function MessageResult({ message, query, teamName, onSelect }: { message: MSMess
     <button
       type="button"
       onClick={onSelect}
-      className="flex w-full gap-2 rounded-md px-3 py-2 text-left transition-colors duration-[80ms] hover:bg-[#27292d]"
+      className="flex w-full gap-2 rounded-md px-3 py-2 text-left transition-colors duration-[80ms] hover:bg-[var(--surface-hover)]"
     >
-      <div className="mt-[3px] flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-[#0F5A8F] text-[10px] font-bold text-white">
+      <div className="mt-[3px] flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-[var(--accent)] text-[10px] font-bold text-[var(--text-white)]">
         {initials || "?"}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 text-[12px]">
-          <span className="font-bold text-[#d1d2d3]">{author}</span>
-          <span className="truncate text-[#6c6f75]">
+          <span className="font-bold text-[var(--text-primary)]">{author}</span>
+          <span className="truncate text-[var(--text-muted)]">
             {teamName} · {formatMessageTime(message.createdDateTime)}
           </span>
         </div>
-        <p className="truncate text-[13px] text-[#ababad]">{highlight(messageText(message), query)}</p>
+        <p className="truncate text-[13px] text-[var(--text-secondary)]">{highlight(messageText(message), query)}</p>
       </div>
     </button>
   );
@@ -287,14 +291,14 @@ function EntityResult({
     <button
       type="button"
       onClick={onSelect}
-      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition-colors duration-[80ms] hover:bg-[#27292d]"
+      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition-colors duration-[80ms] hover:bg-[var(--surface-hover)]"
     >
-      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-[#2c2d30] text-[#ababad]">
+      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-[var(--surface-raised)] text-[var(--text-secondary)]">
         {icon}
       </span>
       <span className="min-w-0">
-        <span className="block truncate text-[13px] font-bold text-[#d1d2d3]">{highlight(title, query)}</span>
-        <span className="block truncate text-[12px] text-[#6c6f75]">{subtitle}</span>
+        <span className="block truncate text-[13px] font-bold text-[var(--text-primary)]">{highlight(title, query)}</span>
+        <span className="block truncate text-[12px] text-[var(--text-muted)]">{subtitle}</span>
       </span>
     </button>
   );
@@ -308,7 +312,7 @@ function highlight(value: string, query: string): React.ReactNode {
   return (
     <>
       {value.slice(0, index)}
-      <span className="rounded-sm bg-[#0F5A8F] px-[2px] text-white">{value.slice(index, index + query.length)}</span>
+      <span className="rounded-sm bg-[var(--accent)] px-[2px] text-[var(--text-white)]">{value.slice(index, index + query.length)}</span>
       {value.slice(index + query.length)}
     </>
   );

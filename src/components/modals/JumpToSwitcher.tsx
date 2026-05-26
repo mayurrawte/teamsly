@@ -52,7 +52,7 @@ export function JumpToSwitcher({ open, onOpenChange, items }: JumpToSwitcherProp
       }}
     >
       <Dialog.Portal>
-        <Dialog.Overlay className="search-modal-overlay fixed inset-0 z-[60] bg-[rgba(0,0,0,0.7)] backdrop-blur-[2px]" />
+        <Dialog.Overlay className="search-modal-overlay fixed inset-0 z-[60] bg-[var(--modal-overlay)] backdrop-blur-[2px]" />
         <Dialog.Content
           aria-describedby={undefined}
           onOpenAutoFocus={(event) => {
@@ -73,32 +73,36 @@ export function JumpToSwitcher({ open, onOpenChange, items }: JumpToSwitcherProp
               selectItem(filtered[activeIndex]);
             }
           }}
-          className="search-modal-content fixed top-1/2 z-[70] flex max-h-[70vh] w-[640px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-[#3f4144] bg-[#1a1d21] text-[#d1d2d3] shadow-[0_16px_64px_rgba(0,0,0,0.6)] outline-none" style={{ left: "calc(50% + 158px)" }}
+          className="search-modal-content fixed top-1/2 z-[70] flex max-h-[70vh] w-[640px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--modal-bg)] text-[var(--text-primary)] shadow-[0_16px_64px_rgba(0,0,0,0.6)] outline-none"
+          style={{ left: "calc(50% + var(--sidebar-offset) / 2)" }}
         >
           <Dialog.Title className="sr-only">Jump to</Dialog.Title>
-          <div className="flex items-center border-b border-[#3f4144]">
-            <Search className="ml-5 h-5 w-5 flex-shrink-0 text-[#ababad]" />
+          <div className="flex items-center border-b border-[var(--border)]">
+            <Search className="ml-5 h-5 w-5 flex-shrink-0 text-[var(--text-secondary)]" />
             <input
               ref={inputRef}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Jump to..."
-              className="h-[58px] min-w-0 flex-1 bg-transparent px-3 text-[18px] text-[#d1d2d3] outline-none placeholder:text-[#6c6f75]"
+              placeholder="Jump to a channel or DM…"
+              className="h-[58px] min-w-0 flex-1 bg-transparent px-3 text-[18px] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
             />
+            <kbd className="mr-3 hidden flex-shrink-0 items-center rounded border border-[var(--border)] bg-[var(--surface-raised)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--text-muted)] md:inline-flex">
+              ⏎
+            </kbd>
             <Dialog.Close
               aria-label="Close jump to"
-              className="mr-3 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-[#ababad] transition-colors duration-150 hover:bg-[#27292d] hover:text-white"
+              className="mr-3 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
             >
               <X size={16} />
             </Dialog.Close>
           </div>
 
           <div className="flex-1 overflow-y-auto p-3">
-            <h3 className="px-3 pb-2 text-[12px] font-bold uppercase tracking-wide text-[#6c6f75]">
+            <h3 className="px-3 pb-2 text-[12px] font-bold uppercase tracking-wide text-[var(--text-muted)]">
               {query.trim() ? "Results" : "Recent"}
             </h3>
             {filtered.length === 0 ? (
-              <p className="px-3 py-8 text-center text-[13px] text-[#6c6f75]">No matching channels or DMs</p>
+              <p className="px-3 py-8 text-center text-[13px] text-[var(--text-muted)]">No matching channels or DMs</p>
             ) : (
               <div className="flex flex-col gap-1">
                 {filtered.map((item, index) => (
@@ -108,12 +112,16 @@ export function JumpToSwitcher({ open, onOpenChange, items }: JumpToSwitcherProp
                     onMouseEnter={() => setActiveIndex(index)}
                     onClick={() => selectItem(item)}
                     className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors duration-[80ms] ${
-                      index === activeIndex ? "bg-[#0F5A8F] text-white" : "text-[#d1d2d3] hover:bg-[#27292d]"
+                      index === activeIndex
+                        ? "bg-[var(--accent)] text-[var(--text-white)]"
+                        : "text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
                     }`}
                   >
                     <span
                       className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded ${
-                        index === activeIndex ? "bg-white/15 text-white" : "bg-[#2c2d30] text-[#ababad]"
+                        index === activeIndex
+                          ? "bg-white/15 text-[var(--text-white)]"
+                          : "bg-[var(--surface-raised)] text-[var(--text-secondary)]"
                       }`}
                     >
                       {item.type === "channel" ? (
@@ -124,7 +132,11 @@ export function JumpToSwitcher({ open, onOpenChange, items }: JumpToSwitcherProp
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-[14px] font-bold">{item.label}</span>
-                      <span className={`block truncate text-[12px] ${index === activeIndex ? "text-white/75" : "text-[#6c6f75]"}`}>
+                      <span
+                        className={`block truncate text-[12px] ${
+                          index === activeIndex ? "text-white/75" : "text-[var(--text-muted)]"
+                        }`}
+                      >
                         {item.subtitle}
                       </span>
                     </span>
