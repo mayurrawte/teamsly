@@ -73,7 +73,7 @@ export function JumpToSwitcher({ open, onOpenChange, items }: JumpToSwitcherProp
               selectItem(filtered[activeIndex]);
             }
           }}
-          className="search-modal-content fixed left-1/2 top-1/2 z-[70] flex max-h-[70vh] w-[640px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-[#3f4144] bg-[#1a1d21] text-[#d1d2d3] shadow-[0_16px_64px_rgba(0,0,0,0.6)] outline-none"
+          className="search-modal-content fixed top-1/2 z-[70] flex max-h-[70vh] w-[640px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-[#3f4144] bg-[#1a1d21] text-[#d1d2d3] shadow-[0_16px_64px_rgba(0,0,0,0.6)] outline-none" style={{ left: "calc(50% + 158px)" }}
         >
           <Dialog.Title className="sr-only">Jump to</Dialog.Title>
           <div className="flex items-center border-b border-[#3f4144]">

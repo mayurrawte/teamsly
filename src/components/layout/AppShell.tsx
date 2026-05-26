@@ -21,6 +21,7 @@ import { getChatLabel } from "@/lib/utils/chat-label";
 import { RealtimeEventsMount } from "@/hooks/useRealtimeEvents";
 import { CatchUpPanel } from "@/components/ai/CatchUpPanel";
 import { useCatchUpStore } from "@/store/catchUp";
+import { useSearchStore } from "@/store/search";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -74,7 +75,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const openCatchUp = useCatchUpStore((s) => s.setOpen);
   const showToast = useToastStore((state) => state.showToast);
   const [jumpToOpen, setJumpToOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const searchOpen = useSearchStore((s) => s.isOpen);
+  const closeSearch = useSearchStore((s) => s.close);
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
@@ -315,7 +317,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <button
             type="button"
             aria-label="Open search"
-            onClick={() => setSearchOpen(true)}
+            onClick={() => useSearchStore.getState().open()}
             className="flex h-8 w-full max-w-[480px] items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface-raised)] px-3 text-[13px] text-[var(--text-muted)] transition-colors hover:border-[var(--text-muted)] hover:bg-[var(--surface-hover)] focus-ring"
           >
             <Search className="h-3.5 w-3.5 flex-shrink-0 text-[var(--text-muted)]" />
@@ -359,7 +361,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <JumpToSwitcher open={jumpToOpen} onOpenChange={setJumpToOpen} items={items} />
       <SearchModal
         open={searchOpen}
-        onOpenChange={setSearchOpen}
+        onOpenChange={(v) => { if (!v) closeSearch(); }}
         teamName={teamName}
         channels={teamChannels}
         chats={chats}

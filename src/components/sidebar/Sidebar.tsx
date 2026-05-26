@@ -1,6 +1,6 @@
 "use client";
 
-import { EMPTY_MESSAGES, useWorkspaceStore } from "@/store/workspace";
+import { useWorkspaceStore } from "@/store/workspace";
 import { useRouter, useParams } from "next/navigation";
 import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search, Settings, UserPlus, Moon, LogOut, Inbox, GitBranch, Star, Check, Circle, CircleDot, BellOff, Clock, CircleOff, Smile, MessageCircleQuestion } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -19,7 +19,6 @@ async function handleSignOut() {
   await signOut({ callbackUrl: "/" });
 }
 import { UserFooter } from "./UserFooter";
-import { SearchModal, type SearchMessageOrigin } from "@/components/modals/SearchModal";
 import { PreferencesModal } from "@/components/modals/PreferencesModal";
 import { StatusMessageModal } from "@/components/modals/StatusMessageModal";
 import { FeedbackModal } from "@/components/modals/FeedbackModal";
@@ -68,8 +67,6 @@ export function Sidebar() {
   const params = useParams();
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
-  const searchOpen = useSearchStore((s) => s.isOpen);
-  const closeSearch = useSearchStore((s) => s.close);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -87,25 +84,6 @@ export function Sidebar() {
   const teamChannels = activeTeamId ? (channels[activeTeamId] ?? []) : [];
   const activeChannel = teamChannels.find((channel) => channel.id === activeChannelId);
   const activeChat = chats.find((chat) => chat.id === activeChatId);
-  const searchGroupName = activeChannel
-    ? `Messages in #${activeChannel.displayName}`
-    : activeChat
-      ? `Messages in ${getChatLabel(activeChat, currentUserId)}`
-      : "Messages";
-  // Active context messages + origin so SearchModal can match in-view messages
-  // and navigate to them with an `?anchor=` param.
-  const activeContextId = activeChannel && activeTeamId
-    ? `${activeTeamId}:${activeChannel.id}`
-    : activeChat?.id ?? null;
-  const activeMessages = useWorkspaceStore((s) =>
-    activeContextId ? (s.messagesByContext[activeContextId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES
-  );
-  const searchMessageOrigin: SearchMessageOrigin | undefined = activeChannel && activeTeamId
-    ? { kind: "channel", teamId: activeTeamId, channelId: activeChannel.id }
-    : activeChat
-      ? { kind: "chat", chatId: activeChat.id }
-      : undefined;
-
   // Unread items: channels + DMs with unreadCounts > 0
   const unreadChannelItems = teamChannels.filter((ch) => (unreadCounts[ch.id] ?? 0) > 0);
   const unreadChatItems = chats.filter((chat) => (unreadCounts[chat.id] ?? 0) > 0);
@@ -287,21 +265,6 @@ export function Sidebar() {
     markRead(chatId);
     setActiveChat(chatId);
     router.push(`/workspace/dm/${chatId}`);
-  }
-
-  function jumpToMessage(message: MSMessage, origin: SearchMessageOrigin) {
-    // Anchor-scroll the matched message after navigating. ChannelView/ChatView
-    // pick up the `?anchor=` param, pass it through MessageFeed, and clear it
-    // once the row is in view.
-    if (origin.kind === "channel") {
-      markRead(origin.channelId);
-      setActiveChannel(origin.channelId);
-      router.push(`/workspace/t/${origin.teamId}/${origin.channelId}?anchor=${encodeURIComponent(message.id)}`);
-    } else {
-      markRead(origin.chatId);
-      setActiveChat(origin.chatId);
-      router.push(`/workspace/dm/${origin.chatId}?anchor=${encodeURIComponent(message.id)}`);
-    }
   }
 
   function switchTeam(teamId: string) {
@@ -743,19 +706,6 @@ export function Sidebar() {
       </div>
 
       <UserFooter />
-      <SearchModal
-        open={searchOpen}
-        onOpenChange={(v) => { if (!v) closeSearch(); }}
-        teamName={activeTeam?.displayName ?? "Teamsly"}
-        channels={teamChannels}
-        chats={chats}
-        messages={activeMessages}
-        messageGroupName={searchGroupName}
-        messageOrigin={searchMessageOrigin}
-        onSelectChannel={(channelId) => goToChannel(channelId)}
-        onSelectChat={(chatId) => goToChat(chatId)}
-        onSelectMessage={jumpToMessage}
-      />
       <PreferencesModal open={settingsOpen} onOpenChange={setSettingsOpen} />
       <StatusMessageModal open={statusModalOpen} onOpenChange={setStatusModalOpen} />
       <FeedbackModal open={feedbackOpen} onOpenChange={setFeedbackOpen} />
