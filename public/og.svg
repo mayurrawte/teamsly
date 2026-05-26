@@ -1,0 +1,59 @@
+<svg viewBox="0 0 1200 630" width="1200" height="630" xmlns="http://www.w3.org/2000/svg" aria-label="Teamsly — A modern Microsoft Teams client built for focus">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0B0F1A"/>
+      <stop offset="55%" stop-color="#101733"/>
+      <stop offset="100%" stop-color="#1E1B4B"/>
+    </linearGradient>
+    <linearGradient id="gL" x1="500" y1="240" x2="600" y2="240" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#818CF8"/>
+    </linearGradient>
+    <linearGradient id="gR" x1="600" y1="240" x2="700" y2="240" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#22D3EE"/>
+    </linearGradient>
+    <linearGradient id="gB" x1="600" y1="240" x2="600" y2="340" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#60A5FA"/>
+    </linearGradient>
+    <linearGradient id="title" x1="0" y1="430" x2="1200" y2="430" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#C7D2FE"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <!-- faint dot grid -->
+  <g fill="#FFFFFF" opacity="0.045">
+    <circle cx="100" cy="100" r="1.5"/>
+    <circle cx="200" cy="100" r="1.5"/>
+    <circle cx="300" cy="100" r="1.5"/>
+    <circle cx="400" cy="100" r="1.5"/>
+    <circle cx="900" cy="500" r="1.5"/>
+    <circle cx="1000" cy="500" r="1.5"/>
+    <circle cx="1100" cy="500" r="1.5"/>
+    <circle cx="1050" cy="150" r="1.5"/>
+    <circle cx="150" cy="540" r="1.5"/>
+  </g>
+
+  <!-- logomark, scaled larger and centered above title -->
+  <g transform="translate(0, 0)">
+    <line x1="500" y1="240" x2="600" y2="240" stroke="url(#gL)" stroke-width="14" stroke-linecap="round"/>
+    <line x1="600" y1="240" x2="700" y2="240" stroke="url(#gR)" stroke-width="14" stroke-linecap="round"/>
+    <line x1="600" y1="240" x2="600" y2="340" stroke="url(#gB)" stroke-width="14" stroke-linecap="round"/>
+    <circle cx="500" cy="240" r="14" fill="#38BDF8"/>
+    <circle cx="700" cy="240" r="14" fill="#22D3EE"/>
+    <circle cx="600" cy="340" r="14" fill="#60A5FA"/>
+    <circle cx="600" cy="240" r="18" fill="#818CF8"/>
+  </g>
+
+  <text x="600" y="440" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="84" font-weight="700" fill="url(#title)" text-anchor="middle" letter-spacing="-2">
+    Teamsly
+  </text>
+  <text x="600" y="500" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="28" font-weight="500" fill="#A5B4FC" text-anchor="middle" letter-spacing="0.5">
+    A modern, open-source Microsoft Teams client
+  </text>
+  <text x="600" y="540" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="22" font-weight="400" fill="#94A3B8" text-anchor="middle" letter-spacing="0.3">
+    Built for focus · Real-time chat · AI catch-up · Voice rooms
+  </text>
+</svg>

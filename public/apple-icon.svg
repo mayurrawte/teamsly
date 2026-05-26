@@ -1,0 +1,28 @@
+<svg viewBox="0 0 180 180" width="180" height="180" xmlns="http://www.w3.org/2000/svg" aria-label="Teamsly">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1E1B4B"/>
+      <stop offset="100%" stop-color="#0B0F1A"/>
+    </linearGradient>
+    <linearGradient id="gL" x1="40" y1="80" x2="90" y2="80" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#818CF8"/>
+    </linearGradient>
+    <linearGradient id="gR" x1="90" y1="80" x2="140" y2="80" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#22D3EE"/>
+    </linearGradient>
+    <linearGradient id="gB" x1="90" y1="80" x2="90" y2="140" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#60A5FA"/>
+    </linearGradient>
+  </defs>
+  <rect width="180" height="180" rx="40" fill="url(#bg)"/>
+  <line x1="40" y1="80" x2="90" y2="80" stroke="url(#gL)" stroke-width="13" stroke-linecap="round"/>
+  <line x1="90" y1="80" x2="140" y2="80" stroke="url(#gR)" stroke-width="13" stroke-linecap="round"/>
+  <line x1="90" y1="80" x2="90" y2="140" stroke="url(#gB)" stroke-width="13" stroke-linecap="round"/>
+  <circle cx="40" cy="80" r="11" fill="#38BDF8"/>
+  <circle cx="140" cy="80" r="11" fill="#22D3EE"/>
+  <circle cx="90" cy="140" r="11" fill="#60A5FA"/>
+  <circle cx="90" cy="80" r="15" fill="#818CF8"/>
+</svg>

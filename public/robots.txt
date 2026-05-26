@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /$
+Allow: /login
+Allow: /demo
+Allow: /terms
+Allow: /privacy
+Disallow: /workspace
+Disallow: /api/
+
+Sitemap: https://teamsly.app/sitemap.xml

@@ -1,0 +1,26 @@
+{
+  "name": "Teamsly",
+  "short_name": "Teamsly",
+  "description": "A modern, open-source Microsoft Teams client built for focus.",
+  "start_url": "/workspace",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0B0F1A",
+  "theme_color": "#6366F1",
+  "categories": ["productivity", "social", "business"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-icon.svg",
+      "sizes": "180x180",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
