@@ -18,6 +18,9 @@ import { useBookmarksStore } from "@/store/bookmarks";
 import { cn } from "@/lib/utils";
 import { detectGitHubLinks } from "@/lib/integrations/github-detect";
 import { GitHubCard } from "./GitHubCard";
+import { detectRichLinks } from "@/lib/integrations/link-detect";
+import { LinkPreviewCard } from "./LinkPreviewCard";
+import { useQuickReact } from "@/hooks/useQuickReact";
 
 interface Props {
   message: MSMessage;
@@ -76,6 +79,14 @@ export function MessageItem({
   const canSave = Boolean(
     contextId && !message.__pending && !message.__failed
   );
+
+  // Quick-react: hover this row and press 1–6 to react. Suppress while
+  // editing so the keystrokes go to the textarea, and on optimistic/failed
+  // messages where there's no stable id to react against.
+  const quickReact = useQuickReact({
+    onReact: onToggleReaction ? (rt) => onToggleReaction(message.id, rt) : undefined,
+    disabled: isEditing || Boolean(message.__pending || message.__failed),
+  });
 
   // Animate messages that just arrived (within the last 3s) or are optimistic
   // sends. This covers real-time inbound messages and the user's own pending
@@ -243,6 +254,8 @@ export function MessageItem({
       <div
         data-message-id={message.id}
         style={animationStyle}
+        onMouseEnter={quickReact.onMouseEnter}
+        onMouseLeave={quickReact.onMouseLeave}
         className={cn(
           "group relative flex px-4 transition-colors duration-[80ms] ease-out hover:bg-[var(--message-hover-bg)]",
           density === "compact" ? "py-0" : "py-[2px]",
@@ -286,6 +299,7 @@ export function MessageItem({
                   {renderMessageBody(message.body.content, message.body.contentType)}
                 </div>
                 <GitHubCards text={content} />
+                <RichLinkCards text={content} />
               </>
             )
           )}
@@ -307,6 +321,8 @@ export function MessageItem({
     <div
       data-message-id={message.id}
       style={animationStyle}
+      onMouseEnter={quickReact.onMouseEnter}
+      onMouseLeave={quickReact.onMouseLeave}
       className={cn(
         "group relative flex gap-2 px-4 transition-colors duration-[80ms] ease-out hover:bg-[var(--message-hover-bg)]",
         density === "compact" ? "pb-0 pt-1" : "pb-[2px] pt-2",
@@ -382,6 +398,16 @@ function GitHubCards({ text }: { text: string }) {
   return (
     <div className="mt-1 flex flex-col gap-2">
       {links.map((link) => <GitHubCard key={link.url} link={link} />)}
+    </div>
+  );
+}
+
+function RichLinkCards({ text }: { text: string }) {
+  const links = detectRichLinks(text);
+  if (links.length === 0) return null;
+  return (
+    <div className="mt-1 flex flex-col gap-2">
+      {links.map((link) => <LinkPreviewCard key={link.url} link={link} />)}
     </div>
   );
 }

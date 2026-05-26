@@ -35,6 +35,8 @@ export function useSmartNotifications({
   const quietHoursEnabled = usePreferencesStore((state) => state.quietHoursEnabled);
   const quietHoursStart = usePreferencesStore((state) => state.quietHoursStart);
   const quietHoursEnd = usePreferencesStore((state) => state.quietHoursEnd);
+  const snoozedContexts = usePreferencesStore((state) => state.snoozedContexts);
+  const focusMode = usePreferencesStore((state) => state.focusMode);
   const lastMessageId = useRef<string | null>(null);
 
   useEffect(() => {
@@ -64,6 +66,23 @@ export function useSmartNotifications({
 
     // 3. Quiet hours window — skip both sound and OS notifications.
     if (quietHoursEnabled && inQuietHours(new Date(), quietHoursStart, quietHoursEnd)) return;
+
+    // 3a. Snooze: skip if this context has an active snooze. The contextId
+    // shape that arrives here is "teamId/channelId" for channels but our
+    // snooze store keys with "teamId:channelId" (same shape used elsewhere) —
+    // check both so either spelling matches.
+    if (contextId) {
+      const colonForm = contextId.replace("/", ":");
+      const expiresAt = snoozedContexts[contextId] ?? snoozedContexts[colonForm];
+      if (expiresAt && expiresAt > Date.now()) return;
+    }
+
+    // 3b. Focus mode — only let @-mentions through. Plain channel chatter
+    // is muted entirely.
+    if (focusMode) {
+      const hasMention = /@(?:here|channel|everyone|you)\b/i.test(text);
+      if (!hasMention) return;
+    }
 
     // 4. Focus / de-dupe guards.
     //    Skip when the renderer process is focused AND the user is on the
@@ -106,6 +125,8 @@ export function useSmartNotifications({
     quietHoursEnabled,
     quietHoursStart,
     quietHoursEnd,
+    snoozedContexts,
+    focusMode,
   ]);
 }
 

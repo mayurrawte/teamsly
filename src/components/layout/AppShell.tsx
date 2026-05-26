@@ -22,6 +22,10 @@ import { RealtimeEventsMount } from "@/hooks/useRealtimeEvents";
 import { CatchUpPanel } from "@/components/ai/CatchUpPanel";
 import { useCatchUpStore } from "@/store/catchUp";
 import { useSearchStore } from "@/store/search";
+import { markVisit } from "@/lib/storage/visit-counter";
+import { warmTopVisited } from "@/lib/storage/prefetch";
+import { BootNudge } from "@/components/ui/BootNudge";
+import { usePreferencesStore } from "@/store/preferences";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -77,23 +81,49 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [jumpToOpen, setJumpToOpen] = useState(false);
   const searchOpen = useSearchStore((s) => s.isOpen);
   const closeSearch = useSearchStore((s) => s.close);
+  const toggleFocusMode = usePreferencesStore((s) => s.toggleFocusMode);
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+      // Don't hijack shortcuts while the user is typing in a field.
+      const target = event.target as HTMLElement | null;
+      const inTextInput =
+        target && (target.isContentEditable || target.tagName === "INPUT" || target.tagName === "TEXTAREA");
+
+      // Cmd/Ctrl+K → quick switcher. Allowed even in text inputs — common Slack/Teams muscle memory.
+      if ((event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setJumpToOpen(true);
+        return;
+      }
+
+      // Cmd/Ctrl+Shift+F → toggle focus mode.
+      if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === "f") {
+        if (inTextInput) return; // don't override browser's find-in-text shortcut
+        event.preventDefault();
+        toggleFocusMode();
       }
     }
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [toggleFocusMode]);
 
   // Hydrate the per-context message cache from IndexedDB once on mount, so
   // ChannelView/ChatView's first render can return cached messages immediately
   // instead of waiting on Graph. Fire-and-forget — IDB is best-effort.
   useEffect(() => {
-    void hydrateMessageCache();
+    (async () => {
+      await hydrateMessageCache();
+      // After hydrate, kick off background fetches for the top-3 most-visited
+      // contexts that hydrate didn't already fill. This makes the user's *first*
+      // click after a cold start feel as fast as later clicks. We exclude the
+      // currently-active context — its own view will fetch on mount anyway.
+      const state = useWorkspaceStore.getState();
+      const activeId = state.activeChannelId && state.activeTeamId
+        ? `${state.activeTeamId}:${state.activeChannelId}`
+        : state.activeChatId ?? null;
+      void warmTopVisited(3, activeId);
+    })();
     // Same pattern for composer drafts and saved-message bookmarks — both
     // are also IDB-backed so they survive reloads. Hydration completes well
     // after the first render but that's fine: stores merge IDB into any
@@ -101,6 +131,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     void useDraftsStore.getState().hydrate();
     void useBookmarksStore.getState().hydrate();
   }, [hydrateMessageCache]);
+
+  // Record visits so the next cold-start prefetch knows what to warm. We watch
+  // the active-context derived id rather than each setActive* call so any
+  // navigation path (sidebar click, search, deep link) gets counted equally.
+  useEffect(() => {
+    if (activeChannelId && activeTeamId) {
+      markVisit({ kind: "channel", teamId: activeTeamId, channelId: activeChannelId });
+    } else if (activeChatId) {
+      markVisit({ kind: "chat", chatId: activeChatId });
+    }
+  }, [activeTeamId, activeChannelId, activeChatId]);
 
   useEffect(() => {
     fetch("/api/me")
@@ -375,6 +416,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <ToastViewport />
       <RealtimeEventsMount />
       <CatchUpPanel />
+      <BootNudge />
     </div>
   );
 }
