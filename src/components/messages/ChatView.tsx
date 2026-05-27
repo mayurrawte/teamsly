@@ -17,6 +17,7 @@ import { useToastStore } from "@/store/toasts";
 import { openTeamsCall } from "@/lib/utils/teams-deeplink";
 import { getChatLabel } from "@/lib/utils/chat-label";
 import { VoiceTrigger } from "@/components/voice/VoiceTrigger";
+import { wrapMessage } from "@/lib/utils/disappear";
 
 export function ChatView({ chatId }: { chatId: string }) {
   const {
@@ -159,14 +160,23 @@ export function ChatView({ chatId }: { chatId: string }) {
 
   async function handleSend(
     content: string,
-    options?: { mentions?: { id: string; name: string }[] }
+    options?: { mentions?: { id: string; name: string }[]; disappearMs?: number }
   ) {
     const tempId = `temp-${crypto.randomUUID()}`;
     const now = new Date().toISOString();
+
+    let outgoing = content;
+    if (options?.disappearMs) {
+      outgoing = await wrapMessage(chatId, content, Date.now() + options.disappearMs);
+    }
+
     const optimistic: MSMessage = {
       id: tempId,
       createdDateTime: now,
-      body: { contentType: "html", content: textToHtml(content) },
+      body: {
+        contentType: options?.disappearMs ? "text" : "html",
+        content: options?.disappearMs ? outgoing : textToHtml(content),
+      },
       from: { user: { id: currentUserId, displayName: currentUserName } },
       reactions: [],
       attachments: [],
@@ -180,7 +190,7 @@ export function ChatView({ chatId }: { chatId: string }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          content,
+          content: outgoing,
           // Only include the array when the user actually @mentioned someone.
           // The server route translates this into Graph's `mentions[]` shape
           // and rewrites the body with `<at>` markup; omit otherwise to avoid

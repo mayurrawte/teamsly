@@ -29,6 +29,7 @@ import { GifPicker } from "./GifPicker";
 import { SlashCommandMenu, useSlashMenu } from "./SlashCommandMenu";
 import { parseSlashCommand, type SlashCommand } from "@/lib/slash-commands";
 import { useCatchUpStore } from "@/store/catchUp";
+import { DISAPPEAR_DURATIONS } from "@/lib/utils/disappear";
 
 // emoji-mart ships a heavy data bundle — load lazily to keep the initial JS small
 const EmojiMartPicker = dynamic(() => import("@emoji-mart/react"), {
@@ -60,6 +61,7 @@ export interface PendingMention {
 
 export interface SendOptions {
   mentions?: PendingMention[];
+  disappearMs?: number; // when set, parent wraps the content as a disappearing message
 }
 
 interface Props {
@@ -188,6 +190,8 @@ export function MessageInput({
   const [sending, setSending] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [emojiOpen, setEmojiOpen] = useState(false);
+  const [disappearMs, setDisappearMs] = useState<number | null>(null);
+  const [showDisappearMenu, setShowDisappearMenu] = useState(false);
   const emojiAnchorRef = useRef<HTMLButtonElement>(null);
   const emojiContainerRef = useRef<HTMLDivElement>(null);
   // Mentions the user has accepted via the autocomplete (or `@everyone`).
@@ -567,9 +571,13 @@ export function MessageInput({
       // renders formatting correctly (contentType: "html" in graph/client.ts).
       await onSend(
         markdownToHtml(trimmed),
-        mentionsForSend.length > 0 ? { mentions: mentionsForSend } : undefined
+        {
+          ...(mentionsForSend.length > 0 ? { mentions: mentionsForSend } : {}),
+          ...(disappearMs ? { disappearMs } : {}),
+        }
       );
       setPendingMentions([]);
+      setDisappearMs(null);
     } catch {
       setValue(trimmed);
     } finally {
@@ -1154,6 +1162,42 @@ export function MessageInput({
                   GIF
                 </button>
               </GifPicker>
+
+              {/* Disappearing message duration picker */}
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-label="Disappearing message"
+                  onClick={() => setShowDisappearMenu((v) => !v)}
+                  className={`rounded p-1 text-[15px] transition-colors press-snap ${
+                    disappearMs ? "text-[var(--accent,#6366F1)]" : "text-[var(--text-secondary,#ababad)] hover:text-white"
+                  }`}
+                >
+                  ⏱{disappearMs ? <span className="ml-[2px] text-[10px]">on</span> : null}
+                </button>
+                {showDisappearMenu && (
+                  <div className="absolute bottom-full z-50 mb-2 min-w-[160px] rounded-md border border-[var(--border,#3f4144)] bg-[var(--modal-bg,#222529)] py-1 shadow-lg">
+                    <button
+                      type="button"
+                      onClick={() => { setDisappearMs(null); setShowDisappearMenu(false); }}
+                      className={`block w-full px-3 py-1 text-left text-[13px] hover:bg-[var(--bg-hover,#2a2d31)] ${disappearMs === null ? "text-[var(--accent,#6366F1)]" : "text-[var(--text-primary,#d1d2d3)]"}`}
+                    >
+                      Off
+                    </button>
+                    {DISAPPEAR_DURATIONS.map((d) => (
+                      <button
+                        key={d.ms}
+                        type="button"
+                        onClick={() => { setDisappearMs(d.ms); setShowDisappearMenu(false); }}
+                        className={`block w-full px-3 py-1 text-left text-[13px] hover:bg-[var(--bg-hover,#2a2d31)] ${disappearMs === d.ms ? "text-[var(--accent,#6366F1)]" : "text-[var(--text-primary,#d1d2d3)]"}`}
+                      >
+                        {d.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <button
                 ref={sendButtonRef}
                 type="button"
