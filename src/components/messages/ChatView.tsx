@@ -17,7 +17,7 @@ import { useToastStore } from "@/store/toasts";
 import { openTeamsCall } from "@/lib/utils/teams-deeplink";
 import { getChatLabel } from "@/lib/utils/chat-label";
 import { VoiceTrigger } from "@/components/voice/VoiceTrigger";
-import { wrapMessage } from "@/lib/utils/disappear";
+import { isDisappearing, unwrapMessage, wrapMessage } from "@/lib/utils/disappear";
 
 export function ChatView({ chatId }: { chatId: string }) {
   const {
@@ -50,10 +50,9 @@ export function ChatView({ chatId }: { chatId: string }) {
   const typingEnabled = usePreferencesStore((s) => s.typingIndicator);
   const [clockNow, setClockNow] = useState(() => Date.now());
   useEffect(() => {
-    if (!typingEnabled) return;
     const id = setInterval(() => setClockNow(Date.now()), 1000);
     return () => clearInterval(id);
-  }, [typingEnabled]);
+  }, []);
 
   // Search jump-to-message: pull `?anchor=` off the URL and forward to
   // MessageFeed. Cleared via router.replace once consumed so back/forward
@@ -69,6 +68,28 @@ export function ChatView({ chatId }: { chatId: string }) {
 
   const messages = getMessages(chatId);
   const chat = chats.find((c) => c.id === chatId);
+
+  // Sweep expired disappearing messages that we sent — only the sender can
+  // DELETE via Graph (403 for anyone else). Receivers hide locally instead.
+  const sweepExpired = useCallback(async (msgs: MSMessage[]) => {
+    const now = Date.now();
+    for (const m of msgs) {
+      if (m.__pending || m.__failed) continue;
+      if (m.from?.user?.id !== currentUserId) continue; // only delete our own (Graph 403s otherwise)
+      if (!isDisappearing(m.body.content)) continue;
+      const payload = await unwrapMessage(chatId, m.body.content);
+      if (!payload || payload.disappearAt > now) continue;
+      try {
+        const res = await fetch(
+          `/api/chats/${chatId}/messages/${encodeURIComponent(m.id)}`,
+          { method: "DELETE" }
+        );
+        if (res.ok) removeMessage(chatId, m.id);
+      } catch {
+        /* best-effort; retried on next poll */
+      }
+    }
+  }, [chatId, currentUserId, removeMessage]);
 
   // Compute typing indicator visibility — recalculates whenever clockNow ticks
   const { showTypingIndicator, typingPersonName } = useMemo(() => {
@@ -139,7 +160,11 @@ export function ChatView({ chatId }: { chatId: string }) {
         const response = await fetch(`/api/chats/${chatId}/messages`);
         if (!response.ok) throw new Error("Failed to load chat messages");
         const data = (await response.json()) as MSMessage[];
-        if (!cancelled) setMessages(chatId, sortByCreated(data));
+        const sorted = sortByCreated(data);
+        if (!cancelled) {
+          setMessages(chatId, sorted);
+          void sweepExpired(sorted);
+        }
       } catch {
         if (isFirstLoad && !cancelled) showToast({ title: "Could not load messages", tone: "error" });
       } finally {
@@ -156,7 +181,7 @@ export function ChatView({ chatId }: { chatId: string }) {
     };
     // getMessages is a stable selector — intentionally not in deps to avoid re-running on cache updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chatId, setLoadingMessages, setMessages, showToast]);
+  }, [chatId, setLoadingMessages, setMessages, showToast, sweepExpired]);
 
   async function handleSend(
     content: string,
