@@ -95,6 +95,12 @@ interface Props {
   currentUserId?: string;
   /** Channel/chat members available for /draw with no args. */
   channelMembers?: Array<{ id: string; displayName: string }>;
+  /**
+   * Show the disappearing-message (⏱) picker. Only DMs wire the send-side
+   * wrapping, so channels must leave this false — otherwise a user could set a
+   * timer expecting ephemerality while the message is sent as plaintext.
+   */
+  allowDisappearing?: boolean;
 }
 
 // Sentinel mention id for `@everyone`. The chat/channel API routes turn
@@ -185,6 +191,7 @@ export function MessageInput({
   currentUserName = "",
   currentUserId = "",
   channelMembers,
+  allowDisappearing,
 }: Props) {
   const [value, setValue] = useState("");
   const [sending, setSending] = useState(false);
@@ -1164,6 +1171,7 @@ export function MessageInput({
               </GifPicker>
 
               {/* Disappearing message duration picker */}
+              {allowDisappearing && (
               <div className="relative">
                 <button
                   type="button"
@@ -1197,6 +1205,7 @@ export function MessageInput({
                   </div>
                 )}
               </div>
+              )}
 
               <button
                 ref={sendButtonRef}

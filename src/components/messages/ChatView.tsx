@@ -516,6 +516,7 @@ export function ChatView({ chatId }: { chatId: string }) {
             currentUserId={currentUserId}
             currentUserName={currentUserName}
             channelMembers={mentionCandidates}
+            allowDisappearing
           />
         </>
       ) : (
