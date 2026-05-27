@@ -319,7 +319,7 @@ server.tool(
     query: z.string().describe("Name or partial name to search for, e.g. 'Priya' or 'Tom Baker'"),
   },
   async ({ query }) => {
-    const encoded = encodeURIComponent(`"${query}"`);
+    const encoded = encodeURIComponent(query);
     const data = (await graph(
       `/me/people?$search=${encoded}&$select=id,displayName,userPrincipalName&$top=5`
     )) as {
