@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Self-hosting Teamsly — teamsly.app</title>
+    <meta
+      name="description"
+      content="Run your own Teamsly instance. Quick-start guide: clone the repo, configure Azure AD credentials, and deploy to Vercel, Fly, Render, or bare Node 20+."
+    />
+    <meta name="theme-color" content="#0F5A8F" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Self-hosting Teamsly" />
+    <meta property="og:description" content="Quick-start self-hosting guide for Teamsly — the open-source Microsoft Teams client." />
+    <meta property="og:url" content="https://teamsly.app/install.html" />
+    <meta property="og:site_name" content="Teamsly" />
+
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a href="index.html" class="brand">
+          <svg class="brand-mark logo-mark" width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="2.5" cy="3.5" r="1.2" fill="currentColor" stroke="none" />
+            <circle cx="6.2" cy="1.4" r="0.9" fill="currentColor" stroke="none" />
+            <line x1="3.5" y1="3" x2="5.5" y2="2" stroke="currentColor" stroke-width="1" />
+            <rect x="3" y="5" width="18" height="13" rx="3" stroke="currentColor" stroke-width="2" />
+            <polyline points="5,18 3,22 7,18" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none" />
+            <polyline points="8,10.5 10.5,12 8,13.5" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none" />
+            <line x1="12.5" y1="13.5" x2="15.5" y2="13.5" stroke="currentColor" stroke-width="2" />
+          </svg>
+          <span class="brand-name">Teamsly</span>
+        </a>
+        <nav class="primary-nav" aria-label="Primary">
+          <a href="index.html#features">Features</a>
+          <a href="index.html#how">How it works</a>
+          <a href="index.html#compare">vs Teams</a>
+          <a href="index.html#download">Download</a>
+          <a href="index.html#roadmap">Roadmap</a>
+          <a href="install.html">Self-host</a>
+          <a href="index.html#faq">FAQ</a>
+        </nav>
+        <a class="btn btn-primary header-cta" href="https://github.com/mayurrawte/teamsly">
+          GitHub
+        </a>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero" style="padding-bottom:48px">
+        <div class="container">
+          <p class="kicker">Self-hosting guide</p>
+          <h1>Run your own Teamsly</h1>
+          <p class="lede">
+            Clone the repo, add your Azure AD credentials, and you have a fully self-hosted
+            Microsoft Teams client. Any Node 20+ host works — local, Vercel, Fly, Render, or Docker.
+          </p>
+        </div>
+      </section>
+
+      <section class="section" style="padding-top:0">
+        <div class="container">
+          <h2>Quick start</h2>
+          <p class="section-lede">Three commands to a running local instance.</p>
+
+          <div class="install-steps">
+            <div class="install-step">
+              <span class="install-step-num">1</span>
+              <div class="install-step-body">
+                <h3>Clone &amp; install</h3>
+                <pre><code>git clone https://github.com/mayurrawte/teamsly.git
+cd teamsly
+npm install</code></pre>
+              </div>
+            </div>
+
+            <div class="install-step">
+              <span class="install-step-num">2</span>
+              <div class="install-step-body">
+                <h3>Configure</h3>
+                <pre><code>cp .env.example .env.local</code></pre>
+                <p>Fill in <code>.env.local</code> with your Azure AD app credentials:</p>
+                <pre><code>AZURE_AD_CLIENT_ID=your-application-client-id
+AZURE_AD_CLIENT_SECRET=your-client-secret-value
+AZURE_AD_TENANT_ID=common
+AUTH_SECRET=                 <span class="hash"># openssl rand -base64 32</span>
+NEXTAUTH_URL=http://localhost:3000</code></pre>
+              </div>
+            </div>
+
+            <div class="install-step">
+              <span class="install-step-num">3</span>
+              <div class="install-step-body">
+                <h3>Run</h3>
+                <pre><code>npm run dev</code></pre>
+                <p>Open <code>http://localhost:3000</code> and sign in with your Microsoft 365 account.
+                  Visit <code>/demo</code> to preview the UI without auth.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout">
+            <p><strong>You need an Azure AD app registration.</strong> Teamsly authenticates
+              through Microsoft Entra ID. Before sign-in works you need an app registration
+              with the correct delegated Graph API permissions (User.Read, ChannelMessage.Read.All,
+              Chat.ReadWrite, and others).</p>
+            <a class="btn btn-primary" href="https://github.com/mayurrawte/teamsly/blob/main/SELF_HOSTING.md">
+              Full Azure AD setup guide →
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-alt">
+        <div class="container">
+          <h2>Deploy to production</h2>
+          <p class="section-lede">
+            Set the same five environment variables on any host and run <code>npm run build &amp;&amp; npm start</code>.
+          </p>
+
+          <div class="deploy-grid">
+            <div class="deploy-card">
+              <h3>Vercel</h3>
+              <p>One-click deploy. Import the repo, set the five env vars in the dashboard, done. Auto-deploys on push to main.</p>
+              <a class="btn btn-primary" href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmayurrawte%2Fteamsly&env=AZURE_AD_CLIENT_ID,AZURE_AD_CLIENT_SECRET,AZURE_AD_TENANT_ID,AUTH_SECRET,NEXTAUTH_URL">
+                Deploy to Vercel
+              </a>
+            </div>
+
+            <div class="deploy-card">
+              <h3>Fly / Render / Railway</h3>
+              <p>Any Node 20+ platform works. Set the five env vars and run the build + start commands. See the full deployment guide for platform-specific notes.</p>
+              <a href="https://github.com/mayurrawte/teamsly/blob/main/SELF_HOSTING.md#deployment">Deployment notes on GitHub →</a>
+            </div>
+
+            <div class="deploy-card">
+              <h3>Bare Node</h3>
+              <p>Build once, serve forever. Node 20+ required. Set <code>NEXTAUTH_URL</code> to your public URL before building.</p>
+              <pre><code>npm run build
+npm start</code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container faq" style="max-width:760px">
+          <h2>Troubleshooting</h2>
+
+          <div class="qa">
+            <h3>Auth redirect mismatch — sign-in fails immediately</h3>
+            <p>Your <code>NEXTAUTH_URL</code> must match the redirect URI registered in Azure AD.
+              Go to Azure Portal → your app → Authentication → add
+              <code>https://your-domain.com/api/auth/callback/microsoft-entra-id</code> as a Web redirect URI.</p>
+          </div>
+
+          <div class="qa">
+            <h3>Graph API returns 403 after sign-in</h3>
+            <p>Admin consent hasn't been granted for the required delegated permissions.
+              Go to Azure Portal → your app → API permissions → click
+              <strong>Grant admin consent for [your tenant]</strong>. You need Global Admin rights
+              (or ask your tenant admin).</p>
+          </div>
+
+          <div class="qa">
+            <h3>macOS Gatekeeper blocks the desktop app</h3>
+            <p>The desktop build is unsigned. Run once to clear the quarantine flag and apply an ad-hoc signature:</p>
+            <pre><code>sudo xattr -cr /Applications/Teamsly.app
+sudo codesign --force --deep --sign - /Applications/Teamsly.app</code></pre>
+            <p>Alternatively, install via Homebrew — the cask preflight script does this automatically:</p>
+            <pre><code>brew tap mayurrawte/teamsly
+brew install --cask teamsly</code></pre>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div class="footer-brand">
+          <div class="brand">
+            <svg class="brand-mark logo-mark" width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="2.5" cy="3.5" r="1.2" fill="currentColor" stroke="none" />
+              <circle cx="6.2" cy="1.4" r="0.9" fill="currentColor" stroke="none" />
+              <line x1="3.5" y1="3" x2="5.5" y2="2" stroke="currentColor" stroke-width="1" />
+              <rect x="3" y="5" width="18" height="13" rx="3" stroke="currentColor" stroke-width="2" />
+              <polyline points="5,18 3,22 7,18" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none" />
+              <polyline points="8,10.5 10.5,12 8,13.5" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none" />
+              <line x1="12.5" y1="13.5" x2="15.5" y2="13.5" stroke="currentColor" stroke-width="2" />
+            </svg>
+            <span class="brand-name">Teamsly</span>
+          </div>
+          <p>Open-source client for Microsoft Teams.<br>Self-hosted, AGPL-3.0.</p>
+        </div>
+
+        <div class="footer-cols">
+          <div>
+            <h4>Project</h4>
+            <a href="https://github.com/mayurrawte/teamsly">GitHub</a>
+            <a href="https://github.com/mayurrawte/teamsly/issues">Issues</a>
+            <a href="https://github.com/mayurrawte/teamsly/blob/main/LICENSE">License (AGPL-3.0)</a>
+          </div>
+          <div>
+            <h4>Docs</h4>
+            <a href="https://github.com/mayurrawte/teamsly/blob/main/README.md">README</a>
+            <a href="install.html">Self-host</a>
+            <a href="index.html#faq">FAQ</a>
+          </div>
+          <div>
+            <h4>Legal</h4>
+            <a href="https://github.com/mayurrawte/teamsly/blob/main/NOTICE.md">Notice</a>
+            <a href="https://github.com/mayurrawte/teamsly/blob/main/LICENSE">License</a>
+            <a href="https://github.com/mayurrawte">@mayurrawte</a>
+          </div>
+        </div>
+      </div>
+      <div class="container footer-bottom">
+        <span>&copy; 2026 Teamsly contributors</span>
+        <span>Not affiliated with Microsoft Corporation.</span>
+      </div>
+      <div class="container footer-disclaimer">
+        Teamsly is not affiliated with, endorsed by, or sponsored by Slack Technologies LLC, Salesforce Inc., or Microsoft Corporation.
+        Microsoft Teams is a trademark of Microsoft Corporation. Slack is a trademark of Slack Technologies LLC.
+        Both marks are used only as nominative references to their respective products.
+        Teamsly accesses Microsoft Teams data via the public Microsoft Graph API.
+        No private APIs, scraped content, or reverse-engineered protocols are used.
+        <a href="https://github.com/mayurrawte/teamsly/blob/main/NOTICE.md">Full notice</a> ·
+        <a href="https://github.com/mayurrawte/teamsly/blob/main/LICENSE">License</a> ·
+        <a href="https://github.com/mayurrawte/teamsly">GitHub</a>
+      </div>
+    </footer>
+  </body>
+</html>
