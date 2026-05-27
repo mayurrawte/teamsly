@@ -158,11 +158,17 @@ export async function sendChatMessage(
    * present, the body must contain `<at id="i">…</at>` markup for each
    * entry or Graph rejects the request.
    */
-  mentions?: unknown[]
+  mentions?: unknown[],
+  /**
+   * Graph body contentType. Use "text" for disappearing messages so the
+   * encrypted blob is stored and returned verbatim without HTML wrapping.
+   * Defaults to "html" for all normal messages.
+   */
+  contentType: "html" | "text" = "html"
 ) {
   const client = getGraphClient(accessToken);
   const payload: Record<string, unknown> = {
-    body: { content, contentType: "html" },
+    body: { content, contentType },
   };
   if (attachments?.length) {
     payload.attachments = attachments;

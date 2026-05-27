@@ -31,6 +31,7 @@ export function ChatView({ chatId }: { chatId: string }) {
     replaceMessage,
     markMessageFailed,
     removeMessage,
+    expireMessage,
     setLoadingMessages,
     toggleReaction,
     deleteMessage,
@@ -221,6 +222,9 @@ export function ChatView({ chatId }: { chatId: string }) {
           // and rewrites the body with `<at>` markup; omit otherwise to avoid
           // the round-trip cost of an extra rewrite pass.
           ...(options?.mentions?.length ? { mentions: options.mentions } : {}),
+          // Disappearing messages must be stored as plain text so Graph doesn't
+          // wrap the encrypted blob in HTML tags, which would break isDisappearing().
+          ...(options?.disappearMs ? { contentType: "text" } : {}),
         }),
       });
       if (!res.ok) throw new Error("Failed to send chat message");
@@ -388,6 +392,26 @@ export function ChatView({ chatId }: { chatId: string }) {
     removeMessage(chatId, messageId);
   }
 
+  // Called by MessageItem when a disappearing message's countdown reaches zero.
+  // Removes the message from local state immediately so it vanishes from the UI.
+  // For own messages the background sweep (sweepExpired) handles the Graph DELETE;
+  // for received messages no Graph action is needed (only the sender can delete).
+  const handleMessageExpire = useCallback((messageId: string) => {
+    // Look up ownership BEFORE tombstoning removes the message from the store.
+    const msg = getMessages(chatId).find((m) => m.id === messageId);
+    const isOwn = msg?.from?.user?.id === currentUserId;
+    // Tombstone so the 4s poll can't resurrect it (Graph still holds received msgs).
+    expireMessage(chatId, messageId);
+    // For our own messages, also delete server-side so the recipient stops
+    // seeing it too. Received messages can't be deleted (Graph 403s) — the
+    // local tombstone is all we can do.
+    if (isOwn) {
+      void fetch(`/api/chats/${chatId}/messages/${encodeURIComponent(messageId)}`, {
+        method: "DELETE",
+      });
+    }
+  }, [chatId, currentUserId, getMessages, expireMessage]);
+
   // Forward — optimistically append to the destination's cache and send via
   // the same /api/chats/{id}/messages or /api/messages/{teamId}/{channelId}
   // endpoints used by handleSend. We never mutate the destination's view
@@ -526,6 +550,7 @@ export function ChatView({ chatId }: { chatId: string }) {
             onEdit={handleEdit}
             onRetry={handleRetry}
             onDiscard={handleDiscard}
+            onExpire={handleMessageExpire}
           />
           {typingEnabled && showTypingIndicator && (
             <TypingIndicator name={typingPersonName} />

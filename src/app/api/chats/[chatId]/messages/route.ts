@@ -34,8 +34,10 @@ export async function POST(req: Request, { params }: { params: Params }) {
     content?: string;
     attachments?: unknown[];
     mentions?: ClientMention[];
+    /** "text" for disappearing messages — keeps the encrypted blob unmodified in Graph storage. */
+    contentType?: "html" | "text";
   };
-  const { content, attachments, mentions } = body;
+  const { content, attachments, mentions, contentType } = body;
   if (!content?.trim() && !attachments?.length) {
     return NextResponse.json({ error: "Empty message" }, { status: 400 });
   }
@@ -79,7 +81,8 @@ export async function POST(req: Request, { params }: { params: Params }) {
       chatId,
       finalContent,
       validatedAttachments,
-      graphMentions
+      graphMentions,
+      contentType
     );
     return NextResponse.json(msg);
   } catch {
@@ -93,7 +96,9 @@ export async function POST(req: Request, { params }: { params: Params }) {
           session.accessToken,
           chatId,
           finalContent,
-          validatedAttachments
+          validatedAttachments,
+          undefined,
+          contentType
         );
         return NextResponse.json(msg);
       } catch {

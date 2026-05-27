@@ -57,6 +57,7 @@ interface Props {
   onRetry?: (originalText: string) => void;
   onDiscard?: (messageId: string) => void;
   onSendOwn?: (callback: () => void) => void;
+  onExpire?: (messageId: string) => void;
 }
 
 // How long to leave the flash highlight on the anchored row before fading.
@@ -66,7 +67,7 @@ const ANCHOR_FLASH_MS = 1500;
 // the URL doesn't keep stale state.
 const ANCHOR_GIVE_UP_MS = 4000;
 
-export function MessageFeed({ messages, loading, contextName, bookmarkContextId, contextLabel, contextId, contextKind, currentUserId, introCard, anchorMessageId, onAnchorConsumed, onReplyInThread, onForward, onToggleReaction, onDelete, onEdit, onRetry, onDiscard }: Props) {
+export function MessageFeed({ messages, loading, contextName, bookmarkContextId, contextLabel, contextId, contextKind, currentUserId, introCard, anchorMessageId, onAnchorConsumed, onReplyInThread, onForward, onToggleReaction, onDelete, onEdit, onRetry, onDiscard, onExpire }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
@@ -232,6 +233,7 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
               onEdit={onEdit}
               onRetry={onRetry}
               onDiscard={onDiscard}
+              onExpire={onExpire}
             />
           </Fragment>
         ))}

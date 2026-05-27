@@ -44,6 +44,14 @@ interface WorkspaceState {
    * receiving view after the scroll-and-flash effect runs.
    */
   pendingAnchorMessageId: string | null;
+  /**
+   * IDs of disappearing messages whose countdown has fired. `setMessages`
+   * filters these out of every poll so Graph — which still holds *received*
+   * disappearing messages (only the sender can DELETE them) — can't resurrect
+   * an expired message on the next 4s refresh. In-memory only (not persisted):
+   * on reload MessageItem re-decodes and re-expires, so the set self-heals.
+   */
+  expiredMessageIds: Set<string>;
 
   setTeams: (teams: MSTeam[]) => void;
   setActiveTeam: (id: string) => void;
@@ -74,6 +82,11 @@ interface WorkspaceState {
   replaceMessage: (contextId: string, tempId: string, serverMessage: MSMessage) => void;
   markMessageFailed: (contextId: string, tempId: string) => void;
   removeMessage: (contextId: string, messageId: string) => void;
+  /**
+   * Tombstone a disappearing message whose timer fired: remove it now and add
+   * its id to `expiredMessageIds` so subsequent polls can't bring it back.
+   */
+  expireMessage: (contextId: string, messageId: string) => void;
   toggleReaction: (contextId: string, messageId: string, reactionType: string) => void;
   deleteMessage: (contextId: string, messageId: string) => { message: MSMessage; index: number } | null;
   restoreMessage: (contextId: string, message: MSMessage, index: number) => void;
@@ -117,6 +130,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       currentUserName: "You",
       starredIds: [],
       pendingAnchorMessageId: null,
+      expiredMessageIds: new Set<string>(),
 
       setTeams: (teams) => set({ teams }),
       setActiveTeam: (id) => set({ activeTeamId: id, activeChannelId: null }),
@@ -160,12 +174,19 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       setMessages: (contextId, incoming) =>
         set((s) => {
           const existing = s.messagesByContext[contextId] ?? [];
+          // Drop any disappearing message that already expired this session.
+          // Graph still serves received disappearing messages (the receiver
+          // can't DELETE them), so without this filter the next poll would
+          // resurrect a message the user already watched vanish.
+          const filtered = s.expiredMessageIds.size
+            ? incoming.filter((m) => !s.expiredMessageIds.has(m.id))
+            : incoming;
           // Preserve optimistic (pending/failed) messages that the server response
           // won't contain — they live only in local state until confirmed or failed.
           const pending = existing.filter((m) => m.__pending || m.__failed);
-          const serverIds = new Set(incoming.map((m) => m.id));
+          const serverIds = new Set(filtered.map((m) => m.id));
           const uniquePending = pending.filter((m) => !serverIds.has(m.id));
-          const merged = trimToMax(sortByCreatedDateTime([...incoming, ...uniquePending]));
+          const merged = trimToMax(sortByCreatedDateTime([...filtered, ...uniquePending]));
           persistContext(contextId, merged);
           return {
             messagesByContext: { ...s.messagesByContext, [contextId]: merged },
@@ -248,6 +269,22 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           const next = existing.filter((m) => m.id !== messageId);
           persistContext(contextId, next);
           return {
+            messagesByContext: {
+              ...s.messagesByContext,
+              [contextId]: next,
+            },
+          };
+        }),
+
+      expireMessage: (contextId, messageId) =>
+        set((s) => {
+          const existing = s.messagesByContext[contextId] ?? [];
+          const next = existing.filter((m) => m.id !== messageId);
+          persistContext(contextId, next);
+          const expiredMessageIds = new Set(s.expiredMessageIds);
+          expiredMessageIds.add(messageId);
+          return {
+            expiredMessageIds,
             messagesByContext: {
               ...s.messagesByContext,
               [contextId]: next,

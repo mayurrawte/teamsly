@@ -44,6 +44,12 @@ interface Props {
   onEdit?: (messageId: string, newContent: string) => Promise<void> | void;
   onRetry?: (originalText: string) => void;
   onDiscard?: (messageId: string) => void;
+  /**
+   * Called when a disappearing message's timer reaches zero so the parent
+   * can remove it from its store. Fired for both own and received messages.
+   * For received messages this is local-only removal (sender handles Graph DELETE).
+   */
+  onExpire?: (messageId: string) => void;
 }
 
 function DisappearBadge({ disappearAt }: { disappearAt: number }) {
@@ -79,6 +85,7 @@ export function MessageItem({
   onEdit,
   onRetry,
   onDiscard,
+  onExpire,
 }: Props) {
   const currentUserId = useWorkspaceStore((state) => state.currentUserId);
   const [isEditing, setIsEditing] = useState(false);
@@ -179,6 +186,8 @@ export function MessageItem({
   const disappearing = isDisappearing(rawContent);
   const [decoded, setDecoded] = useState<{ body: string; disappearAt: number } | null>(null);
   const [decodeFailed, setDecodeFailed] = useState(false);
+  // true once the disappear timer fires — hides the row immediately
+  const [expired, setExpired] = useState(false);
 
   useEffect(() => {
     if (!disappearing || !contextId) return;
@@ -191,7 +200,30 @@ export function MessageItem({
     return () => { cancelled = true; };
   }, [disappearing, contextId, rawContent]);
 
+  // Fire a timer so the message vanishes from the UI exactly when it expires.
+  // Works for both sent (own) and received messages — the parent's onExpire
+  // callback removes it from the store; the sweep in ChatView handles the
+  // Graph DELETE for sent messages separately.
+  useEffect(() => {
+    if (!decoded) return;
+    const remaining = decoded.disappearAt - Date.now();
+    if (remaining <= 0) {
+      setExpired(true);
+      return;
+    }
+    const timer = setTimeout(() => setExpired(true), remaining);
+    return () => clearTimeout(timer);
+  }, [decoded]);
+
+  useEffect(() => {
+    if (!expired) return;
+    onExpire?.(message.id);
+  // onExpire intentionally omitted — stable callback ref, avoid spurious fires
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expired, message.id]);
+
   if (message.deletedDateTime) return null;
+  if (expired) return null;
 
   const author = message.from?.user?.displayName ?? "Unknown";
   const userId = message.from?.user?.id ?? author;

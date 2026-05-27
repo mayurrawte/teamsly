@@ -33,8 +33,20 @@ export function getContextKey(contextId: string): Promise<CryptoKey> {
   return cached;
 }
 
+/**
+ * Strip an outer HTML wrapper that Graph adds when messages are sent with
+ * contentType="html" (the legacy behaviour before we fixed the send path).
+ * Handles the common `<p>...</p>` wrapping Teams applies to plain-looking text.
+ */
+function stripHtmlWrapper(content: string): string {
+  if (content.startsWith(PREFIX)) return content;
+  // Graph typically wraps with <p> — strip exactly one opening and one closing tag.
+  const inner = content.replace(/^<[a-z][^>]*>\s*/i, "").replace(/\s*<\/[a-z][^>]*>$/i, "");
+  return inner;
+}
+
 export function isDisappearing(content: string): boolean {
-  return content.startsWith(PREFIX);
+  return stripHtmlWrapper(content).startsWith(PREFIX);
 }
 
 function toB64Url(bytes: Uint8Array): string {
@@ -71,9 +83,10 @@ export async function unwrapMessage(
   contextId: string,
   content: string
 ): Promise<DisappearPayload | null> {
-  if (!isDisappearing(content)) return null;
+  const raw = stripHtmlWrapper(content);
+  if (!raw.startsWith(PREFIX)) return null;
   try {
-    const inner = content.slice(PREFIX.length, -1); // strip "[TEAMSLY_E:" and trailing "]"
+    const inner = raw.slice(PREFIX.length, -1); // strip "[TEAMSLY_E:" and trailing "]"
     const [ivPart, ctPart] = inner.split(":");
     if (!ivPart || !ctPart) return null;
     const key = await getContextKey(contextId);
