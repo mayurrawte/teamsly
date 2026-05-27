@@ -246,57 +246,73 @@
 
       <section id="download" class="section">
         <div class="container">
-          <h2>Download for desktop</h2>
+          <h2>Download Teamsly <span class="download-version-badge">v0.3.0</span></h2>
           <p class="section-lede">
-            Native window, system tray with unread count, auto-update.
-            All three platforms, no account required to install.
+            Native window, system tray with unread count, auto-update. Pick your platform.
           </p>
 
-          <div class="download-grid">
-            <div class="download-card">
-              <h3>macOS</h3>
-              <p class="download-sub">Apple Silicon &amp; Intel · Homebrew (recommended)</p>
+          <div class="download-tabs" role="tablist">
+            <button class="download-tab active" role="tab" id="tab-mac" onclick="switchTab('mac')">macOS</button>
+            <button class="download-tab" role="tab" id="tab-win" onclick="switchTab('win')">Windows</button>
+            <button class="download-tab" role="tab" id="tab-linux" onclick="switchTab('linux')">Linux</button>
+          </div>
+
+          <!-- macOS -->
+          <div class="download-tab-content active" id="content-mac">
+            <div class="download-panel">
+              <p class="download-sub" style="margin:0 0 14px">Apple Silicon &amp; Intel · Homebrew recommended</p>
               <pre><code>brew tap mayurrawte/teamsly
 brew install --cask teamsly</code></pre>
-              <p class="download-direct">
-                Or grab the <code>.dmg</code> directly from the
-                <a href="https://github.com/mayurrawte/teamsly/releases/latest">latest release</a>.
-                Unsigned builds: right-click → Open the first time.
-              </p>
-            </div>
-
-            <div class="download-card">
-              <h3>Windows</h3>
-              <p class="download-sub">10 / 11 · NSIS installer or portable</p>
-              <p>
-                Download <code>Teamsly-Setup-*.exe</code> or the portable
-                <code>Teamsly-*.exe</code> from the
-                <a href="https://github.com/mayurrawte/teamsly/releases/latest">latest release</a>.
-              </p>
-              <p class="download-direct">
-                Unsigned: SmartScreen → More info → Run anyway on first launch.
-              </p>
-            </div>
-
-            <div class="download-card">
-              <h3>Linux</h3>
-              <p class="download-sub">AppImage or Debian package</p>
-              <p>
-                Grab the <code>.AppImage</code> or <code>.deb</code> from the
-                <a href="https://github.com/mayurrawte/teamsly/releases/latest">latest release</a>.
-              </p>
-              <p class="download-direct">
-                AppImage: <code>chmod +x</code> &amp; run. Deb: <code>sudo dpkg -i ...</code>.
-                Auto-update works cleanly.
-              </p>
+              <div class="download-secondary-row">
+                <a class="download-secondary" href="https://github.com/mayurrawte/teamsly/releases/download/v0.3.0/Teamsly-0.3.0-arm64.dmg">Apple Silicon (.dmg)</a>
+                <a class="download-secondary" href="https://github.com/mayurrawte/teamsly/releases/download/v0.3.0/Teamsly-0.3.0.dmg">Intel (.dmg)</a>
+              </div>
+              <p class="download-note">Unsigned build — right-click → Open on first launch, or use Homebrew which handles the signature automatically.</p>
             </div>
           </div>
 
-          <p class="download-footer">
-            Or use the web app at
-            <a href="https://teamsly.vercel.app">teamsly.vercel.app</a> — no install required.
-          </p>
+          <!-- Windows -->
+          <div class="download-tab-content" id="content-win">
+            <div class="download-panel">
+              <p class="download-sub" style="margin:0 0 14px">Windows 10 / 11</p>
+              <a class="download-primary" href="https://github.com/mayurrawte/teamsly/releases/download/v0.3.0/Teamsly-Setup-0.3.0.exe">⬇ Download Setup (.exe)</a>
+              <div class="download-secondary-row">
+                <a class="download-secondary" href="https://github.com/mayurrawte/teamsly/releases/download/v0.3.0/Teamsly-0.3.0.exe">Portable (.exe)</a>
+              </div>
+              <p class="download-note">SmartScreen warning on first launch — click "More info" → "Run anyway". Unsigned build.</p>
+            </div>
+          </div>
+
+          <!-- Linux -->
+          <div class="download-tab-content" id="content-linux">
+            <div class="download-panel">
+              <p class="download-sub" style="margin:0 0 14px">AppImage or Debian package</p>
+              <div style="display:flex;gap:12px;flex-wrap:wrap">
+                <a class="download-primary" href="https://github.com/mayurrawte/teamsly/releases/download/v0.3.0/Teamsly-0.3.0.AppImage">⬇ AppImage</a>
+                <a class="download-primary" href="https://github.com/mayurrawte/teamsly/releases/download/v0.3.0/teamsly_0.3.0_amd64.deb">⬇ .deb (amd64)</a>
+              </div>
+              <p class="download-note">AppImage: <code>chmod +x Teamsly-*.AppImage &amp;&amp; ./Teamsly-*.AppImage</code>. Deb: <code>sudo dpkg -i teamsly_*.deb</code>. Auto-update works on both.</p>
+            </div>
+          </div>
+
+          <a class="download-all-link" href="https://github.com/mayurrawte/teamsly/releases">All releases on GitHub →</a>
         </div>
+
+        <script>
+          function switchTab(platform) {
+            document.querySelectorAll('.download-tab').forEach(function(t) { t.classList.remove('active'); });
+            document.querySelectorAll('.download-tab-content').forEach(function(c) { c.classList.remove('active'); });
+            document.getElementById('tab-' + platform).classList.add('active');
+            document.getElementById('content-' + platform).classList.add('active');
+          }
+          (function() {
+            var p = (navigator.platform || '').toLowerCase();
+            var ua = (navigator.userAgent || '').toLowerCase();
+            if (p.indexOf('win') !== -1) { switchTab('win'); }
+            else if (p.indexOf('linux') !== -1 || ua.indexOf('linux') !== -1) { switchTab('linux'); }
+            // default: mac tab already active
+          })();
+        </script>
       </section>
 
       <section id="install" class="section section-alt">
