@@ -11,6 +11,7 @@ import { MessageHoverToolbar } from "./MessageHoverToolbar";
 import { AddReactionPill, ReactionPill } from "./ReactionPill";
 import { formatMessageTime, formatFullTimestamp } from "@/lib/utils/dates";
 import { messagePlainText, renderMessageBody } from "@/lib/utils/render-message";
+import { isDisappearing, unwrapMessage } from "@/lib/utils/disappear";
 import type { ReactionType } from "@/lib/utils/reactions";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useBookmarksStore } from "@/store/bookmarks";
@@ -43,6 +44,27 @@ interface Props {
   onEdit?: (messageId: string, newContent: string) => Promise<void> | void;
   onRetry?: (originalText: string) => void;
   onDiscard?: (messageId: string) => void;
+}
+
+function DisappearBadge({ disappearAt }: { disappearAt: number }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const remaining = Math.max(0, disappearAt - now);
+  const secs = Math.ceil(remaining / 1000);
+  const text = secs >= 3600 ? `${Math.ceil(secs / 3600)}h`
+    : secs >= 60 ? `${Math.ceil(secs / 60)}m`
+    : `${secs}s`;
+  return (
+    <span
+      title="This message will disappear"
+      className="ml-2 inline-flex items-center gap-1 rounded-full bg-[var(--bg-elevated,#2a2d31)] px-2 py-[1px] text-[11px] text-[var(--text-secondary,#ababad)]"
+    >
+      ⏱ {text}
+    </span>
+  );
 }
 
 export function MessageItem({
@@ -147,6 +169,22 @@ export function MessageItem({
       });
     }
   }, [isEditing]);
+
+  const rawContent = message.body.content;
+  const disappearing = isDisappearing(rawContent);
+  const [decoded, setDecoded] = useState<{ body: string; disappearAt: number } | null>(null);
+  const [decodeFailed, setDecodeFailed] = useState(false);
+
+  useEffect(() => {
+    if (!disappearing || !contextId) return;
+    let cancelled = false;
+    unwrapMessage(contextId, rawContent).then((res) => {
+      if (cancelled) return;
+      if (res) setDecoded(res);
+      else setDecodeFailed(true);
+    });
+    return () => { cancelled = true; };
+  }, [disappearing, contextId, rawContent]);
 
   if (message.deletedDateTime) return null;
 
@@ -318,7 +356,13 @@ export function MessageItem({
                   style={bodyDensityStyle}
                   className={`message-body break-words text-[var(--text-primary)]${isRecentSlashResult ? " slash-fx-pop" : ""}`}
                 >
-                  {renderMessageBody(message.body.content, message.body.contentType)}
+                  {disappearing
+                    ? decoded
+                      ? renderMessageBody(decoded.body, "text")
+                      : decodeFailed
+                        ? <span className="italic text-[var(--text-secondary,#ababad)]">🕓 Message not available here</span>
+                        : <span className="italic text-[var(--text-secondary,#ababad)]">…</span>
+                    : renderMessageBody(message.body.content, message.body.contentType)}
                 </div>
                 <GitHubCards text={content} />
                 <RichLinkCards text={content} />
@@ -393,8 +437,17 @@ export function MessageItem({
           hasBody && (
             <>
               <div className="message-body break-words text-[14px] leading-[1.5] text-[var(--text-primary)]">
-                {renderMessageBody(message.body.content, message.body.contentType)}
+                {disappearing
+                  ? decoded
+                    ? renderMessageBody(decoded.body, "text")
+                    : decodeFailed
+                      ? <span className="italic text-[var(--text-secondary,#ababad)]">🕓 Message not available here</span>
+                      : <span className="italic text-[var(--text-secondary,#ababad)]">…</span>
+                  : renderMessageBody(message.body.content, message.body.contentType)}
               </div>
+              {disappearing && decoded && decoded.disappearAt > Date.now() && (
+                <DisappearBadge disappearAt={decoded.disappearAt} />
+              )}
               <GitHubCards text={content} />
             </>
           )
