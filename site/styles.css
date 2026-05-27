@@ -560,3 +560,261 @@ tbody td:first-child { color: var(--text-soft); width: 32%; }
   .sidebar { display: none; }
   tbody td:first-child { width: 40%; }
 }
+
+/* ---------- download version badge ---------- */
+
+.download-version-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  background: #f0f4ff;
+  color: var(--accent);
+  border: 1px solid #c7d9f5;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+/* ---------- download tabs ---------- */
+
+.download-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin: 24px 0 0;
+}
+
+.download-tab {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-soft);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: color 120ms ease, border-color 120ms ease;
+  font-family: inherit;
+}
+
+.download-tab:hover { color: var(--text); }
+.download-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.download-tab-content { display: none; padding: 24px 0 0; }
+.download-tab-content.active { display: block; }
+
+.download-panel {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.download-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 20px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 120ms ease;
+}
+.download-primary:hover { background: var(--accent-hover); text-decoration: none; color: #fff; }
+
+.download-secondary-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.download-secondary {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 14px;
+  background: #fff;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 120ms ease;
+}
+.download-secondary:hover { background: var(--bg-alt); text-decoration: none; }
+
+.download-note {
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--text-mute);
+}
+
+.download-all-link {
+  display: block;
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+  color: var(--text-soft);
+}
+
+/* ---------- roadmap ---------- */
+
+.roadmap-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.roadmap-col-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 14px;
+}
+
+.roadmap-col-label.shipped { color: #059669; }
+.roadmap-col-label.planned { color: var(--text-mute); }
+
+.roadmap-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.version-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.version-badge.shipped {
+  background: #f0fdf4;
+  color: #059669;
+}
+
+.roadmap-footer {
+  margin-top: 20px;
+  font-size: 14px;
+  color: var(--text-soft);
+  text-align: center;
+}
+
+/* ---------- self-host CTA ---------- */
+
+.selfhost-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px 32px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.selfhost-cta-text h3 { margin-bottom: 6px; }
+.selfhost-cta-text p { margin: 0; color: var(--text-soft); font-size: 15px; }
+
+/* ---------- install page ---------- */
+
+.install-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.install-step {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 22px 24px;
+}
+
+.install-step-num {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.install-step-body { flex: 1; min-width: 0; }
+.install-step-body h3 { margin-bottom: 10px; }
+.install-step-body pre { margin: 10px 0 0; }
+.install-step-body p { margin: 10px 0 0; color: var(--text-soft); font-size: 14px; }
+
+.callout {
+  margin-top: 40px;
+  padding: 18px 22px;
+  background: #f0f4ff;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 6px 6px 0;
+}
+
+.callout p { margin: 0 0 14px; color: var(--text); }
+.callout p:last-child { margin: 0; }
+
+.deploy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.deploy-card {
+  padding: 20px 22px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.deploy-card h3 { margin: 0; font-size: 16px; }
+.deploy-card p { margin: 0; color: var(--text-soft); font-size: 14px; line-height: 1.55; }
+
+/* ---------- responsive additions ---------- */
+
+@media (max-width: 980px) {
+  .roadmap-grid { grid-template-columns: 1fr; }
+  .deploy-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 720px) {
+  .selfhost-cta { flex-direction: column; align-items: flex-start; }
+  .deploy-grid { grid-template-columns: 1fr; }
+}
