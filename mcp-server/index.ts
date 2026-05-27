@@ -46,6 +46,7 @@ const TOKEN_FILE = join(TOKEN_DIR, "tokens.json");
 const SCOPE = [
   "User.Read",
   "User.ReadBasic.All",
+  "People.Read",
   "Team.ReadBasic.All",
   "Channel.ReadBasic.All",
   "ChannelMessage.Read.All",
@@ -200,6 +201,18 @@ async function getAccessToken(): Promise<string> {
     }
   }
   return _tokens.access_token;
+}
+
+// Cached own AAD user ID — needed when building the members array for
+// POST /chats (1:1 chat creation requires both member IDs explicitly).
+let _myId: string | null = null;
+
+async function getMyId(): Promise<string> {
+  if (!_myId) {
+    const me = (await graph("/me?$select=id")) as { id: string };
+    _myId = me.id;
+  }
+  return _myId;
 }
 
 // ---------------------------------------------------------------------------
