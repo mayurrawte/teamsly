@@ -55,7 +55,8 @@
           <a href="#how">How it works</a>
           <a href="#compare">vs Teams</a>
           <a href="#download">Download</a>
-          <a href="#install">Self-host</a>
+          <a href="#roadmap">Roadmap</a>
+          <a href="install.html">Self-host</a>
           <a href="#faq">FAQ</a>
         </nav>
         <a class="btn btn-primary header-cta" href="https://github.com/mayurrawte/teamsly">
@@ -77,6 +78,7 @@
             </p>
             <div class="hero-actions">
               <a class="btn btn-primary" href="#download">Download for desktop</a>
+              <a class="btn btn-secondary" href="https://teamsly.app">Try the web app</a>
               <a class="btn btn-secondary" href="https://github.com/mayurrawte/teamsly">View on GitHub</a>
             </div>
             <p class="meta">
@@ -354,31 +356,13 @@ brew install --cask teamsly</code></pre>
       <section id="install" class="section section-alt">
         <div class="container">
           <h2>Self-host</h2>
-          <p class="section-lede">
-            One repository. No managed service to depend on.
-          </p>
-
-          <pre><code>git clone https://github.com/mayurrawte/teamsly
-cd teamsly
-npm install
-cp .env.example .env.local
-npm run dev</code></pre>
-
-          <p>
-            Fill in <code>.env.local</code> with your Azure AD app credentials:
-          </p>
-
-          <pre><code>AZURE_AD_CLIENT_ID=<span class="hash">your-client-id</span>
-AZURE_AD_CLIENT_SECRET=<span class="hash">your-client-secret</span>
-AZURE_AD_TENANT_ID=common
-AUTH_SECRET=<span class="hash">openssl rand -base64 32</span>
-NEXTAUTH_URL=http://localhost:3000</code></pre>
-
-          <p>
-            Then open <code>http://localhost:3000</code> and sign in, or visit <code>/demo</code> to preview the UI without auth.
-            For production, any Node 20+ host works (<code>npm run build &amp;&amp; npm start</code>) and Vercel deploys
-            cleanly with the same environment variables.
-          </p>
+          <div class="selfhost-cta">
+            <div class="selfhost-cta-text">
+              <h3>Run your own instance</h3>
+              <p>Connects to your own Azure AD tenant. No data leaves your infrastructure. Any Node 20+ host works — Vercel, Fly, Render, or bare Node.</p>
+            </div>
+            <a class="btn btn-primary" href="install.html">Self-hosting guide →</a>
+          </div>
         </div>
       </section>
 
@@ -407,8 +391,8 @@ NEXTAUTH_URL=http://localhost:3000</code></pre>
 
           <div class="qa">
             <h3>Is there a mobile app?</h3>
-            <p>Not yet. The web app is responsive and works in mobile browsers; a desktop wrapper (Electron) is on the
-              roadmap.</p>
+            <p>Desktop apps for macOS, Windows, and Linux are available on the <a href="#download">Download</a> page.
+              A native mobile app is not yet available; the web app works in mobile browsers.</p>
           </div>
 
           <div class="qa">
@@ -449,7 +433,7 @@ NEXTAUTH_URL=http://localhost:3000</code></pre>
           <div>
             <h4>Docs</h4>
             <a href="https://github.com/mayurrawte/teamsly/blob/main/README.md">README</a>
-            <a href="#install">Self-host</a>
+            <a href="install.html">Self-host</a>
             <a href="#faq">FAQ</a>
           </div>
           <div>
