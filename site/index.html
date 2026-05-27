@@ -55,7 +55,8 @@
           <a href="#how">How it works</a>
           <a href="#compare">vs Teams</a>
           <a href="#download">Download</a>
-          <a href="#install">Self-host</a>
+          <a href="#roadmap">Roadmap</a>
+          <a href="install.html">Self-host</a>
           <a href="#faq">FAQ</a>
         </nav>
         <a class="btn btn-primary header-cta" href="https://github.com/mayurrawte/teamsly">
@@ -77,6 +78,7 @@
             </p>
             <div class="hero-actions">
               <a class="btn btn-primary" href="#download">Download for desktop</a>
+              <a class="btn btn-secondary" href="https://teamsly.app">Try the web app</a>
               <a class="btn btn-secondary" href="https://github.com/mayurrawte/teamsly">View on GitHub</a>
             </div>
             <p class="meta">
@@ -155,28 +157,28 @@
 
           <div class="feature-grid">
             <div class="feature">
-              <h3>Channels and direct messages</h3>
+              <h3>Channels &amp; direct messages</h3>
               <p>Workspace switcher, sidebar navigation, unread counts, and presence indicators backed by Microsoft Graph.</p>
             </div>
             <div class="feature">
-              <h3>Threads and reactions</h3>
-              <p>Slide-in thread panel, optimistic replies and reactions, and clear rollback when a Graph call fails.</p>
+              <h3>Threads &amp; reactions</h3>
+              <p>Slide-in thread panel, optimistic replies, animated reaction pills, and clear rollback when a Graph call fails.</p>
             </div>
             <div class="feature">
-              <h3>Search and Cmd+K</h3>
-              <p>Search across channels, DMs, and loaded messages. A keyboard switcher gets you anywhere in two keystrokes.</p>
+              <h3>Disappearing messages</h3>
+              <p>DM-only. Sender picks 30 s / 5 min / 1 hr. Body is cloaked in transit; Teamsly shows a countdown badge and auto-deletes on expiry.</p>
             </div>
             <div class="feature">
-              <h3>Rich messages</h3>
-              <p>Inline mentions, code blocks with copy-to-clipboard, and file attachment cards rendered safely.</p>
+              <h3>Voice rooms</h3>
+              <p>In-app voice via LiveKit. Join or start a call without leaving Teamsly — no separate window, no browser tab.</p>
             </div>
             <div class="feature">
-              <h3>Density and preferences</h3>
-              <p>Compact and comfortable density modes, per-user preferences stored locally, and a clean settings modal.</p>
+              <h3>Cmd+K &amp; search</h3>
+              <p>Jump to any channel, DM, or contact in two keystrokes. Full-text search across loaded messages and channels.</p>
             </div>
             <div class="feature">
-              <h3>Optional AI features</h3>
-              <p>AI unread summaries, multi-tenant account switcher, and smart browser notifications — behind a feature flag.</p>
+              <h3>AI summaries &amp; MCP</h3>
+              <p>Catch up on long threads with one click. MCP server lets Claude Desktop, Cursor, and any MCP-compatible agent read and send messages on your behalf.</p>
             </div>
           </div>
         </div>
@@ -246,55 +248,107 @@
 
       <section id="download" class="section">
         <div class="container">
-          <h2>Download for desktop</h2>
+          <h2>Download Teamsly <span class="download-version-badge">v0.3.0</span></h2>
           <p class="section-lede">
-            Native window, system tray with unread count, auto-update.
-            All three platforms, no account required to install.
+            Native window, system tray with unread count, auto-update. Pick your platform.
           </p>
 
-          <div class="download-grid">
-            <div class="download-card">
-              <h3>macOS</h3>
-              <p class="download-sub">Apple Silicon &amp; Intel · Homebrew (recommended)</p>
+          <div class="download-tabs" role="tablist">
+            <button class="download-tab active" role="tab" id="tab-mac" onclick="switchTab('mac')">macOS</button>
+            <button class="download-tab" role="tab" id="tab-win" onclick="switchTab('win')">Windows</button>
+            <button class="download-tab" role="tab" id="tab-linux" onclick="switchTab('linux')">Linux</button>
+          </div>
+
+          <!-- macOS -->
+          <div class="download-tab-content active" id="content-mac">
+            <div class="download-panel">
+              <p class="download-sub" style="margin:0 0 14px">Apple Silicon &amp; Intel · Homebrew recommended</p>
               <pre><code>brew tap mayurrawte/teamsly
 brew install --cask teamsly</code></pre>
-              <p class="download-direct">
-                Or grab the <code>.dmg</code> directly from the
-                <a href="https://github.com/mayurrawte/teamsly/releases/latest">latest release</a>.
-                Unsigned builds: right-click → Open the first time.
-              </p>
-            </div>
-
-            <div class="download-card">
-              <h3>Windows</h3>
-              <p class="download-sub">10 / 11 · NSIS installer or portable</p>
-              <p>
-                Download <code>Teamsly-Setup-*.exe</code> or the portable
-                <code>Teamsly-*.exe</code> from the
-                <a href="https://github.com/mayurrawte/teamsly/releases/latest">latest release</a>.
-              </p>
-              <p class="download-direct">
-                Unsigned: SmartScreen → More info → Run anyway on first launch.
-              </p>
-            </div>
-
-            <div class="download-card">
-              <h3>Linux</h3>
-              <p class="download-sub">AppImage or Debian package</p>
-              <p>
-                Grab the <code>.AppImage</code> or <code>.deb</code> from the
-                <a href="https://github.com/mayurrawte/teamsly/releases/latest">latest release</a>.
-              </p>
-              <p class="download-direct">
-                AppImage: <code>chmod +x</code> &amp; run. Deb: <code>sudo dpkg -i ...</code>.
-                Auto-update works cleanly.
-              </p>
+              <div class="download-secondary-row">
+                <a class="download-secondary" href="https://github.com/mayurrawte/teamsly/releases/download/v0.3.0/Teamsly-0.3.0-arm64.dmg">Apple Silicon (.dmg)</a>
+                <a class="download-secondary" href="https://github.com/mayurrawte/teamsly/releases/download/v0.3.0/Teamsly-0.3.0.dmg">Intel (.dmg)</a>
+              </div>
+              <p class="download-note">Unsigned build — right-click → Open on first launch, or use Homebrew which handles the signature automatically.</p>
             </div>
           </div>
 
-          <p class="download-footer">
-            Or use the web app at
-            <a href="https://teamsly.vercel.app">teamsly.vercel.app</a> — no install required.
+          <!-- Windows -->
+          <div class="download-tab-content" id="content-win">
+            <div class="download-panel">
+              <p class="download-sub" style="margin:0 0 14px">Windows 10 / 11</p>
+              <a class="download-primary" href="https://github.com/mayurrawte/teamsly/releases/download/v0.3.0/Teamsly-Setup-0.3.0.exe">⬇ Download Setup (.exe)</a>
+              <div class="download-secondary-row">
+                <a class="download-secondary" href="https://github.com/mayurrawte/teamsly/releases/download/v0.3.0/Teamsly-0.3.0.exe">Portable (.exe)</a>
+              </div>
+              <p class="download-note">SmartScreen warning on first launch — click "More info" → "Run anyway". Unsigned build.</p>
+            </div>
+          </div>
+
+          <!-- Linux -->
+          <div class="download-tab-content" id="content-linux">
+            <div class="download-panel">
+              <p class="download-sub" style="margin:0 0 14px">AppImage or Debian package</p>
+              <div style="display:flex;gap:12px;flex-wrap:wrap">
+                <a class="download-primary" href="https://github.com/mayurrawte/teamsly/releases/download/v0.3.0/Teamsly-0.3.0.AppImage">⬇ AppImage</a>
+                <a class="download-primary" href="https://github.com/mayurrawte/teamsly/releases/download/v0.3.0/teamsly_0.3.0_amd64.deb">⬇ .deb (amd64)</a>
+              </div>
+              <p class="download-note">AppImage: <code>chmod +x Teamsly-*.AppImage &amp;&amp; ./Teamsly-*.AppImage</code>. Deb: <code>sudo dpkg -i teamsly_*.deb</code>. Auto-update works on both.</p>
+            </div>
+          </div>
+
+          <a class="download-all-link" href="https://github.com/mayurrawte/teamsly/releases">All releases on GitHub →</a>
+        </div>
+
+        <script>
+          function switchTab(platform) {
+            document.querySelectorAll('.download-tab').forEach(function(t) { t.classList.remove('active'); });
+            document.querySelectorAll('.download-tab-content').forEach(function(c) { c.classList.remove('active'); });
+            document.getElementById('tab-' + platform).classList.add('active');
+            document.getElementById('content-' + platform).classList.add('active');
+          }
+          (function() {
+            var p = (navigator.platform || '').toLowerCase();
+            var ua = (navigator.userAgent || '').toLowerCase();
+            if (p.indexOf('win') !== -1) { switchTab('win'); }
+            else if (p.indexOf('linux') !== -1 || ua.indexOf('linux') !== -1) { switchTab('linux'); }
+            // default: mac tab already active
+          })();
+        </script>
+      </section>
+
+      <section id="roadmap" class="section section-alt">
+        <div class="container">
+          <h2>What's shipping</h2>
+          <p class="section-lede">
+            Built in the open. Every release adds something that makes Teams less painful.
+          </p>
+
+          <div class="roadmap-grid">
+            <div>
+              <div class="roadmap-col-label shipped">✓ Shipped</div>
+              <div class="roadmap-item">Channels, DMs, threads, reactions <span class="version-badge shipped">v0.1</span></div>
+              <div class="roadmap-item">Cmd+K switcher, search, presence <span class="version-badge shipped">v0.1</span></div>
+              <div class="roadmap-item">Voice rooms, calendar auto-status <span class="version-badge shipped">v0.2</span></div>
+              <div class="roadmap-item">Real-time channel push (webhooks) <span class="version-badge shipped">v0.2</span></div>
+              <div class="roadmap-item">Theming, density, animated reactions <span class="version-badge shipped">v0.2</span></div>
+              <div class="roadmap-item">MCP server for AI agents <span class="version-badge shipped">v0.2</span></div>
+              <div class="roadmap-item">Disappearing messages (DMs) <span class="version-badge shipped">v0.3</span></div>
+            </div>
+            <div>
+              <div class="roadmap-col-label planned">→ Planned</div>
+              <div class="roadmap-item">Real-time DM push (sub-second)</div>
+              <div class="roadmap-item">Send later / send-when-free</div>
+              <div class="roadmap-item">AI action-item extractor</div>
+              <div class="roadmap-item">Voice memos + auto-transcript</div>
+              <div class="roadmap-item">Anonymous polls</div>
+              <div class="roadmap-item">Channel snooze UI</div>
+              <div class="roadmap-item">Read-receipt toggle</div>
+            </div>
+          </div>
+
+          <p class="roadmap-footer">
+            Full roadmap and task list on <a href="https://github.com/mayurrawte/teamsly/blob/main/TASKS.md">GitHub →</a>
           </p>
         </div>
       </section>
@@ -302,31 +356,13 @@ brew install --cask teamsly</code></pre>
       <section id="install" class="section section-alt">
         <div class="container">
           <h2>Self-host</h2>
-          <p class="section-lede">
-            One repository. No managed service to depend on.
-          </p>
-
-          <pre><code>git clone https://github.com/mayurrawte/teamsly
-cd teamsly
-npm install
-cp .env.example .env.local
-npm run dev</code></pre>
-
-          <p>
-            Fill in <code>.env.local</code> with your Azure AD app credentials:
-          </p>
-
-          <pre><code>AZURE_AD_CLIENT_ID=<span class="hash">your-client-id</span>
-AZURE_AD_CLIENT_SECRET=<span class="hash">your-client-secret</span>
-AZURE_AD_TENANT_ID=common
-AUTH_SECRET=<span class="hash">openssl rand -base64 32</span>
-NEXTAUTH_URL=http://localhost:3000</code></pre>
-
-          <p>
-            Then open <code>http://localhost:3000</code> and sign in, or visit <code>/demo</code> to preview the UI without auth.
-            For production, any Node 20+ host works (<code>npm run build &amp;&amp; npm start</code>) and Vercel deploys
-            cleanly with the same environment variables.
-          </p>
+          <div class="selfhost-cta">
+            <div class="selfhost-cta-text">
+              <h3>Run your own instance</h3>
+              <p>Connects to your own Azure AD tenant. No data leaves your infrastructure. Any Node 20+ host works — Vercel, Fly, Render, or bare Node.</p>
+            </div>
+            <a class="btn btn-primary" href="install.html">Self-hosting guide →</a>
+          </div>
         </div>
       </section>
 
@@ -355,8 +391,8 @@ NEXTAUTH_URL=http://localhost:3000</code></pre>
 
           <div class="qa">
             <h3>Is there a mobile app?</h3>
-            <p>Not yet. The web app is responsive and works in mobile browsers; a desktop wrapper (Electron) is on the
-              roadmap.</p>
+            <p>Desktop apps for macOS, Windows, and Linux are available on the <a href="#download">Download</a> page.
+              A native mobile app is not yet available; the web app works in mobile browsers.</p>
           </div>
 
           <div class="qa">
@@ -397,7 +433,7 @@ NEXTAUTH_URL=http://localhost:3000</code></pre>
           <div>
             <h4>Docs</h4>
             <a href="https://github.com/mayurrawte/teamsly/blob/main/README.md">README</a>
-            <a href="#install">Self-host</a>
+            <a href="install.html">Self-host</a>
             <a href="#faq">FAQ</a>
           </div>
           <div>
