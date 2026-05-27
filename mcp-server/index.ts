@@ -337,6 +337,45 @@ server.tool(
 );
 
 server.tool(
+  "send_dm",
+  "Send a direct message to a Teams user. Call find_people first to get their user ID. Creates a new 1:1 chat if one doesn't exist yet, or reuses the existing one.",
+  {
+    user_id: z.string().describe("AAD user ID from find_people"),
+    message: z.string().describe("Plain text message to send"),
+  },
+  async ({ user_id, message }) => {
+    const myId = await getMyId();
+
+    // POST /chats is idempotent for oneOnOne: returns existing chat or creates new.
+    const chat = (await graph("/chats", {
+      method: "POST",
+      body: JSON.stringify({
+        chatType: "oneOnOne",
+        members: [
+          {
+            "@odata.type": "#microsoft.graph.aadUserConversationMember",
+            roles: ["owner"],
+            "user@odata.bind": `https://graph.microsoft.com/v1.0/users('${myId}')`,
+          },
+          {
+            "@odata.type": "#microsoft.graph.aadUserConversationMember",
+            roles: ["owner"],
+            "user@odata.bind": `https://graph.microsoft.com/v1.0/users('${user_id}')`,
+          },
+        ],
+      }),
+    })) as { id: string };
+
+    await graph(`/me/chats/${encodeURIComponent(chat.id)}/messages`, {
+      method: "POST",
+      body: JSON.stringify({ body: { contentType: "text", content: message } }),
+    });
+
+    return { content: [{ type: "text", text: "Message sent." }] };
+  }
+);
+
+server.tool(
   "send_channel_message",
   "Post a message to a Teams channel",
   {
