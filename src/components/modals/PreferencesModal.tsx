@@ -19,6 +19,9 @@ import {
   Plus,
   Trash2,
   Sparkles,
+  Bot,
+  Copy,
+  Check,
 } from "lucide-react";
 import {
   usePreferencesStore,
@@ -46,6 +49,7 @@ type NavSection =
   | "appearance"
   | "messages"
   | "shortcuts"
+  | "mcp"
   | "accessibility"
   | "advanced";
 
@@ -61,6 +65,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "appearance",     label: "Appearance",       icon: PaletteIcon },
   { key: "messages",       label: "Messages & media", icon: MessageSquare },
   { key: "shortcuts",      label: "Keyboard",         icon: Keyboard },
+  { key: "mcp",            label: "MCP",              icon: Bot },
   { key: "accessibility",  label: "Accessibility",    icon: Accessibility },
   { key: "advanced",       label: "Advanced",         icon: Settings2 },
 ];
@@ -137,6 +142,8 @@ export function PreferencesModal({ open, onOpenChange }: Props) {
                 <AvailabilityPanel />
               ) : section === "shortcuts" ? (
                 <ShortcutsPanel />
+              ) : section === "mcp" ? (
+                <McpPanel />
               ) : section === "accessibility" ? (
                 <AccessibilityPanel />
               ) : (
@@ -743,6 +750,123 @@ function ShortcutsPanel() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ─── MCP (Model Context Protocol) ────────────────────────────────────────────
+
+const MCP_TOOLS = [
+  "find_people",
+  "send_dm",
+  "list_chats",
+  "get_chat_messages",
+  "send_chat_message",
+  "list_teams",
+  "list_channels",
+  "get_channel_messages",
+  "send_channel_message",
+];
+
+const MCP_REPO_CONFIG = `{
+  "mcpServers": {
+    "teamsly": {
+      "command": "npx",
+      "args": ["tsx", "mcp-server/index.ts"]
+    }
+  }
+}`;
+
+const MCP_GLOBAL_CONFIG = `{
+  "mcpServers": {
+    "teamsly": {
+      "command": "npx",
+      "args": ["tsx", "/absolute/path/to/teamsly/mcp-server/index.ts"]
+    }
+  }
+}`;
+
+function McpPanel() {
+  return (
+    <div className="flex flex-col gap-5">
+      <p className="text-[12px] leading-relaxed text-[var(--text-muted)]">
+        Teamsly ships an MCP server so AI assistants like Claude and Cursor can
+        find people, send DMs, and post to channels on your behalf. It runs from
+        the Teamsly repo — clone it, add a config below to your MCP client, then
+        sign in once via the device-code prompt on first run.
+      </p>
+
+      <div>
+        <SettingLabel>Available tools</SettingLabel>
+        <div className="flex flex-wrap gap-1.5">
+          {MCP_TOOLS.map((t) => (
+            <code
+              key={t}
+              className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 py-1 font-mono text-[11px] text-[var(--text-secondary)]"
+            >
+              {t}
+            </code>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <SettingLabel>Claude Code — project (.mcp.json in the repo root)</SettingLabel>
+        <CopyBlock text={MCP_REPO_CONFIG} />
+      </div>
+
+      <div>
+        <SettingLabel>Claude Desktop / Cursor — use an absolute path</SettingLabel>
+        <CopyBlock text={MCP_GLOBAL_CONFIG} />
+        <p className="mt-1.5 text-[11px] text-[var(--text-muted)]">
+          Replace <code className="font-mono">/absolute/path/to/teamsly</code> with where you cloned the repo.
+        </p>
+      </div>
+
+      <a
+        href="https://github.com/mayurrawte/teamsly/tree/main/mcp-server"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[var(--accent)] hover:underline"
+      >
+        Full setup guide & client list →
+      </a>
+    </div>
+  );
+}
+
+function SettingLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mb-2 text-[12px] font-semibold text-[var(--text-primary)]">{children}</p>
+  );
+}
+
+function CopyBlock({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  function copy() {
+    navigator.clipboard?.writeText(text).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      },
+      () => {},
+    );
+  }
+
+  return (
+    <div className="relative">
+      <pre className="overflow-x-auto rounded-md border border-[var(--border)] bg-[var(--surface)] p-3 pr-12 font-mono text-[11px] leading-relaxed text-[var(--text-secondary)]">
+        {text}
+      </pre>
+      <button
+        type="button"
+        onClick={copy}
+        aria-label={copied ? "Copied" : "Copy to clipboard"}
+        className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface-raised)] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-ring"
+      >
+        {copied ? <Check size={13} className="text-[var(--accent)]" /> : <Copy size={13} />}
+      </button>
     </div>
   );
 }
