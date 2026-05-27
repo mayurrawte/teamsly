@@ -255,6 +255,69 @@ export async function getMe(accessToken: string) {
   return client.api("/me").select("id,displayName,mail,userPrincipalName").get() as Promise<MSUser>;
 }
 
+export interface PersonResult {
+  id: string;
+  displayName: string;
+  email: string;
+}
+
+// Org directory search by name. Uses /users $search (needs the eventual
+// ConsistencyLevel header + $count for advanced queries), so it finds anyone
+// in the tenant — not just people the user has already chatted with.
+export async function searchPeople(
+  accessToken: string,
+  query: string
+): Promise<PersonResult[]> {
+  const client = getGraphClient(accessToken);
+  // Strip double-quotes so they can't break out of the KQL search string.
+  const q = query.replace(/"/g, "").trim();
+  if (!q) return [];
+  const res = await client
+    .api("/users")
+    .header("ConsistencyLevel", "eventual")
+    .query({ $count: "true" })
+    .search(`"displayName:${q}" OR "mail:${q}"`)
+    .select("id,displayName,mail,userPrincipalName")
+    .top(10)
+    .get();
+  const users = (res.value ?? []) as Array<{
+    id: string;
+    displayName: string;
+    mail?: string;
+    userPrincipalName?: string;
+  }>;
+  return users.map((u) => ({
+    id: u.id,
+    displayName: u.displayName,
+    email: u.mail ?? u.userPrincipalName ?? "",
+  }));
+}
+
+// Find-or-create a 1:1 chat with a user. Graph is idempotent for oneOnOne
+// chats: it returns the existing chat if one already exists, else creates it.
+export async function getOrCreateOneOnOneChat(
+  accessToken: string,
+  myId: string,
+  userId: string
+): Promise<MSChat> {
+  const client = getGraphClient(accessToken);
+  return client.api("/chats").post({
+    chatType: "oneOnOne",
+    members: [
+      {
+        "@odata.type": "#microsoft.graph.aadUserConversationMember",
+        roles: ["owner"],
+        "user@odata.bind": `https://graph.microsoft.com/v1.0/users('${myId}')`,
+      },
+      {
+        "@odata.type": "#microsoft.graph.aadUserConversationMember",
+        roles: ["owner"],
+        "user@odata.bind": `https://graph.microsoft.com/v1.0/users('${userId}')`,
+      },
+    ],
+  }) as Promise<MSChat>;
+}
+
 // ---------------------------------------------------------------------------
 // Large-file upload via Graph createUploadSession (resumable, chunked).
 //

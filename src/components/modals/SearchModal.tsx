@@ -21,6 +21,12 @@ export type SearchMessageOrigin =
   | { kind: "channel"; teamId: string; channelId: string }
   | { kind: "chat"; chatId: string };
 
+export interface SearchPerson {
+  id: string;
+  displayName: string;
+  email: string;
+}
+
 interface SearchModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -33,6 +39,8 @@ interface SearchModalProps {
   onSelectChannel?: (channelId: string) => void;
   onSelectChat?: (chatId: string) => void;
   onSelectMessage?: (message: MSMessage, origin: SearchMessageOrigin) => void;
+  /** Picked an org-directory person (someone not already in a chat) → open/create a DM. */
+  onSelectPerson?: (person: SearchPerson) => void;
 }
 
 export function SearchModal({
@@ -47,6 +55,7 @@ export function SearchModal({
   onSelectChannel,
   onSelectChat,
   onSelectMessage,
+  onSelectPerson,
 }: SearchModalProps) {
   const [query, setQuery] = useState("");
   // Debounced copy of `query`. Filtering keys off this so each keystroke
@@ -83,6 +92,30 @@ export function SearchModal({
     return () => window.clearTimeout(handle);
   }, [query]);
 
+  // Org-directory people search (finds users the current user has never chatted
+  // with). Runs only when the modal is open and the query is at least 2 chars,
+  // and is cancelled if the query changes mid-flight.
+  const [people, setPeople] = useState<SearchPerson[]>([]);
+  const trimmedQuery = debouncedQuery.trim();
+  useEffect(() => {
+    if (!open || trimmedQuery.length < 2 || !onSelectPerson) {
+      setPeople([]);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/people?q=${encodeURIComponent(trimmedQuery)}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data: SearchPerson[]) => {
+        if (!cancelled) setPeople(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setPeople([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, trimmedQuery, onSelectPerson]);
+
   const normalizedQuery = debouncedQuery.trim().toLowerCase();
   const results = useMemo(() => {
     if (!normalizedQuery) return { channels: channels.slice(0, 6), chats: chats.slice(0, 6), messageGroups: [] };
@@ -109,6 +142,7 @@ export function SearchModal({
   const hasResults =
     results.channels.length > 0 ||
     results.chats.length > 0 ||
+    people.length > 0 ||
     results.messageGroups.some((group) => group.messages.length > 0);
 
   function resetQuery() {
@@ -134,6 +168,12 @@ export function SearchModal({
     if (messageOrigin) onSelectMessage?.(message, messageOrigin);
   }
 
+  function handleSelectPerson(person: SearchPerson) {
+    onOpenChange(false);
+    resetQuery();
+    onSelectPerson?.(person);
+  }
+
   return (
     <Dialog.Root
       open={open}
@@ -150,7 +190,7 @@ export function SearchModal({
             event.preventDefault();
             inputRef.current?.focus();
           }}
-          className="search-modal-content fixed top-1/2 z-[70] flex max-h-[70vh] w-[640px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--modal-bg)] text-[var(--text-primary)] shadow-[0_16px_64px_rgba(0,0,0,0.6)] outline-none"
+          className="search-modal-content fixed top-1/2 z-[70] flex max-h-[70vh] w-[640px] max-w-[calc(100vw-var(--sidebar-offset)-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--modal-bg)] text-[var(--text-primary)] shadow-[0_16px_64px_rgba(0,0,0,0.6)] outline-none"
           style={{ left: "calc(50% + var(--sidebar-offset) / 2)" }}
         >
           <Dialog.Title className="sr-only">Search</Dialog.Title>
@@ -224,6 +264,19 @@ export function SearchModal({
                     ))}
                   </ResultSection>
                 )}
+
+                {people.length > 0 && (
+                  <ResultSection title="People">
+                    {people.map((person) => (
+                      <PersonResult
+                        key={person.id}
+                        person={person}
+                        query={normalizedQuery}
+                        onSelect={() => handleSelectPerson(person)}
+                      />
+                    ))}
+                  </ResultSection>
+                )}
               </div>
             )}
           </div>
@@ -270,6 +323,44 @@ function MessageResult({ message, query, teamName, onSelect }: { message: MSMess
         </div>
         <p className="truncate text-[13px] text-[var(--text-secondary)]">{highlight(messageText(message), query)}</p>
       </div>
+    </button>
+  );
+}
+
+function PersonResult({
+  person,
+  query,
+  onSelect,
+}: {
+  person: SearchPerson;
+  query: string;
+  onSelect: () => void;
+}) {
+  const initials = person.displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition-colors duration-[80ms] hover:bg-[var(--surface-hover)]"
+    >
+      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[10px] font-bold text-[var(--text-white)]">
+        {initials || "?"}
+      </span>
+      <span className="min-w-0">
+        <span className="block truncate text-[13px] font-bold text-[var(--text-primary)]">
+          {highlight(person.displayName, query)}
+        </span>
+        <span className="block truncate text-[12px] text-[var(--text-muted)]">
+          {person.email ? `${person.email} · Start a chat` : "Start a chat"}
+        </span>
+      </span>
     </button>
   );
 }

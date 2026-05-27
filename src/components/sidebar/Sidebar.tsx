@@ -889,10 +889,15 @@ function ChatAvatar({
   presenceMap: Record<string, MSPresence["availability"]>;
   currentUserId: string;
 }) {
-  if (chat.chatType === "group") return <MessageSquare className="h-3.5 w-3.5" />;
-
   const members = chat.members ?? [];
   const otherMembers = members.filter((m) => (m.userId ?? m.id) !== currentUserId);
+  // Treat as a group when Graph says so OR when there's more than one other
+  // member — some tenants omit chatType on the list response, and without this
+  // a group would fall through and render a single member's photo.
+  if (chat.chatType === "group" || otherMembers.length > 1) {
+    return <MessageSquare className="h-3.5 w-3.5" />;
+  }
+
   const member = otherMembers[0] ?? members[0];
   if (!member) return <MessageSquare className="h-3.5 w-3.5" />;
 

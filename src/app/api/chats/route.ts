@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth/config";
-import { getChats } from "@/lib/graph/client";
+import { getChats, getMe, getOrCreateOneOnOneChat } from "@/lib/graph/client";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -20,5 +20,25 @@ export async function GET(request: NextRequest) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[graph] chats failed:", msg);
     return NextResponse.json({ error: "Graph chats failed", detail: msg }, { status: 502 });
+  }
+}
+
+// Find-or-create a 1:1 chat with a user, so search results for people the user
+// hasn't messaged yet can open a DM. Returns the chat (existing or new).
+export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session?.accessToken) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { userId } = (await request.json()) as { userId?: string };
+  if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+
+  try {
+    const me = await getMe(session.accessToken);
+    const chat = await getOrCreateOneOnOneChat(session.accessToken, me.id, userId);
+    return NextResponse.json(chat);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[graph] create chat failed:", msg);
+    return NextResponse.json({ error: "Create chat failed", detail: msg }, { status: 502 });
   }
 }

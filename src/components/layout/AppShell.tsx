@@ -9,7 +9,7 @@ import { LeftRail } from "@/components/layout/LeftRail";
 import { MemberPanel } from "@/components/layout/MemberPanel";
 import { FilePreviewPanel } from "@/components/files/FilePreviewPanel";
 import { JumpToSwitcher, type JumpToItem } from "@/components/modals/JumpToSwitcher";
-import { SearchModal, type SearchMessageOrigin } from "@/components/modals/SearchModal";
+import { SearchModal, type SearchMessageOrigin, type SearchPerson } from "@/components/modals/SearchModal";
 import { Logo } from "@/components/ui/Logo";
 import { EMPTY_MESSAGES, useWorkspaceStore } from "@/store/workspace";
 import { useDraftsStore } from "@/store/drafts";
@@ -66,7 +66,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       signOut({ callbackUrl: "/login" });
     }
   }, [session.status]);
-  const { teams, activeTeamId, activeChannelId, activeChatId, channels, chats, currentUserId, setTeams, setActiveTeam, setChannels, setActiveChannel, setActiveChat, markRead, setCurrentUser, hydrateMessageCache } = useWorkspaceStore();
+  const { teams, activeTeamId, activeChannelId, activeChatId, channels, chats, currentUserId, setTeams, setActiveTeam, setChannels, setActiveChannel, setActiveChat, markRead, setCurrentUser, hydrateMessageCache, patchChat } = useWorkspaceStore();
   const unreadCounts = useWorkspaceStore((s) => s.unreadCounts);
   // Pull the active context's messages so SearchModal can find matches in the
   // currently open chat/channel. Empty array when nothing is open.
@@ -278,6 +278,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // Picked someone from org-directory search: find-or-create the 1:1 chat,
+  // seed it into the store so the sidebar shows it, and navigate to the DM.
+  async function handleSelectPerson(person: SearchPerson) {
+    try {
+      const res = await fetch("/api/chats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: person.id }),
+      });
+      if (!res.ok) throw new Error("create chat failed");
+      const chat = (await res.json()) as MSChat;
+      patchChat(chat);
+      markRead(chat.id);
+      setActiveChat(chat.id);
+      router.push(`/workspace/dm/${chat.id}`);
+    } catch {
+      showToast({ title: `Could not open a chat with ${person.displayName}`, tone: "error" });
+    }
+  }
+
   const autoInstallSupported =
     typeof window !== 'undefined' && (window.electron?.isAutoInstallSupported?.() ?? false);
 
@@ -412,6 +432,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         onSelectChannel={handleSelectChannel}
         onSelectChat={handleSelectChat}
         onSelectMessage={handleSelectMessage}
+        onSelectPerson={handleSelectPerson}
       />
       <ToastViewport />
       <RealtimeEventsMount />
