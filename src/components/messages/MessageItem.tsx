@@ -95,9 +95,14 @@ export function MessageItem({
   const removeBookmark = useBookmarksStore((s) => s.removeBookmark);
 
   // Optimistic + pending messages can't be saved — there's nothing stable
-  // to bookmark against until the server assigns a real id.
+  // to bookmark against until the server assigns a real id. Disappearing
+  // messages can't be saved either: the bookmark would capture the opaque
+  // blob, and saving defeats the point of an ephemeral message.
   const canSave = Boolean(
-    contextId && !message.__pending && !message.__failed
+    contextId &&
+      !message.__pending &&
+      !message.__failed &&
+      !isDisappearing(message.body.content)
   );
 
   // Quick-react: hover this row and press 1–6 to react. Suppress while
@@ -363,6 +368,9 @@ export function MessageItem({
                         ? <span className="italic text-[var(--text-secondary,#ababad)]">🕓 Message not available here</span>
                         : <span className="italic text-[var(--text-secondary,#ababad)]">…</span>
                     : renderMessageBody(message.body.content, message.body.contentType)}
+                  {disappearing && decoded && decoded.disappearAt > Date.now() && (
+                    <DisappearBadge disappearAt={decoded.disappearAt} />
+                  )}
                 </div>
                 <GitHubCards text={content} />
                 <RichLinkCards text={content} />
