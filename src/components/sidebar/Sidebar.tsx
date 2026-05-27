@@ -10,6 +10,34 @@ import { clearAll as clearMessageCache } from "@/lib/storage/message-cache";
 import { clearAll as clearDraftsCache } from "@/lib/storage/drafts";
 import { clearAll as clearBookmarksCache } from "@/lib/storage/bookmarks";
 import { cn } from "@/lib/utils";
+import { isDisappearing, unwrapMessage } from "@/lib/utils/disappear";
+
+async function sweepAllDms(
+  chatIds: string[],
+  getMessages: (id: string) => MSMessage[],
+  removeMessage: (ctx: string, id: string) => void,
+  currentUserId: string
+) {
+  const now = Date.now();
+  for (const chatId of chatIds) {
+    for (const m of getMessages(chatId)) {
+      if (m.__pending || m.__failed) continue;
+      if (m.from?.user?.id !== currentUserId) continue; // only delete our own (Graph 403s otherwise)
+      if (!isDisappearing(m.body.content)) continue;
+      const payload = await unwrapMessage(chatId, m.body.content);
+      if (!payload || payload.disappearAt > now) continue;
+      try {
+        const res = await fetch(
+          `/api/chats/${chatId}/messages/${encodeURIComponent(m.id)}`,
+          { method: "DELETE" }
+        );
+        if (res.ok) removeMessage(chatId, m.id);
+      } catch {
+        /* best-effort */
+      }
+    }
+  }
+}
 
 async function handleSignOut() {
   // Drop the IDB caches before redirect so a previous user's messages,
@@ -105,6 +133,13 @@ export function Sidebar() {
         if (cancelled) return;
         const data = (await response.json()) as { chats: MSChat[]; nextLink: string | null };
         setChats(data.chats, data.nextLink);
+        const ws = useWorkspaceStore.getState();
+        void sweepAllDms(
+          data.chats.map((c) => c.id),
+          ws.getMessages,
+          ws.removeMessage,
+          ws.currentUserId
+        );
       } catch {
         if (!cancelled && !toastShown) {
           toastShown = true;
