@@ -313,6 +313,30 @@ server.tool(
 );
 
 server.tool(
+  "find_people",
+  "Search for a Microsoft Teams contact by name. Returns up to 5 matching users with their IDs, display names, and email addresses. Use the returned `id` with send_dm to send a message.",
+  {
+    query: z.string().describe("Name or partial name to search for, e.g. 'Priya' or 'Tom Baker'"),
+  },
+  async ({ query }) => {
+    const encoded = encodeURIComponent(`"${query}"`);
+    const data = (await graph(
+      `/me/people?$search=${encoded}&$select=id,displayName,userPrincipalName&$top=5`
+    )) as {
+      value?: Array<{ id: string; displayName: string; userPrincipalName?: string }>;
+    };
+    const people = (data?.value ?? []).map((p) => ({
+      id: p.id,
+      displayName: p.displayName,
+      email: p.userPrincipalName ?? "",
+    }));
+    return {
+      content: [{ type: "text", text: JSON.stringify(people, null, 2) }],
+    };
+  }
+);
+
+server.tool(
   "send_channel_message",
   "Post a message to a Teams channel",
   {
