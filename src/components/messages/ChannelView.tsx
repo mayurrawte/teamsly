@@ -105,9 +105,19 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
       body: JSON.stringify({ teamId, channelId }),
     }).catch(() => { /* subscription is best-effort; poll is the fallback */ });
 
+    // Re-subscribe before the 55-min Graph TTL so long-open views stay live.
+    const resubscribe = setInterval(() => {
+      fetch("/api/realtime/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teamId, channelId }),
+      }).catch(() => { /* best-effort */ });
+    }, 45 * 60 * 1000);
+
     return () => {
       cancelled = true;
       clearInterval(interval);
+      clearInterval(resubscribe);
     };
     // getMessages is a stable selector — intentionally not in deps to avoid re-running on cache updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
