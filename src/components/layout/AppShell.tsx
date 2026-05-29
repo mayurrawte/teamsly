@@ -305,23 +305,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen flex-col overflow-hidden bg-[var(--content-bg)]">
       {/* Electron auto-update banner — shown above the reconnect banner */}
       {updateStatus.kind === 'available' && (
-        <div className="flex flex-shrink-0 items-center justify-center gap-3 border-b border-[#0F5A8F]/40 bg-[#0F5A8F]/15 px-4 py-2 text-[13px] text-blue-200">
+        <div className="flex flex-shrink-0 items-center justify-center gap-3 border-b border-[var(--accent)]/40 bg-[var(--accent-light)] px-4 py-2 text-[13px] text-[var(--text-primary)]">
           <span>Teamsly v{updateStatus.version} is available — downloading…</span>
         </div>
       )}
       {updateStatus.kind === 'downloading' && (
-        <div className="flex flex-shrink-0 items-center justify-center gap-3 border-b border-[#0F5A8F]/40 bg-[#0F5A8F]/15 px-4 py-2 text-[13px] text-blue-200">
+        <div className="flex flex-shrink-0 items-center justify-center gap-3 border-b border-[var(--accent)]/40 bg-[var(--accent-light)] px-4 py-2 text-[13px] text-[var(--text-primary)]">
           <span>Downloading update… {updateStatus.percent ?? 0}%</span>
         </div>
       )}
       {updateStatus.kind === 'downloaded' && (
-        <div className="flex flex-shrink-0 items-center justify-center gap-3 border-b border-[#0F5A8F]/40 bg-[#0F5A8F]/15 px-4 py-2 text-[13px] text-blue-200">
+        <div className="flex flex-shrink-0 items-center justify-center gap-3 border-b border-[var(--accent)]/40 bg-[var(--accent-light)] px-4 py-2 text-[13px] text-[var(--text-primary)]">
           <span>Update ready — v{updateStatus.version}.</span>
           {autoInstallSupported ? (
             <button
               type="button"
               onClick={() => window.electron?.installUpdate()}
-              className="rounded bg-[#0F5A8F] px-2.5 py-0.5 text-[12px] font-semibold text-white transition-colors hover:bg-[#0d4f7d]"
+              className="rounded bg-[var(--accent)] px-2.5 py-0.5 text-[12px] font-semibold text-white transition-colors hover:opacity-90"
             >
               Restart &amp; install
             </button>
@@ -329,7 +329,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               onClick={() => window.electron?.openReleasesPage()}
-              className="rounded bg-[#0F5A8F] px-2.5 py-0.5 text-[12px] font-semibold text-white transition-colors hover:bg-[#0d4f7d]"
+              className="rounded bg-[var(--accent)] px-2.5 py-0.5 text-[12px] font-semibold text-white transition-colors hover:opacity-90"
             >
               Open release page
             </button>
@@ -370,7 +370,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="flex h-[50px] flex-shrink-0 items-center gap-3 border-b border-[var(--border)] bg-[var(--sidebar-bg)] px-4">
         {/* Left: logomark */}
         <div className="flex w-[56px] flex-shrink-0 items-center justify-center">
-          <Logo size={22} className="text-[#4da3e0]" />
+          <Logo size={22} className="text-[var(--accent)]" />
         </div>
 
         {/* Center: search input */}

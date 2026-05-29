@@ -50,8 +50,8 @@ function TabRow({
           onClick={() => onTabChange(id)}
           className={`px-3 py-1 text-[13px] font-medium transition-colors focus-ring ${
             activeTab === id
-              ? "border-b-2 border-white text-white"
-              : "text-[var(--text-secondary)] hover:text-white"
+              ? "border-b-2 border-[var(--text-primary)] text-[var(--text-primary)]"
+              : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           }`}
         >
           {label}
@@ -183,7 +183,7 @@ export function ChannelMessageHeader({
         {/* Left: icon + name + description */}
         <div className="flex min-w-0 items-center gap-2">
           <Hash className="h-4 w-4 flex-shrink-0 text-[var(--text-secondary)]" />
-          <span className="truncate text-[17px] font-bold text-white">{name}</span>
+          <span className="truncate text-[17px] font-bold text-[var(--text-primary)]">{name}</span>
           {description && (
             <>
               <span className="text-[var(--border)]">|</span>
@@ -244,7 +244,7 @@ export function DmMessageHeader({
               onOpenMembers={onOpenMembers}
             />
           ) : null}
-          <span className="truncate text-[17px] font-bold text-white">{displayLabel}</span>
+          <span className="truncate text-[17px] font-bold text-[var(--text-primary)]">{displayLabel}</span>
         </div>
         {/* Right: voice trigger + icon cluster */}
         <div className="flex flex-shrink-0 items-center gap-0.5">

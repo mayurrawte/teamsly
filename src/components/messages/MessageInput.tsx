@@ -1178,17 +1178,17 @@ export function MessageInput({
                   aria-label="Disappearing message"
                   onClick={() => setShowDisappearMenu((v) => !v)}
                   className={`rounded p-1 text-[15px] transition-colors press-snap ${
-                    disappearMs ? "text-[var(--accent,#6366F1)]" : "text-[var(--text-secondary,#ababad)] hover:text-white"
+                    disappearMs ? "text-[var(--accent)]" : "text-[var(--text-secondary)] hover:text-white"
                   }`}
                 >
                   ⏱{disappearMs ? <span className="ml-[2px] text-[10px]">on</span> : null}
                 </button>
                 {showDisappearMenu && (
-                  <div className="absolute bottom-full z-50 mb-2 min-w-[160px] rounded-md border border-[var(--border,#3f4144)] bg-[var(--modal-bg,#222529)] py-1 shadow-lg">
+                  <div className="absolute bottom-full z-50 mb-2 min-w-[160px] rounded-md border border-[var(--border)] bg-[var(--modal-bg)] py-1 shadow-lg">
                     <button
                       type="button"
                       onClick={() => { setDisappearMs(null); setShowDisappearMenu(false); }}
-                      className={`block w-full px-3 py-1 text-left text-[13px] hover:bg-[var(--bg-hover,#2a2d31)] ${disappearMs === null ? "text-[var(--accent,#6366F1)]" : "text-[var(--text-primary,#d1d2d3)]"}`}
+                      className={`block w-full px-3 py-1 text-left text-[13px] hover:bg-[var(--surface-hover)] ${disappearMs === null ? "text-[var(--accent)]" : "text-[var(--text-primary)]"}`}
                     >
                       Off
                     </button>
@@ -1197,7 +1197,7 @@ export function MessageInput({
                         key={d.ms}
                         type="button"
                         onClick={() => { setDisappearMs(d.ms); setShowDisappearMenu(false); }}
-                        className={`block w-full px-3 py-1 text-left text-[13px] hover:bg-[var(--bg-hover,#2a2d31)] ${disappearMs === d.ms ? "text-[var(--accent,#6366F1)]" : "text-[var(--text-primary,#d1d2d3)]"}`}
+                        className={`block w-full px-3 py-1 text-left text-[13px] hover:bg-[var(--surface-hover)] ${disappearMs === d.ms ? "text-[var(--accent)]" : "text-[var(--text-primary)]"}`}
                       >
                         {d.label}
                       </button>
@@ -1216,7 +1216,7 @@ export function MessageInput({
                 className={cn(
                   "relative overflow-hidden flex h-8 w-8 items-center justify-center rounded transition-[background,color,transform] duration-150 ease-out focus-ring",
                   canSend
-                    ? "bg-[#007a5a] text-white hover:bg-[#148567] hover:scale-105 active:scale-95"
+                    ? "bg-[var(--status-online)] text-white hover:opacity-90 hover:scale-105 active:scale-95"
                     : "text-[var(--text-muted)]"
                 )}
               >

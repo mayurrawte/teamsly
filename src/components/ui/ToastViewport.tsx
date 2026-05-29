@@ -30,28 +30,28 @@ export function ToastViewport() {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className={`rounded-md border border-[#3f4144] bg-[#1a1d21] p-3 text-[#d1d2d3] shadow-[0_8px_32px_rgba(0,0,0,0.45)] ${exiting.has(toast.id) ? "toast-exit" : "toast-enter"}`}
+          className={`rounded-md border border-[var(--border)] bg-[var(--modal-bg)] p-3 text-[var(--text-primary)] shadow-[0_8px_32px_rgba(0,0,0,0.45)] ${exiting.has(toast.id) ? "toast-exit" : "toast-enter"}`}
         >
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p
                 className={
                   toast.tone === "error"
-                    ? "text-[13px] font-bold text-[#e01e5a]"
-                    : "text-[13px] font-bold text-white"
+                    ? "text-[13px] font-bold text-[var(--status-busy)]"
+                    : "text-[13px] font-bold text-[var(--text-primary)]"
                 }
               >
                 {toast.title}
               </p>
               {toast.description && (
-                <p className="mt-1 text-[12px] text-[#ababad]">{toast.description}</p>
+                <p className="mt-1 text-[12px] text-[var(--text-secondary)]">{toast.description}</p>
               )}
             </div>
             <button
               type="button"
               aria-label="Dismiss"
               onClick={() => handleDismiss(toast.id)}
-              className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded text-[#ababad] hover:bg-[#27292d] hover:text-white"
+              className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
             >
               <X size={14} />
             </button>
