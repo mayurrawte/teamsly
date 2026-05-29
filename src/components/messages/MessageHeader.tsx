@@ -227,6 +227,10 @@ export function DmMessageHeader({
   );
   const displayMembers = otherMembers.length > 0 ? otherMembers : members;
 
+  // Fallback: if getChatLabel returned "" (members not yet in store), use the
+  // first other member's displayName from the local prop, or a generic label.
+  const displayLabel = label || otherMembers[0]?.displayName || "Direct message";
+
   return (
     <div className="flex flex-col border-b border-[var(--border)] bg-[var(--content-bg)] px-4 shadow-sm">
       {/* Top row */}
@@ -240,7 +244,7 @@ export function DmMessageHeader({
               onOpenMembers={onOpenMembers}
             />
           ) : null}
-          <span className="truncate text-[17px] font-bold text-white">{label}</span>
+          <span className="truncate text-[17px] font-bold text-white">{displayLabel}</span>
         </div>
         {/* Right: voice trigger + icon cluster */}
         <div className="flex flex-shrink-0 items-center gap-0.5">
