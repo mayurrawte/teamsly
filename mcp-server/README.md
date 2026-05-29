@@ -19,6 +19,8 @@ On first run, a sign-in prompt appears in your terminal:
 
 Open the URL, enter the code, sign in with your Microsoft account. Done — tokens are saved to `~/.config/teamsly-mcp/tokens.json` and auto-refreshed.
 
+> **Azure app requirement:** the app registration behind `TEAMSLY_CLIENT_ID` must have **"Allow public client flows"** enabled (Entra ID → App registrations → *app* → Authentication → Advanced settings). The device-code flow is a public-client flow; without this, sign-in fails at the token step with `AADSTS7000218: ... must contain 'client_assertion' or 'client_secret'`.
+
 ## Tools
 
 | Tool | Description |
