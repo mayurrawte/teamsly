@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useWorkspaceStore } from "@/store/workspace";
 import { usePreferencesStore } from "@/store/preferences";
@@ -18,6 +18,7 @@ import { openTeamsCall } from "@/lib/utils/teams-deeplink";
 import { getChatLabel } from "@/lib/utils/chat-label";
 import { VoiceTrigger } from "@/components/voice/VoiceTrigger";
 import { isDisappearing, unwrapMessage, wrapMessage } from "@/lib/utils/disappear";
+import { useRealtimeEvents } from "@/hooks/useRealtimeEvents";
 
 export function ChatView({ chatId }: { chatId: string }) {
   const {
@@ -69,6 +70,10 @@ export function ChatView({ chatId }: { chatId: string }) {
 
   const messages = getMessages(chatId);
   const chat = chats.find((c) => c.id === chatId);
+
+  // loadRef lets the realtime handler trigger a fetch without becoming a
+  // dependency of the polling effect (which would re-run it on every change).
+  const loadRef = useRef<() => Promise<void>>(async () => {});
 
   // Sweep expired disappearing messages that we sent — only the sender can
   // DELETE via Graph (403 for anyone else). Receivers hide locally instead.
@@ -173,16 +178,45 @@ export function ChatView({ chatId }: { chatId: string }) {
       }
     }
 
+    loadRef.current = load;
     load();
 
-    const interval = setInterval(load, 4000);
+    // Webhook push is primary; poll kept at 30s as safety net for missed events.
+    const interval = setInterval(load, 30_000);
+
+    // Disappearing-message sweep stays on a fast cadence, decoupled from the
+    // message fetch. It's network-free unless one of our own messages has
+    // actually expired, so running it every 4s is cheap and preserves the
+    // ~4s auto-delete latency the feature shipped with.
+    const sweep = setInterval(() => void sweepExpired(getMessages(chatId)), 4000);
+
+    // Fire-and-forget: create a Graph change notification subscription so the
+    // webhook endpoint can push new DM messages via SSE instead of waiting for poll.
+    fetch("/api/realtime/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chatId }),
+    }).catch(() => { /* subscription is best-effort; poll is the fallback */ });
+
     return () => {
       cancelled = true;
       clearInterval(interval);
+      clearInterval(sweep);
     };
     // getMessages is a stable selector — intentionally not in deps to avoid re-running on cache updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId, setLoadingMessages, setMessages, showToast, sweepExpired]);
+
+  useRealtimeEvents(
+    useCallback(
+      (event) => {
+        if (event.type === "chat_message" && event.chatId === chatId) {
+          void loadRef.current();
+        }
+      },
+      [chatId]
+    )
+  );
 
   async function handleSend(
     content: string,

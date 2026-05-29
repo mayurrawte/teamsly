@@ -34,12 +34,20 @@ export async function POST(req: NextRequest) {
     }
     const messageId = notification.resourceData?.id;
     if (!messageId) continue;
-    publish(record.userId, {
-      type: "channel_message",
-      teamId: record.teamId,
-      channelId: record.channelId,
-      messageId,
-    });
+    if (record.resourceType === "chat_message") {
+      publish(record.userId, {
+        type: "chat_message",
+        chatId: record.chatId,
+        messageId,
+      });
+    } else {
+      publish(record.userId, {
+        type: "channel_message",
+        teamId: record.teamId,
+        channelId: record.channelId,
+        messageId,
+      });
+    }
   }
 
   return Response.json({ ok: true });

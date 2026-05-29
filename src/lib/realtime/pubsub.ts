@@ -3,6 +3,7 @@
 
 export type RealtimeEvent =
   | { type: "channel_message"; teamId: string; channelId: string; messageId: string }
+  | { type: "chat_message"; chatId: string; messageId: string }
   | { type: "noop" };
 
 type Subscriber = { send: (event: RealtimeEvent) => void };
@@ -28,13 +29,20 @@ export function publish(userId: string, event: RealtimeEvent): void {
   for (const sub of set) sub.send(event);
 }
 
-export interface SubscriptionRecord {
-  userId: string;
-  resourceType: "channel_message";
-  teamId: string;
-  channelId: string;
-  expiresAt: number;
-}
+export type SubscriptionRecord =
+  | {
+      userId: string;
+      resourceType: "channel_message";
+      teamId: string;
+      channelId: string;
+      expiresAt: number;
+    }
+  | {
+      userId: string;
+      resourceType: "chat_message";
+      chatId: string;
+      expiresAt: number;
+    };
 
 const subRecords = new Map<string, SubscriptionRecord>();
 
