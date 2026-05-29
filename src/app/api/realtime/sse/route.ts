@@ -1,8 +1,9 @@
 import { auth } from "@/lib/auth/config";
-import { subscribe } from "@/lib/realtime/pubsub";
+import { transport } from "@/lib/realtime/pubsub";
 import type { RealtimeEvent } from "@/lib/realtime/pubsub";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -13,7 +14,7 @@ export async function GET(req: Request) {
   const userId = session.user.id;
 
   const stream = new ReadableStream({
-    start(controller) {
+    async start(controller) {
       const enc = new TextEncoder();
 
       function enqueue(event: RealtimeEvent) {
@@ -24,7 +25,7 @@ export async function GET(req: Request) {
         }
       }
 
-      const unsubscribe = subscribe(userId, { send: enqueue });
+      const unsubscribe = await transport.subscribe(userId, enqueue);
 
       const keepAlive = setInterval(() => {
         try {
@@ -37,7 +38,11 @@ export async function GET(req: Request) {
       req.signal.addEventListener("abort", () => {
         clearInterval(keepAlive);
         unsubscribe();
-        try { controller.close(); } catch { /* already closed */ }
+        try {
+          controller.close();
+        } catch {
+          /* already closed */
+        }
       });
     },
   });

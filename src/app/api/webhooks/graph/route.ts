@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { getSubscription, publish } from "@/lib/realtime/pubsub";
+import { transport } from "@/lib/realtime/pubsub";
 
 interface GraphNotification {
   subscriptionId: string;
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   }
 
   for (const notification of payload.value ?? []) {
-    const record = getSubscription(notification.subscriptionId);
+    const record = await transport.getSub(notification.subscriptionId);
     if (!record) {
       console.warn("[webhooks/graph] unknown subscriptionId", notification.subscriptionId);
       continue;
@@ -35,13 +35,13 @@ export async function POST(req: NextRequest) {
     const messageId = notification.resourceData?.id;
     if (!messageId) continue;
     if (record.resourceType === "chat_message") {
-      publish(record.userId, {
+      await transport.publish(record.userId, {
         type: "chat_message",
         chatId: record.chatId,
         messageId,
       });
     } else {
-      publish(record.userId, {
+      await transport.publish(record.userId, {
         type: "channel_message",
         teamId: record.teamId,
         channelId: record.channelId,
