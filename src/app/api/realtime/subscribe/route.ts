@@ -1,14 +1,13 @@
 import { auth } from "@/lib/auth/config";
 import { NextResponse } from "next/server";
-import {
-  listUserSubscriptions,
-  registerSubscription,
-} from "@/lib/realtime/pubsub";
+import { transport, resourceKey, type SubscriptionRecord } from "@/lib/realtime/pubsub";
 
 const URL_SAFE = /^[A-Za-z0-9_-]+$/;
 // Teams chat IDs look like 19:xxx_yyy@unq.gbl.spaces — allow :, @, . in addition.
 const CHAT_ID_SAFE = /^[A-Za-z0-9_@.:-]+$/;
 const TTL_MS = 55 * 60 * 1000;
+const TTL_SEC = TTL_MS / 1000;
+const REUSE_IF_REMAINING_MS = 15 * 60 * 1000;
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -22,21 +21,19 @@ export async function POST(req: Request) {
     chatId?: string;
   };
   const { teamId, channelId, chatId } = body;
-
   const userId = session.user.id;
   const now = Date.now();
 
-  // Resolve the subscription target: a chat (DM) or a channel.
+  let rkey: string;
   let resource: string;
-  let matchExisting: (r: ReturnType<typeof listUserSubscriptions>[number][1]) => boolean;
-  let makeRecord: (expiresAt: number) => Parameters<typeof registerSubscription>[1];
+  let makeRecord: (expiresAt: number) => SubscriptionRecord;
 
   if (chatId) {
     if (!CHAT_ID_SAFE.test(chatId)) {
       return NextResponse.json({ error: "Invalid chatId" }, { status: 400 });
     }
+    rkey = resourceKey({ kind: "chat", chatId });
     resource = `/chats/${chatId}/messages`;
-    matchExisting = (r) => r.resourceType === "chat_message" && r.chatId === chatId;
     makeRecord = (expiresAt) => ({
       userId,
       resourceType: "chat_message",
@@ -44,11 +41,8 @@ export async function POST(req: Request) {
       expiresAt,
     });
   } else if (teamId && channelId && URL_SAFE.test(teamId) && URL_SAFE.test(channelId)) {
+    rkey = resourceKey({ kind: "channel", teamId, channelId });
     resource = `/teams/${teamId}/channels/${channelId}/messages`;
-    matchExisting = (r) =>
-      r.resourceType === "channel_message" &&
-      r.teamId === teamId &&
-      r.channelId === channelId;
     makeRecord = (expiresAt) => ({
       userId,
       resourceType: "channel_message",
@@ -63,11 +57,13 @@ export async function POST(req: Request) {
     );
   }
 
-  const existing = listUserSubscriptions(userId).find(
-    ([, r]) => matchExisting(r) && r.expiresAt > now
-  );
-  if (existing) {
-    return NextResponse.json({ subscriptionId: existing[0], expiresAt: existing[1].expiresAt });
+  // Reuse an existing subscription unless it's within the recreate window.
+  const existing = await transport.findActiveSub(userId, rkey);
+  if (existing && existing.expiresAt - now > REUSE_IF_REMAINING_MS) {
+    return NextResponse.json({
+      subscriptionId: existing.subId,
+      expiresAt: existing.expiresAt,
+    });
   }
 
   const expiresAt = now + TTL_MS;
@@ -108,7 +104,7 @@ export async function POST(req: Request) {
   }
 
   const sub = (await res.json()) as { id: string };
-  registerSubscription(sub.id, makeRecord(expiresAt));
+  await transport.saveSub(sub.id, makeRecord(expiresAt), rkey, TTL_SEC);
 
   return NextResponse.json({ subscriptionId: sub.id, expiresAt });
 }
