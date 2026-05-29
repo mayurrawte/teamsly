@@ -114,7 +114,7 @@ export function LeftRail() {
   return (
     <nav
       aria-label="Primary navigation"
-      className="flex w-[56px] flex-shrink-0 flex-col items-center bg-[#19171d] py-2"
+      className="flex w-[56px] flex-shrink-0 flex-col items-center bg-[var(--sidebar-bg)] py-2"
     >
       {/* macOS traffic-light clearance + window drag region.
           hiddenInset removes the native title bar so we provide a drag handle
@@ -130,12 +130,12 @@ export function LeftRail() {
           onClick={openSearch}
           aria-label="Search (Cmd+K)"
           title="Search (Cmd+K)"
-          className="group flex w-full flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-medium transition-colors focus-ring text-[#a0a3a8] hover:text-[#d1d2d3]"
+          className="group flex w-full flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-medium transition-colors focus-ring text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors group-hover:bg-white/8">
-            <Search size={18} strokeWidth={1.8} className="text-[#a0a3a8] group-hover:text-[#d1d2d3]" />
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors group-hover:bg-[var(--surface-hover)]">
+            <Search size={18} strokeWidth={1.8} className="text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
           </span>
-          <span className="leading-none text-[#a0a3a8] group-hover:text-[#d1d2d3]">Search</span>
+          <span className="leading-none text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]">Search</span>
         </button>
 
         {NAV_ITEMS.map((item) => {
@@ -158,15 +158,15 @@ export function LeftRail() {
               className={cn(
                 "group relative flex w-full flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-medium transition-colors focus-ring",
                 active
-                  ? "text-white"
-                  : "text-[#a0a3a8] hover:text-[#d1d2d3]"
+                  ? "text-[var(--text-primary)]"
+                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               )}
             >
               {/* Left border accent for active state */}
               {active && (
                 <span
                   aria-hidden="true"
-                  className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-[#0F5A8F]"
+                  className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-[var(--accent)]"
                 />
               )}
               {/* Icon container with hover/active fill */}
@@ -175,22 +175,22 @@ export function LeftRail() {
                   className={cn(
                     "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
                     active
-                      ? "bg-[#0F5A8F]/20"
-                      : "group-hover:bg-white/8"
+                      ? "bg-[var(--accent)]/20"
+                      : "group-hover:bg-[var(--surface-hover)]"
                   )}
                 >
                   <Icon
                     size={18}
                     strokeWidth={active ? 2.2 : 1.8}
                     className={cn(
-                      active ? "text-[#4da3e0]" : "text-[#a0a3a8] group-hover:text-[#d1d2d3]"
+                      active ? "text-[var(--accent)]" : "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]"
                     )}
                   />
                 </span>
                 {showBadge && (
                   <span
                     aria-hidden="true"
-                    className="absolute -right-1 -top-1 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-[#cd2553] px-[3px] text-[9px] font-bold leading-none text-white"
+                    className="absolute -right-1 -top-1 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-[var(--text-mention)] px-[3px] text-[9px] font-bold leading-none text-white"
                   >
                     {badgeCount > 99 ? "99+" : badgeCount}
                   </span>
@@ -199,7 +199,7 @@ export function LeftRail() {
               <span
                 className={cn(
                   "leading-none",
-                  active ? "text-white" : "text-[#a0a3a8] group-hover:text-[#d1d2d3]"
+                  active ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]"
                 )}
               >
                 {item.label}
@@ -218,22 +218,22 @@ export function LeftRail() {
           aria-expanded={moreOpen}
           className={cn(
             "group flex w-full flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-medium transition-colors focus-ring",
-            moreOpen ? "text-white" : "text-[#a0a3a8] hover:text-[#d1d2d3]"
+            moreOpen ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           )}
         >
           <span
             className={cn(
               "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
-              moreOpen ? "bg-[#0F5A8F]/20" : "group-hover:bg-white/8"
+              moreOpen ? "bg-[var(--accent)]/20" : "group-hover:bg-[var(--surface-hover)]"
             )}
           >
             <MoreHorizontal
               size={18}
               strokeWidth={moreOpen ? 2.2 : 1.8}
-              className={moreOpen ? "text-[#4da3e0]" : "text-[#a0a3a8] group-hover:text-[#d1d2d3]"}
+              className={moreOpen ? "text-[var(--accent)]" : "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]"}
             />
           </span>
-          <span className={moreOpen ? "text-white" : "text-[#a0a3a8] group-hover:text-[#d1d2d3] leading-none"}>
+          <span className={moreOpen ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] leading-none"}>
             More
           </span>
         </button>
@@ -243,7 +243,7 @@ export function LeftRail() {
           <div
             role="menu"
             aria-label="More options menu"
-            className="absolute bottom-full left-full z-[200] mb-1 ml-1 w-48 overflow-hidden rounded-lg border border-white/10 bg-[#1e2027] py-1 shadow-xl"
+            className="absolute bottom-full left-full z-[200] mb-1 ml-1 w-48 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] py-1 shadow-xl"
           >
             <button
               role="menuitem"
@@ -251,9 +251,9 @@ export function LeftRail() {
                 setMoreOpen(false);
                 setPrefsOpen(true);
               }}
-              className="flex w-full items-center gap-3 px-3 py-2 text-sm text-[#d1d2d3] transition-colors hover:bg-white/8 focus-ring"
+              className="flex w-full items-center gap-3 px-3 py-2 text-sm text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-hover)] focus-ring"
             >
-              <Settings size={15} strokeWidth={1.8} className="shrink-0 text-[#a0a3a8]" />
+              <Settings size={15} strokeWidth={1.8} className="shrink-0 text-[var(--text-secondary)]" />
               Preferences
             </button>
             <button
@@ -262,29 +262,29 @@ export function LeftRail() {
                 setMoreOpen(false);
                 setFeedbackOpen(true);
               }}
-              className="flex w-full items-center gap-3 px-3 py-2 text-sm text-[#d1d2d3] transition-colors hover:bg-white/8 focus-ring"
+              className="flex w-full items-center gap-3 px-3 py-2 text-sm text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-hover)] focus-ring"
             >
-              <MessageCircleQuestion size={15} strokeWidth={1.8} className="shrink-0 text-[#a0a3a8]" />
+              <MessageCircleQuestion size={15} strokeWidth={1.8} className="shrink-0 text-[var(--text-secondary)]" />
               Send feedback…
             </button>
             <button
               role="menuitem"
               onClick={() => setMoreOpen(false)}
-              className="flex w-full items-center gap-3 px-3 py-2 text-sm text-[#d1d2d3] transition-colors hover:bg-white/8 focus-ring"
+              className="flex w-full items-center gap-3 px-3 py-2 text-sm text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-hover)] focus-ring"
             >
-              <Info size={15} strokeWidth={1.8} className="shrink-0 text-[#a0a3a8]" />
+              <Info size={15} strokeWidth={1.8} className="shrink-0 text-[var(--text-secondary)]" />
               About Teamsly
             </button>
-            <hr className="my-1 border-white/10" />
+            <hr className="my-1 border-[var(--border)]" />
             <button
               role="menuitem"
               onClick={() => {
                 setMoreOpen(false);
                 void handleSignOut();
               }}
-              className="flex w-full items-center gap-3 px-3 py-2 text-sm text-[#e8534a] transition-colors hover:bg-white/8 focus-ring"
+              className="flex w-full items-center gap-3 px-3 py-2 text-sm text-[var(--status-busy)] transition-colors hover:bg-[var(--surface-hover)] focus-ring"
             >
-              <LogOut size={15} strokeWidth={1.8} className="shrink-0 text-[#e8534a]" />
+              <LogOut size={15} strokeWidth={1.8} className="shrink-0 text-[var(--status-busy)]" />
               Sign out
             </button>
           </div>
