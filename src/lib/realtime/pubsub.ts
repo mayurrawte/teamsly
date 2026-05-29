@@ -66,6 +66,7 @@ class InMemoryTransport implements RealtimeTransport {
     return { subId, expiresAt: entry.record.expiresAt };
   }
 
+  // ttlSec is intentionally unused: in-memory records have no TTL.
   async saveSub(subId: string, record: SubscriptionRecord, rkey: string) {
     const idxKey = `${record.userId}|${rkey}`;
     const old = this.index.get(idxKey);
@@ -99,8 +100,6 @@ class InMemoryTransport implements RealtimeTransport {
 }
 
 // ---- Redis (optional; reliable across instances) ----------------------------
-const TTL_SEC = 55 * 60;
-
 class RedisTransport implements RealtimeTransport {
   constructor(private redis: Redis) {}
 
@@ -153,21 +152,27 @@ class RedisTransport implements RealtimeTransport {
   }
 
   async subscribe(userId: string, onEvent: (e: RealtimeEvent) => void) {
-    const sub = this.redis.subscribe(`realtime:${userId}`);
-    sub.on("message", ({ message }: { message: unknown }) => {
-      try {
-        const event =
-          typeof message === "string"
-            ? (JSON.parse(message) as RealtimeEvent)
-            : (message as RealtimeEvent);
-        onEvent(event);
-      } catch {
-        /* ignore malformed payloads */
-      }
-    });
-    return () => {
-      void sub.unsubscribe();
-    };
+    try {
+      const sub = this.redis.subscribe(`realtime:${userId}`);
+      sub.on("message", ({ message }: { message: unknown }) => {
+        try {
+          const event =
+            typeof message === "string"
+              ? (JSON.parse(message) as RealtimeEvent)
+              : (message as RealtimeEvent);
+          onEvent(event);
+        } catch {
+          /* ignore malformed payloads */
+        }
+      });
+      return () => {
+        void sub.unsubscribe();
+      };
+    } catch (err) {
+      // Degrade to no-op so the SSE connection stays alive and the poll covers it.
+      console.error("[redis] subscribe failed:", err);
+      return () => {};
+    }
   }
 }
 
