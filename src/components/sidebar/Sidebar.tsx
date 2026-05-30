@@ -906,7 +906,7 @@ function SectionHeader({
       <span className="flex-shrink-0 opacity-70">{icon}</span>
       <span className="truncate">{label}</span>
       {count > 0 && (
-        <span className="ml-auto flex h-[15px] min-w-[15px] flex-shrink-0 items-center justify-center rounded-full bg-[#cd2553] px-[4px] text-[10px] font-bold text-white">
+        <span className="ml-auto flex h-[15px] min-w-[15px] flex-shrink-0 items-center justify-center rounded-full bg-[var(--text-mention)] px-[4px] text-[10px] font-bold text-white">
           {count > 99 ? "99+" : count}
         </span>
       )}
@@ -1002,7 +1002,7 @@ function SidebarItem({
         {unread && (
           <span
             className={cn(
-              "flex h-[16px] min-w-[16px] flex-shrink-0 items-center justify-center rounded-full bg-[#cd2553] px-[4px] text-[10px] font-bold text-white",
+              "flex h-[16px] min-w-[16px] flex-shrink-0 items-center justify-center rounded-full bg-[var(--text-mention)] px-[4px] text-[10px] font-bold text-white",
               voiceCount > 0 || isSnoozed ? "ml-1" : "ml-auto"
             )}
             style={pulsing ? { animation: 'badge-pulse 300ms ease-out' } : undefined}
