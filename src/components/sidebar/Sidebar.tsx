@@ -544,7 +544,7 @@ export function Sidebar() {
 
       <div className="flex-1 overflow-y-auto pb-2">
         {/* Unreads section */}
-        <div className="mb-1">
+        <div className="mb-2">
           <SectionHeader
             label="Unreads"
             icon={<Inbox className="h-3.5 w-3.5" />}
@@ -554,7 +554,7 @@ export function Sidebar() {
           />
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 ease-out",
+              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
               unreadsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >
@@ -588,14 +588,14 @@ export function Sidebar() {
                 />
               ))}
               {totalUnreads === 0 && (
-                <p className="px-4 py-1 text-[12px] text-[var(--text-muted)]">All caught up</p>
+                <p className="motion-fade-up px-4 py-1 text-[12px] text-[var(--text-muted)]">All caught up</p>
               )}
             </div>
           </div>
         </div>
 
         {/* Threads section */}
-        <div className="mb-1">
+        <div className="mb-2">
           <SectionHeader
             label="Threads"
             icon={<GitBranch className="h-3.5 w-3.5" />}
@@ -605,7 +605,7 @@ export function Sidebar() {
           />
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 ease-out",
+              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
               threadsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >
@@ -616,7 +616,7 @@ export function Sidebar() {
         </div>
 
         {/* Starred section */}
-        <div className="mb-1">
+        <div className="mb-2">
           <SectionHeader
             label="Starred"
             icon={<Star className="h-3.5 w-3.5" />}
@@ -626,7 +626,7 @@ export function Sidebar() {
           />
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 ease-out",
+              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
               starredOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >
@@ -669,7 +669,7 @@ export function Sidebar() {
         </div>
 
         {/* Channels section */}
-        <div className="mb-1">
+        <div className="mb-2">
           <button
             onClick={() => setChannelsOpen((v) => !v)}
             className="group/section flex w-full items-center justify-between px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] transition-colors duration-[80ms] ease-out hover:text-[var(--text-secondary)] focus:outline-none"
@@ -688,7 +688,7 @@ export function Sidebar() {
 
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 ease-out",
+              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
               channelsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >
@@ -715,7 +715,7 @@ export function Sidebar() {
         </div>
 
         {/* DMs section */}
-        <div className="mt-3">
+        <div className="mb-2">
           <button
             onClick={() => setDmsOpen((v) => !v)}
             className="group/section flex w-full items-center justify-between px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] transition-colors duration-[80ms] ease-out hover:text-[var(--text-secondary)] focus:outline-none"
@@ -734,7 +734,7 @@ export function Sidebar() {
 
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 ease-out",
+              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
               dmsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >

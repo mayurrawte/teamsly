@@ -260,7 +260,7 @@ export function MessageItem({
         <button
           type="button"
           onClick={() => onRetry(message.__originalText ?? content)}
-          className="text-[12px] font-medium text-[var(--accent)] hover:underline"
+          className="rounded px-2 py-1 text-[12px] font-medium text-[var(--accent)] transition-colors hover:bg-[var(--surface-hover)] focus-ring"
         >
           Retry
         </button>
@@ -269,7 +269,7 @@ export function MessageItem({
         <button
           type="button"
           onClick={() => onDiscard(message.id)}
-          className="text-[12px] font-medium text-[var(--text-muted)] hover:underline"
+          className="rounded px-2 py-1 text-[12px] font-medium text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-hover)] focus-ring"
         >
           Discard
         </button>
@@ -476,7 +476,7 @@ export function MessageItem({
         ) : (
           hasBody && (
             <>
-              <div className="message-body break-words text-[14px] leading-[1.5] text-[var(--text-primary)]">
+              <div style={bodyDensityStyle} className="message-body break-words text-[var(--text-primary)]">
                 {disappearing
                   ? decoded
                     ? renderMessageBody(decoded.body, "text")
