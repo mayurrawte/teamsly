@@ -69,7 +69,7 @@ export function ReactionPill({ reactionType, count, active, onClick }: ReactionP
         type="button"
         onClick={handleClick}
         className={[
-          "inline-flex h-[24px] items-center gap-1 rounded-full border px-2 text-[12px] transition-colors duration-150 focus-ring",
+          "inline-flex h-6 items-center gap-1 rounded-full border px-2.5 py-0.5 text-[12px] transition-colors duration-150 focus-ring",
           bursting ? "react-burst" : "",
           active
             ? "border-[var(--accent)] bg-[var(--reaction-active-bg)] text-[var(--text-primary)]"
@@ -89,7 +89,7 @@ export function AddReactionPill({ onSelect }: { onSelect: (reaction: ReactionTyp
       <button
         type="button"
         aria-label="Add reaction"
-        className="inline-flex h-[24px] items-center rounded-full border border-[var(--reaction-border)] bg-[var(--reaction-bg)] px-2 text-[var(--text-secondary)] transition-colors duration-150 hover:border-[var(--accent)] hover:bg-[var(--reaction-active-bg)] hover:text-white focus-ring"
+        className="inline-flex h-6 items-center rounded-full border border-[var(--reaction-border)] bg-[var(--reaction-bg)] px-2.5 py-0.5 text-[var(--text-secondary)] transition-colors duration-150 hover:border-[var(--accent)] hover:bg-[var(--reaction-active-bg)] hover:text-white focus-ring"
       >
         <Plus size={13} />
       </button>
