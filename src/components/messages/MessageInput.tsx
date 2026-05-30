@@ -62,6 +62,7 @@ export interface PendingMention {
 export interface SendOptions {
   mentions?: PendingMention[];
   disappearMs?: number; // when set, parent wraps the content as a disappearing message
+  scheduleTime?: number; // epoch ms; when set, parent queues the message instead of sending now
 }
 
 interface Props {
@@ -101,6 +102,11 @@ interface Props {
    * timer expecting ephemerality while the message is sent as plaintext.
    */
   allowDisappearing?: boolean;
+  /**
+   * Show the send-later (📅) picker. Only DMs wire the client-side queue +
+   * due-sweep, so channels must leave this false.
+   */
+  allowSchedule?: boolean;
 }
 
 // Sentinel mention id for `@everyone`. The chat/channel API routes turn
@@ -176,6 +182,69 @@ function mimeToExt(mimeType: string): string {
 const MAX_FILE_BYTES = 250 * 1024 * 1024;
 
 // ---------------------------------------------------------------------------
+// Send-later presets
+// ---------------------------------------------------------------------------
+
+interface SchedulePreset {
+  label: string;
+  /** Returns the target epoch ms, or null when the preset is in the past now. */
+  at: () => number | null;
+}
+
+// Each preset is computed fresh at open time so "Tonight 6pm" disables itself
+// once 18:00 has passed and "Tomorrow 9am" always lands on the next day.
+const SCHEDULE_PRESETS: SchedulePreset[] = [
+  {
+    label: "In 1 hour",
+    at: () => Date.now() + 60 * 60 * 1000,
+  },
+  {
+    label: "Tonight 6pm",
+    at: () => {
+      const d = new Date();
+      d.setHours(18, 0, 0, 0);
+      return d.getTime() > Date.now() ? d.getTime() : null;
+    },
+  },
+  {
+    label: "Tomorrow 9am",
+    at: () => {
+      const d = new Date();
+      d.setDate(d.getDate() + 1);
+      d.setHours(9, 0, 0, 0);
+      return d.getTime();
+    },
+  },
+  {
+    label: "Monday 9am",
+    at: () => {
+      const d = new Date();
+      // 1 = Monday. Days until next Monday (always strictly in the future).
+      const daysUntilMonday = ((1 - d.getDay() + 7) % 7) || 7;
+      d.setDate(d.getDate() + daysUntilMonday);
+      d.setHours(9, 0, 0, 0);
+      return d.getTime();
+    },
+  },
+];
+
+/** Format an epoch ms for the active-state pill + datetime-local input. */
+function formatScheduleLabel(ms: number): string {
+  return new Date(ms).toLocaleString(undefined, {
+    weekday: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+/** Convert epoch ms to the `YYYY-MM-DDTHH:mm` string a datetime-local wants. */
+function toDatetimeLocalValue(ms: number): string {
+  const d = new Date(ms);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
@@ -192,6 +261,7 @@ export function MessageInput({
   currentUserId = "",
   channelMembers,
   allowDisappearing,
+  allowSchedule,
 }: Props) {
   const [value, setValue] = useState("");
   const [sending, setSending] = useState(false);
@@ -199,6 +269,8 @@ export function MessageInput({
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [disappearMs, setDisappearMs] = useState<number | null>(null);
   const [showDisappearMenu, setShowDisappearMenu] = useState(false);
+  const [scheduleTime, setScheduleTime] = useState<number | null>(null);
+  const [showScheduleMenu, setShowScheduleMenu] = useState(false);
   const emojiAnchorRef = useRef<HTMLButtonElement>(null);
   const emojiContainerRef = useRef<HTMLDivElement>(null);
   // Mentions the user has accepted via the autocomplete (or `@everyone`).
@@ -220,6 +292,9 @@ export function MessageInput({
   // draft mutation. When `contextId` is undefined (thread reply composer),
   // skip persistence entirely.
   useEffect(() => {
+    // A schedule selection is per-composition; never carry it across chats.
+    setScheduleTime(null);
+    setShowScheduleMenu(false);
     if (!contextId) {
       setValue("");
       return;
@@ -581,10 +656,12 @@ export function MessageInput({
         {
           ...(mentionsForSend.length > 0 ? { mentions: mentionsForSend } : {}),
           ...(disappearMs ? { disappearMs } : {}),
+          ...(scheduleTime ? { scheduleTime } : {}),
         }
       );
       setPendingMentions([]);
       setDisappearMs(null);
+      setScheduleTime(null);
     } catch {
       setValue(trimmed);
     } finally {
@@ -1207,20 +1284,87 @@ export function MessageInput({
               </div>
               )}
 
+              {/* Send-later (scheduled message) picker */}
+              {allowSchedule && (
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-label="Schedule message"
+                  onClick={() => setShowScheduleMenu((v) => !v)}
+                  className={`rounded p-1 text-[15px] transition-colors press-snap ${
+                    scheduleTime ? "text-[var(--accent)]" : "text-[var(--text-secondary)] hover:text-white"
+                  }`}
+                >
+                  📅{scheduleTime ? <span className="ml-[2px] text-[10px]">{formatScheduleLabel(scheduleTime)}</span> : null}
+                </button>
+                {showScheduleMenu && (
+                  <div className="absolute bottom-full right-0 z-50 mb-2 min-w-[200px] rounded-md border border-[var(--border)] bg-[var(--modal-bg)] py-1 shadow-lg">
+                    {scheduleTime !== null && (
+                      <button
+                        type="button"
+                        onClick={() => { setScheduleTime(null); setShowScheduleMenu(false); }}
+                        className="block w-full px-3 py-1 text-left text-[13px] text-[var(--accent)] hover:bg-[var(--surface-hover)]"
+                      >
+                        Send now (clear)
+                      </button>
+                    )}
+                    {SCHEDULE_PRESETS.map((preset) => {
+                      const at = preset.at();
+                      return (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          disabled={at === null}
+                          onClick={() => { if (at !== null) { setScheduleTime(at); setShowScheduleMenu(false); } }}
+                          className={`block w-full px-3 py-1 text-left text-[13px] hover:bg-[var(--surface-hover)] ${
+                            at === null
+                              ? "cursor-not-allowed text-[var(--text-muted)] opacity-50"
+                              : scheduleTime === at
+                                ? "text-[var(--accent)]"
+                                : "text-[var(--text-primary)]"
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      );
+                    })}
+                    <div className="my-1 h-px bg-[var(--border)]" aria-hidden="true" />
+                    <label className="block px-3 py-1 text-[11px] text-[var(--text-muted)]">
+                      Custom time
+                      <input
+                        type="datetime-local"
+                        min={toDatetimeLocalValue(Date.now())}
+                        value={scheduleTime !== null ? toDatetimeLocalValue(scheduleTime) : ""}
+                        onChange={(e) => {
+                          const next = e.target.value ? new Date(e.target.value).getTime() : NaN;
+                          if (!Number.isNaN(next) && next > Date.now()) {
+                            setScheduleTime(next);
+                          }
+                        }}
+                        className="mt-1 block w-full rounded border border-[var(--border-input)] bg-[var(--surface)] px-2 py-1 text-[12px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+              )}
+
               <button
                 ref={sendButtonRef}
                 type="button"
-                aria-label="Send message"
+                aria-label={scheduleTime ? "Schedule message" : "Send message"}
                 onClick={submit}
                 disabled={!canSend}
                 className={cn(
-                  "relative overflow-hidden flex h-8 w-8 items-center justify-center rounded transition-[background,color,transform] duration-150 ease-out focus-ring",
+                  "relative overflow-hidden flex h-8 items-center justify-center rounded transition-[background,color,transform] duration-150 ease-out focus-ring",
+                  scheduleTime ? "w-auto gap-1 px-2.5 text-[13px] font-medium" : "w-8",
                   canSend
                     ? "bg-[var(--status-online)] text-white hover:opacity-90 hover:scale-105 active:scale-95"
                     : "text-[var(--text-muted)]"
                 )}
               >
                 <Send className="h-4 w-4" />
+                {scheduleTime ? <span>Schedule</span> : null}
               </button>
             </div>
           </div>
