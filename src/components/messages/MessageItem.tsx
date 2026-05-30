@@ -476,7 +476,7 @@ export function MessageItem({
         ) : (
           hasBody && (
             <>
-              <div className="message-body break-words text-[14px] leading-[1.5] text-[var(--text-primary)]">
+              <div style={bodyDensityStyle} className="message-body break-words text-[var(--text-primary)]">
                 {disappearing
                   ? decoded
                     ? renderMessageBody(decoded.body, "text")
