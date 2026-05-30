@@ -127,9 +127,9 @@ export function FeedbackModal({ open, onOpenChange }: Props) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out" />
+        <Dialog.Overlay className="search-modal-overlay fixed inset-0 z-[60] bg-black/70 backdrop-blur-[2px]" />
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 z-[70] w-[500px] max-w-[94vw] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 overflow-y-auto overflow-x-hidden rounded-xl border border-[var(--border)] bg-[var(--modal-bg)] text-[var(--text-primary)] shadow-[0_16px_64px_rgba(0,0,0,0.6)] focus:outline-none"
+          className="search-modal-content fixed left-1/2 top-1/2 z-[70] w-[500px] max-w-[94vw] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 overflow-y-auto overflow-x-hidden rounded-xl border border-[var(--border)] bg-[var(--modal-bg)] text-[var(--text-primary)] shadow-[0_16px_64px_rgba(0,0,0,0.6)] focus:outline-none"
           aria-describedby={undefined}
         >
           <Dialog.Title className="sr-only">Send feedback</Dialog.Title>
