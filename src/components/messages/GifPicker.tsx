@@ -63,17 +63,17 @@ export function GifPicker({ children, onSelect }: Props) {
           side="top"
           align="end"
           sideOffset={8}
-          className="z-[120] w-[340px] rounded-lg border border-[var(--border)] bg-[#1a1d21] shadow-[0_8px_32px_rgba(0,0,0,0.5)] outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
+          className="z-[120] w-[340px] rounded-lg border border-[var(--border)] bg-[var(--modal-bg)] shadow-[0_8px_32px_rgba(0,0,0,0.5)] outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
         >
-          <div className="border-b border-[#3f4144] p-2">
-            <div className="flex h-8 items-center gap-2 rounded-md border border-[#565856] bg-[#2c2d30] px-2 text-[#ababad] focus-within:border-white">
+          <div className="border-b border-[var(--border)] p-2">
+            <div className="flex h-8 items-center gap-2 rounded-md border border-[var(--border-input)] bg-[var(--surface)] px-2 text-[var(--text-secondary)] focus-within:border-[var(--text-primary)]">
               <Search className="h-3.5 w-3.5 flex-shrink-0" />
               <input
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search GIFs"
-                className="min-w-0 flex-1 bg-transparent text-[13px] text-[#d1d2d3] outline-none placeholder:text-[#ababad]"
+                className="min-w-0 flex-1 bg-transparent text-[13px] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-secondary)]"
               />
             </div>
           </div>
@@ -81,10 +81,10 @@ export function GifPicker({ children, onSelect }: Props) {
           <div className="h-[300px] overflow-y-auto p-2">
             {loading ? (
               <div className="flex h-full items-center justify-center">
-                <Loader2 className="h-5 w-5 animate-spin text-[#ababad]" />
+                <Loader2 className="h-5 w-5 animate-spin text-[var(--text-secondary)]" />
               </div>
             ) : gifs.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-[13px] text-[#6c6f75]">
+              <div className="flex h-full items-center justify-center text-[13px] text-[var(--text-muted)]">
                 {query ? "No GIFs found" : "Type to search…"}
               </div>
             ) : (
@@ -99,7 +99,7 @@ export function GifPicker({ children, onSelect }: Props) {
                       <button
                         type="button"
                         onClick={() => onSelect(full.url, gif.title)}
-                        className="block w-full overflow-hidden rounded-md bg-[#2c2d30] transition-opacity hover:opacity-90"
+                        className="block w-full overflow-hidden rounded-md bg-[var(--surface)] transition-opacity hover:opacity-90"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -116,7 +116,7 @@ export function GifPicker({ children, onSelect }: Props) {
             )}
           </div>
 
-          <div className="border-t border-[#3f4144] px-3 py-1.5 text-[10px] text-[#6c6f75]">
+          <div className="border-t border-[var(--border)] px-3 py-1.5 text-[10px] text-[var(--text-muted)]">
             Powered by Tenor
           </div>
         </Popover.Content>
