@@ -62,7 +62,7 @@ export default async function LandingPage() {
             </span>
           </div>
           <div className="hidden items-center gap-7 md:flex">
-            <a href="#features" className="text-[13px] text-[#8b9ab0] transition-colors hover:text-white">Features</a>
+            <Link href="/features" className="text-[13px] text-[#8b9ab0] transition-colors hover:text-white">Features</Link>
             <a href="#mcp" className="text-[13px] text-[#8b9ab0] transition-colors hover:text-white">MCP</a>
             <a href="#self-host" className="text-[13px] text-[#8b9ab0] transition-colors hover:text-white">Self-host</a>
             <a href="#faq" className="text-[13px] text-[#8b9ab0] transition-colors hover:text-white">FAQ</a>
