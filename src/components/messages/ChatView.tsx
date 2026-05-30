@@ -19,6 +19,7 @@ import { getChatLabel } from "@/lib/utils/chat-label";
 import { VoiceTrigger } from "@/components/voice/VoiceTrigger";
 import { isDisappearing, unwrapMessage, wrapMessage } from "@/lib/utils/disappear";
 import { useRealtimeEvents } from "@/hooks/useRealtimeEvents";
+import { useScheduledStore } from "@/store/scheduled";
 
 export function ChatView({ chatId }: { chatId: string }) {
   const {
@@ -43,9 +44,14 @@ export function ChatView({ chatId }: { chatId: string }) {
     patchChatMembers,
   } = useWorkspaceStore();
   const isHydrated = useWorkspaceStore((s) => s.isHydrated);
+  const scheduledMessages = useScheduledStore((s) => s.scheduled);
+  const addScheduled = useScheduledStore((s) => s.addScheduled);
+  const removeScheduled = useScheduledStore((s) => s.removeScheduled);
+  const markScheduledFailed = useScheduledStore((s) => s.markFailed);
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [forwardMessage, setForwardMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
+  const [scheduledBannerOpen, setScheduledBannerOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | undefined>(undefined);
   const showToast = useToastStore((state) => state.showToast);
@@ -73,6 +79,15 @@ export function ChatView({ chatId }: { chatId: string }) {
   const messages = getMessages(chatId);
   const chat = chats.find((c) => c.id === chatId);
 
+  // Pending scheduled ("send later") messages for this chat, soonest-first.
+  const pendingScheduled = useMemo(
+    () =>
+      scheduledMessages
+        .filter((m) => m.contextId === chatId && m.status === "pending")
+        .sort((a, b) => a.scheduleTime - b.scheduleTime),
+    [scheduledMessages, chatId]
+  );
+
   // loadRef lets the realtime handler trigger a fetch without becoming a
   // dependency of the polling effect (which would re-run it on every change).
   const loadRef = useRef<() => Promise<void>>(async () => {});
@@ -98,6 +113,42 @@ export function ChatView({ chatId }: { chatId: string }) {
       }
     }
   }, [chatId, currentUserId, removeMessage]);
+
+  // Deliver any due scheduled ("send later") messages for this chat. Reads
+  // the queue from the store imperatively so it isn't a dependency of the
+  // polling effect. POSTs to the same endpoint as handleSend; on success we
+  // drop the queue entry and reload so the message appears, on failure we
+  // mark it failed so the sweep stops retrying it.
+  const sweepScheduled = useCallback(async () => {
+    const now = Date.now();
+    const due = useScheduledStore
+      .getState()
+      .scheduled.filter(
+        (m) => m.contextId === chatId && m.status === "pending" && m.scheduleTime <= now
+      );
+    for (const m of due) {
+      let outgoing = m.content;
+      if (m.disappearMs) {
+        outgoing = await wrapMessage(chatId, m.content, Date.now() + m.disappearMs);
+      }
+      try {
+        const res = await fetch(`/api/chats/${chatId}/messages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content: outgoing,
+            ...(m.mentions?.length ? { mentions: m.mentions } : {}),
+            ...(m.disappearMs ? { contentType: "text" } : {}),
+          }),
+        });
+        if (!res.ok) throw new Error("Failed to send scheduled message");
+        removeScheduled(chatId, m.id);
+        void loadRef.current();
+      } catch {
+        markScheduledFailed(chatId, m.id);
+      }
+    }
+  }, [chatId, removeScheduled, markScheduledFailed]);
 
   // Compute typing indicator visibility — recalculates whenever clockNow ticks
   const { showTypingIndicator, typingPersonName } = useMemo(() => {
@@ -197,6 +248,11 @@ export function ChatView({ chatId }: { chatId: string }) {
     // ~4s auto-delete latency the feature shipped with.
     const sweep = setInterval(() => void sweepExpired(getMessages(chatId)), 4000);
 
+    // Scheduled ("send later") due-sweep — independent cadence, network-free
+    // unless a queued message has actually come due.
+    void sweepScheduled();
+    const scheduleSweep = setInterval(() => void sweepScheduled(), 5000);
+
     // Fire-and-forget: create a Graph change notification subscription so the
     // webhook endpoint can push new DM messages via SSE instead of waiting for poll.
     fetch("/api/realtime/subscribe", {
@@ -218,11 +274,12 @@ export function ChatView({ chatId }: { chatId: string }) {
       cancelled = true;
       clearInterval(interval);
       clearInterval(sweep);
+      clearInterval(scheduleSweep);
       clearInterval(resubscribe);
     };
     // getMessages is a stable selector — intentionally not in deps to avoid re-running on cache updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chatId, isHydrated, setLoadingMessages, setMessages, showToast, sweepExpired]);
+  }, [chatId, isHydrated, setLoadingMessages, setMessages, showToast, sweepExpired, sweepScheduled]);
 
   useRealtimeEvents(
     useCallback(
@@ -237,8 +294,28 @@ export function ChatView({ chatId }: { chatId: string }) {
 
   async function handleSend(
     content: string,
-    options?: { mentions?: { id: string; name: string }[]; disappearMs?: number }
+    options?: { mentions?: { id: string; name: string }[]; disappearMs?: number; scheduleTime?: number }
   ) {
+    // Send later: queue the message client-side instead of POSTing now. The
+    // due-sweep (here + Sidebar) delivers it once scheduleTime arrives. The
+    // composer already cleared the draft before calling us.
+    if (options?.scheduleTime && options.scheduleTime > Date.now()) {
+      addScheduled({
+        contextId: chatId,
+        id: crypto.randomUUID(),
+        content,
+        ...(options.mentions?.length ? { mentions: options.mentions } : {}),
+        ...(options.disappearMs ? { disappearMs: options.disappearMs } : {}),
+        scheduleTime: options.scheduleTime,
+        createdAt: Date.now(),
+        status: "pending",
+      });
+      showToast({
+        title: `Scheduled for ${new Date(options.scheduleTime).toLocaleString()}`,
+      });
+      return;
+    }
+
     const tempId = `temp-${crypto.randomUUID()}`;
     const now = new Date().toISOString();
 
@@ -582,6 +659,50 @@ export function ChatView({ chatId }: { chatId: string }) {
         <ContextFilesTab mode={{ kind: "chat", chatId }} />
       ) : activeTab === "messages" ? (
         <>
+          {pendingScheduled.length > 0 && (
+            <div className="border-b border-[var(--border)] bg-[var(--surface)] text-[13px] text-[var(--text-secondary)]">
+              <button
+                type="button"
+                onClick={() => setScheduledBannerOpen((v) => !v)}
+                className="flex w-full items-center gap-2 px-4 py-1.5 text-left hover:text-[var(--text-primary)]"
+                aria-expanded={scheduledBannerOpen}
+              >
+                <span aria-hidden="true">📅</span>
+                <span className="font-medium text-[var(--text-primary)]">
+                  {pendingScheduled.length} scheduled
+                </span>
+                <span className="text-[var(--text-muted)]">
+                  {scheduledBannerOpen ? "Hide" : "Show"}
+                </span>
+              </button>
+              {scheduledBannerOpen && (
+                <ul className="border-t border-[var(--border)]">
+                  {pendingScheduled.map((m) => (
+                    <li
+                      key={m.id}
+                      className="flex items-center gap-3 px-4 py-1.5"
+                    >
+                      <span className="min-w-0 flex-1 truncate text-[var(--text-primary)]">
+                        {messagePlainText(m.content, "html") || "(empty message)"}
+                      </span>
+                      <span className="flex-shrink-0 text-[12px] text-[var(--text-muted)]">
+                        {new Date(m.scheduleTime).toLocaleString()}
+                      </span>
+                      <button
+                        type="button"
+                        aria-label="Cancel scheduled message"
+                        title="Cancel scheduled message"
+                        onClick={() => removeScheduled(chatId, m.id)}
+                        className="flex-shrink-0 rounded p-0.5 text-[var(--text-secondary)] transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-[var(--accent)]"
+                      >
+                        ✕
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
           <MessageFeed
             messages={messages}
             loading={isLoadingMessages}
@@ -618,6 +739,7 @@ export function ChatView({ chatId }: { chatId: string }) {
             currentUserName={currentUserName}
             channelMembers={mentionCandidates}
             allowDisappearing
+            allowSchedule
           />
         </>
       ) : (

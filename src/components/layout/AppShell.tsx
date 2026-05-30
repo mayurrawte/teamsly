@@ -14,6 +14,7 @@ import { Logo } from "@/components/ui/Logo";
 import { EMPTY_MESSAGES, useWorkspaceStore } from "@/store/workspace";
 import { useDraftsStore } from "@/store/drafts";
 import { useBookmarksStore } from "@/store/bookmarks";
+import { useScheduledStore } from "@/store/scheduled";
 import { ToastViewport } from "@/components/ui/ToastViewport";
 import { useToastStore } from "@/store/toasts";
 import { sendUnreadCount } from "@/lib/electron-bridge";
@@ -130,6 +131,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     // already-in-memory state so a quick draft typed during boot isn't lost.
     void useDraftsStore.getState().hydrate();
     void useBookmarksStore.getState().hydrate();
+    void useScheduledStore.getState().hydrate();
   }, [hydrateMessageCache]);
 
   // Record visits so the next cold-start prefetch knows what to warm. We watch

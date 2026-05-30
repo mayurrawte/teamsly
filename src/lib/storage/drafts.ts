@@ -15,10 +15,11 @@
  */
 
 const DB_NAME = "teamsly";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const MESSAGE_CACHE_STORE = "messages-by-context";
 const DRAFTS_STORE = "drafts";
 const BOOKMARKS_STORE = "bookmarks";
+const SCHEDULED_STORE = "scheduled-messages";
 
 interface DraftRecord {
   contextId: string;
@@ -58,6 +59,12 @@ function openDb(): Promise<IDBDatabase | null> {
             keyPath: ["contextId", "messageId"],
           });
           store.createIndex("savedAt", "savedAt");
+        }
+        if (!db.objectStoreNames.contains(SCHEDULED_STORE)) {
+          const store = db.createObjectStore(SCHEDULED_STORE, {
+            keyPath: ["contextId", "id"],
+          });
+          store.createIndex("scheduleTime", "scheduleTime");
         }
       };
       request.onsuccess = () => resolve(request.result);
