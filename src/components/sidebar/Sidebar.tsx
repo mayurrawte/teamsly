@@ -11,7 +11,8 @@ import { clearAll as clearDraftsCache } from "@/lib/storage/drafts";
 import { clearAll as clearBookmarksCache } from "@/lib/storage/bookmarks";
 import { clearAllScheduled } from "@/lib/storage/scheduled-messages";
 import { cn } from "@/lib/utils";
-import { isDisappearing, unwrapMessage } from "@/lib/utils/disappear";
+import { isDisappearing, unwrapMessage, wrapMessage } from "@/lib/utils/disappear";
+import { useScheduledStore } from "@/store/scheduled";
 
 async function sweepAllDms(
   chatIds: string[],
@@ -36,6 +37,40 @@ async function sweepAllDms(
       } catch {
         /* best-effort */
       }
+    }
+  }
+}
+
+// Deliver due scheduled ("send later") DMs across every chat — the safety
+// net for chats the user isn't currently viewing (ChatView sweeps the open
+// one on a faster cadence). Mirrors sweepAllDms: best-effort POST to the
+// same /api/chats/{id}/messages endpoint, drop the queue entry on success
+// and mark it failed otherwise so we don't keep retrying a doomed send.
+async function sweepAllScheduledDms() {
+  const now = Date.now();
+  const due = useScheduledStore
+    .getState()
+    .scheduled.filter((m) => m.status === "pending" && m.scheduleTime <= now);
+  const { removeScheduled, markFailed } = useScheduledStore.getState();
+  for (const m of due) {
+    let outgoing = m.content;
+    if (m.disappearMs) {
+      outgoing = await wrapMessage(m.contextId, m.content, Date.now() + m.disappearMs);
+    }
+    try {
+      const res = await fetch(`/api/chats/${m.contextId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: outgoing,
+          ...(m.mentions?.length ? { mentions: m.mentions } : {}),
+          ...(m.disappearMs ? { contentType: "text" } : {}),
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to send scheduled message");
+      removeScheduled(m.contextId, m.id);
+    } catch {
+      markFailed(m.contextId, m.id);
     }
   }
 }
@@ -141,6 +176,8 @@ export function Sidebar() {
           ws.removeMessage,
           ws.currentUserId
         );
+        // Deliver any due scheduled DMs on the same 15s cadence + focus.
+        void sweepAllScheduledDms();
       } catch {
         if (!cancelled && !toastShown) {
           toastShown = true;
