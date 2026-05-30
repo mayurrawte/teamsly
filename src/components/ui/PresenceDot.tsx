@@ -13,7 +13,7 @@ export function PresenceDot({ availability, className }: PresenceDotProps) {
       <span
         aria-label="Away"
         className={cn(
-          "absolute bottom-[-2px] right-[-2px] h-[10px] w-[10px] rounded-full border-2 border-[var(--sidebar-bg)] bg-[#e8a838]",
+          "absolute bottom-[-2px] right-[-2px] h-[10px] w-[10px] rounded-full border-2 border-[var(--sidebar-bg)] bg-[var(--status-away)]",
           className
         )}
       />
@@ -25,7 +25,7 @@ export function PresenceDot({ availability, className }: PresenceDotProps) {
       <span
         aria-label="Busy"
         className={cn(
-          "absolute bottom-[-2px] right-[-2px] flex h-[10px] w-[10px] items-center justify-center rounded-full border-2 border-[var(--sidebar-bg)] bg-[#e01e5a]",
+          "absolute bottom-[-2px] right-[-2px] flex h-[10px] w-[10px] items-center justify-center rounded-full border-2 border-[var(--sidebar-bg)] bg-[var(--status-busy)]",
           className
         )}
       >
@@ -38,11 +38,11 @@ export function PresenceDot({ availability, className }: PresenceDotProps) {
   return (
     <span className={cn("absolute bottom-[-2px] right-[-2px] h-[10px] w-[10px]", className)}>
       {/* Ping ring — slow sonar pulse */}
-      <span className="absolute inset-0 rounded-full bg-[#2bac76] opacity-75 animate-[presence-ping_2.5s_ease-out_infinite]" />
+      <span className="absolute inset-0 rounded-full bg-[var(--status-online)] opacity-75 animate-[presence-ping_2.5s_ease-out_infinite]" />
       {/* Solid dot */}
       <span
         aria-label="Available"
-        className="absolute inset-0 rounded-full border-2 border-[var(--sidebar-bg)] bg-[#2bac76]"
+        className="absolute inset-0 rounded-full border-2 border-[var(--sidebar-bg)] bg-[var(--status-online)]"
       />
     </span>
   );

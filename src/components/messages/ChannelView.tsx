@@ -35,6 +35,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
     setLoadingMessages,
     toggleReaction,
   } = useWorkspaceStore();
+  const isHydrated = useWorkspaceStore((s) => s.isHydrated);
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [forwardMessage, setForwardMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
@@ -74,7 +75,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
   useEffect(() => {
     let cancelled = false;
     const cached = getMessages(contextId);
-    const isFirstLoad = cached.length === 0;
+    const isFirstLoad = cached.length === 0 && isHydrated;
 
     if (isFirstLoad) setLoadingMessages(true);
 
@@ -121,7 +122,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
     };
     // getMessages is a stable selector — intentionally not in deps to avoid re-running on cache updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teamId, channelId, contextId, setLoadingMessages, setMessages, showToast]);
+  }, [teamId, channelId, contextId, isHydrated, setLoadingMessages, setMessages, showToast]);
 
   useRealtimeEvents(
     useCallback(

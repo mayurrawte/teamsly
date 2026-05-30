@@ -27,20 +27,20 @@ export function EmojiPicker({ children, onSelect }: EmojiPickerProps) {
           side="top"
           align="end"
           sideOffset={8}
-          className="z-[120] h-[420px] w-[360px] rounded-lg border border-[#3f4144] bg-[#1a1d21] p-3 text-[#d1d2d3] shadow-[0_8px_32px_rgba(0,0,0,0.5)] outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
+          className="z-[120] h-[420px] w-[360px] rounded-lg border border-[var(--border)] bg-[var(--modal-bg)] p-3 text-[var(--text-primary)] shadow-[0_8px_32px_rgba(0,0,0,0.5)] outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
         >
-          <div className="mb-3 flex h-7 items-center gap-2 rounded-md border border-[#565856] bg-[#2c2d30] px-2 text-[#ababad] focus-within:border-white focus-within:bg-[#1a1d21]">
+          <div className="mb-3 flex h-7 items-center gap-2 rounded-md border border-[var(--border-input)] bg-[var(--surface)] px-2 text-[var(--text-secondary)] focus-within:border-[var(--text-primary)] focus-within:bg-[var(--modal-bg)]">
             <Search className="h-3.5 w-3.5" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search emoji"
-              className="min-w-0 flex-1 bg-transparent text-[13px] text-[#d1d2d3] outline-none placeholder:text-[#ababad]"
+              className="min-w-0 flex-1 bg-transparent text-[13px] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-secondary)]"
             />
           </div>
 
           <section className="mb-4">
-            <h3 className="mb-2 text-[12px] font-bold uppercase tracking-wide text-[#6c6f75]">Frequently used</h3>
+            <h3 className="mb-2 text-[12px] font-bold uppercase tracking-wide text-[var(--text-muted)]">Frequently used</h3>
             <div className="grid grid-cols-9 gap-1">
               {REACTION_TYPES.map((type) => (
                 <EmojiButton key={type} type={type} onSelect={onSelect} />
@@ -48,11 +48,11 @@ export function EmojiPicker({ children, onSelect }: EmojiPickerProps) {
             </div>
           </section>
 
-          <div className="mb-3 flex gap-1 overflow-hidden text-[11px] font-bold text-[#ababad]">
+          <div className="mb-3 flex gap-1 overflow-hidden text-[11px] font-bold text-[var(--text-secondary)]">
             {["Smileys", "People", "Nature", "Food"].map((label, index) => (
               <span
                 key={label}
-                className={`rounded px-2 py-1 ${index === 0 ? "bg-[#27292d] text-white" : "text-[#6c6f75]"}`}
+                className={`rounded px-2 py-1 ${index === 0 ? "bg-[var(--surface-raised)] text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`}
               >
                 {label}
               </span>
@@ -60,14 +60,14 @@ export function EmojiPicker({ children, onSelect }: EmojiPickerProps) {
           </div>
 
           <section>
-            <h3 className="mb-2 text-[12px] font-bold uppercase tracking-wide text-[#6c6f75]">Teams reactions</h3>
+            <h3 className="mb-2 text-[12px] font-bold uppercase tracking-wide text-[var(--text-muted)]">Teams reactions</h3>
             <div className="grid grid-cols-9 gap-1">
               {filtered.map((type) => (
                 <EmojiButton key={type} type={type} onSelect={onSelect} />
               ))}
             </div>
             {filtered.length === 0 && (
-              <p className="px-1 py-4 text-center text-[13px] text-[#6c6f75]">No matching reactions</p>
+              <p className="px-1 py-4 text-center text-[13px] text-[var(--text-muted)]">No matching reactions</p>
             )}
           </section>
         </Popover.Content>
@@ -84,7 +84,7 @@ function EmojiButton({ type, onSelect }: { type: ReactionType; onSelect: (reacti
         aria-label={type}
         title={type}
         onClick={() => onSelect(type)}
-        className="flex h-9 w-9 items-center justify-center rounded-md text-[22px] transition-colors duration-150 hover:bg-[#27292d]"
+        className="flex h-9 w-9 items-center justify-center rounded-md text-[22px] transition-colors duration-150 hover:bg-[var(--surface-hover)]"
       >
         {REACTION_EMOJI[type]}
       </button>

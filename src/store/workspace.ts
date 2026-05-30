@@ -52,6 +52,13 @@ interface WorkspaceState {
    * on reload MessageItem re-decodes and re-expires, so the set self-heals.
    */
   expiredMessageIds: Set<string>;
+  /**
+   * True once `hydrateMessageCache` has finished writing IDB data into the
+   * store. Views use this to defer the loading skeleton until after hydration
+   * so a cached chat never flashes blank. Not persisted — resets to false on
+   * every page reload (intentionally: IDB hydration must run each time).
+   */
+  isHydrated: boolean;
 
   setTeams: (teams: MSTeam[]) => void;
   setActiveTeam: (id: string) => void;
@@ -131,6 +138,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       starredIds: [],
       pendingAnchorMessageId: null,
       expiredMessageIds: new Set<string>(),
+      isHydrated: false,
 
       setTeams: (teams) => set({ teams }),
       setActiveTeam: (id) => set({ activeTeamId: id, activeChannelId: null }),
@@ -202,7 +210,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           for (const [k, v] of Object.entries(s.messagesByContext)) {
             merged[k] = v;
           }
-          return { messagesByContext: merged };
+          return { messagesByContext: merged, isHydrated: true };
         });
       },
 

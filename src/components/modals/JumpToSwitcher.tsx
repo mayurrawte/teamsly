@@ -60,6 +60,11 @@ export function JumpToSwitcher({ open, onOpenChange, items }: JumpToSwitcherProp
             inputRef.current?.focus();
           }}
           onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              onOpenChange(false);
+              return;
+            }
             if (event.key === "ArrowDown") {
               event.preventDefault();
               setActiveIndex((index) => Math.min(index + 1, filtered.length - 1));
@@ -97,10 +102,10 @@ export function JumpToSwitcher({ open, onOpenChange, items }: JumpToSwitcherProp
             </Dialog.Close>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3">
-            <h3 className="px-3 pb-2 text-[12px] font-bold uppercase tracking-wide text-[var(--text-muted)]">
-              {query.trim() ? "Results" : "Recent"}
-            </h3>
+          <h3 className="px-3 pt-3 pb-1 text-[12px] font-bold uppercase tracking-wide text-[var(--text-muted)]">
+            {query.trim() ? "Results" : "Recent"}
+          </h3>
+          <div className="flex-1 overflow-y-auto px-3 pb-3">
             {filtered.length === 0 ? (
               <p className="px-3 py-8 text-center text-[13px] text-[var(--text-muted)]">No matching channels or DMs</p>
             ) : (

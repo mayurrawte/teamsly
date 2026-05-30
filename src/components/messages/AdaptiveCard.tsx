@@ -100,18 +100,18 @@ const COLOR_MAP: Record<string, string> = {
   good: "var(--status-online)",
   warning: "var(--status-away)",
   attention: "var(--status-busy)",
-  dark: "#ffffff",
+  dark: "var(--text-primary)",
   light: "var(--text-muted)",
   subtle: "var(--text-secondary)",
 };
 
 const CONTAINER_STYLE_MAP: Record<string, string> = {
   default: "",
-  emphasis: "bg-[#27292d] rounded-md px-3 py-2",
-  good: "bg-[#1a2e24] border border-[#2bac76]/40 rounded-md px-3 py-2",
-  attention: "bg-[#2e1a1e] border border-[#e01e5a]/40 rounded-md px-3 py-2",
-  warning: "bg-[#2e2519] border border-[#e8a838]/40 rounded-md px-3 py-2",
-  accent: "bg-[rgba(15,90,143,0.15)] border border-[#0F5A8F]/40 rounded-md px-3 py-2",
+  emphasis: "bg-[var(--surface-raised)] rounded-md px-3 py-2",
+  good: "bg-[var(--status-online)]/10 border border-[var(--status-online)]/40 rounded-md px-3 py-2",
+  attention: "bg-[var(--status-busy)]/10 border border-[var(--status-busy)]/40 rounded-md px-3 py-2",
+  warning: "bg-[var(--status-away)]/10 border border-[var(--status-away)]/40 rounded-md px-3 py-2",
+  accent: "bg-[var(--accent-light)] border border-[var(--accent)]/40 rounded-md px-3 py-2",
 };
 
 // ---------------------------------------------------------------------------
@@ -268,7 +268,7 @@ function ActionSetEl({ el }: { el: ACActionSet }) {
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded border border-[#0F5A8F] px-3 py-1.5 text-[12px] font-medium text-[#1d9bd1] transition-colors hover:bg-[rgba(15,90,143,0.15)]"
+                className="inline-flex items-center gap-1.5 rounded border border-[var(--accent)] px-3 py-1.5 text-[12px] font-medium text-[var(--accent)] transition-colors hover:bg-[var(--accent-light)]"
               >
                 {action.title ?? "Open"}
                 <ExternalLink size={11} />
@@ -282,7 +282,7 @@ function ActionSetEl({ el }: { el: ACActionSet }) {
             key={i}
             type="button"
             disabled
-            className="inline-flex cursor-not-allowed items-center rounded border border-[#3f4144] px-3 py-1.5 text-[12px] font-medium text-[#6c6f75] opacity-60"
+            className="inline-flex cursor-not-allowed items-center rounded border border-[var(--border)] px-3 py-1.5 text-[12px] font-medium text-[var(--text-muted)] opacity-60"
           >
             {action.title ?? action.type}
           </button>
@@ -348,12 +348,12 @@ export function AdaptiveCard({ data }: AdaptiveCardProps) {
 
   return (
     <div
-      className="mt-2 max-w-[520px] rounded-md border border-[#3f4144] bg-[#1a1d21] px-4 py-3 text-[13px]"
+      className="mt-2 max-w-[520px] rounded-md border border-[var(--border)] bg-[var(--modal-bg)] px-4 py-3 text-[13px]"
       style={{ color: "var(--text-primary)" }}
     >
       <ElementList items={body} />
       {topActions && topActions.length > 0 && (
-        <div className="mt-3 border-t border-[#3f4144] pt-3">
+        <div className="mt-3 border-t border-[var(--border)] pt-3">
           <ActionSetEl el={{ type: "ActionSet", actions: topActions }} />
         </div>
       )}

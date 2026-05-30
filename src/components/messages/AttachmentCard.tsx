@@ -38,20 +38,20 @@ export function AttachmentCard({ attachment }: AttachmentCardProps) {
 
   const content = (
     <>
-      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[#2c2d30] text-[#ababad]">
+      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[var(--surface)] text-[var(--text-secondary)]">
         <FileIcon size={18} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] font-bold text-[#d1d2d3]">{label}</span>
-        <span className="block truncate text-[12px] text-[#6c6f75]">{contentType}</span>
+        <span className="block truncate text-[13px] font-bold text-[var(--text-primary)]">{label}</span>
+        <span className="block truncate text-[12px] text-[var(--text-muted)]">{contentType}</span>
       </span>
-      <Download className="h-4 w-4 flex-shrink-0 text-[#ababad]" />
+      <Download className="h-4 w-4 flex-shrink-0 text-[var(--text-secondary)]" />
     </>
   );
 
   if (!href) {
     return (
-      <div className="mt-2 flex max-w-[420px] items-center gap-3 rounded-md border border-[#3f4144] bg-[#1a1d21] px-3 py-2 text-left opacity-70">
+      <div className="mt-2 flex max-w-[420px] items-center gap-3 rounded-md border border-[var(--border)] bg-[var(--modal-bg)] px-3 py-2 text-left opacity-70">
         {content}
       </div>
     );
@@ -80,7 +80,7 @@ export function AttachmentCard({ attachment }: AttachmentCardProps) {
       // Middle-click (button 1) goes to onAuxClick, not onClick, so the
       // browser's default "open in new tab" already works for us — no
       // explicit handler needed.
-      className="mt-2 flex max-w-[420px] cursor-pointer items-center gap-3 rounded-md border border-[#3f4144] bg-[#1a1d21] px-3 py-2 text-left transition-colors duration-150 hover:border-[#565856] hover:bg-[#27292d]"
+      className="mt-2 flex max-w-[420px] cursor-pointer items-center gap-3 rounded-md border border-[var(--border)] bg-[var(--modal-bg)] px-3 py-2 text-left transition-colors duration-150 hover:border-[var(--border-input)] hover:bg-[var(--surface-hover)]"
     >
       {content}
     </a>
@@ -103,19 +103,19 @@ function InlineImageAttachment({ attachment }: { attachment: MSAttachment }) {
     const contentType = attachment.contentType || "File";
     const content = (
       <>
-        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[#2c2d30] text-[#ababad]">
+        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[var(--surface)] text-[var(--text-secondary)]">
           <FileIcon size={18} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13px] font-bold text-[#d1d2d3]">{label}</span>
-          <span className="block truncate text-[12px] text-[#6c6f75]">{contentType}</span>
+          <span className="block truncate text-[13px] font-bold text-[var(--text-primary)]">{label}</span>
+          <span className="block truncate text-[12px] text-[var(--text-muted)]">{contentType}</span>
         </span>
-        <Download className="h-4 w-4 flex-shrink-0 text-[#ababad]" />
+        <Download className="h-4 w-4 flex-shrink-0 text-[var(--text-secondary)]" />
       </>
     );
     if (!href) {
       return (
-        <div className="mt-2 flex max-w-[420px] items-center gap-3 rounded-md border border-[#3f4144] bg-[#1a1d21] px-3 py-2 text-left opacity-70">
+        <div className="mt-2 flex max-w-[420px] items-center gap-3 rounded-md border border-[var(--border)] bg-[var(--modal-bg)] px-3 py-2 text-left opacity-70">
           {content}
         </div>
       );
@@ -125,7 +125,7 @@ function InlineImageAttachment({ attachment }: { attachment: MSAttachment }) {
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-2 flex max-w-[420px] cursor-pointer items-center gap-3 rounded-md border border-[#3f4144] bg-[#1a1d21] px-3 py-2 text-left transition-colors duration-150 hover:border-[#565856] hover:bg-[#27292d]"
+        className="mt-2 flex max-w-[420px] cursor-pointer items-center gap-3 rounded-md border border-[var(--border)] bg-[var(--modal-bg)] px-3 py-2 text-left transition-colors duration-150 hover:border-[var(--border-input)] hover:bg-[var(--surface-hover)]"
       >
         {content}
       </a>
@@ -218,15 +218,15 @@ function AdaptiveCardAttachment({ attachment }: { attachment: MSAttachment }) {
     // Parse failed or content missing — render name-only stub
     const FallbackIcon = getFileIcon(attachment.contentType, false, attachment.name ?? undefined);
     return (
-      <div className="mt-2 flex max-w-[420px] items-center gap-3 rounded-md border border-[#3f4144] bg-[#1a1d21] px-3 py-2 text-left opacity-70">
-        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[#2c2d30] text-[#ababad]">
+      <div className="mt-2 flex max-w-[420px] items-center gap-3 rounded-md border border-[var(--border)] bg-[var(--modal-bg)] px-3 py-2 text-left opacity-70">
+        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[var(--surface)] text-[var(--text-secondary)]">
           <FallbackIcon size={18} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13px] font-bold text-[#d1d2d3]">
+          <span className="block truncate text-[13px] font-bold text-[var(--text-primary)]">
             {attachment.name || "Adaptive Card"}
           </span>
-          <span className="block truncate text-[12px] text-[#6c6f75]">
+          <span className="block truncate text-[12px] text-[var(--text-muted)]">
             application/vnd.microsoft.card.adaptive
           </span>
         </span>

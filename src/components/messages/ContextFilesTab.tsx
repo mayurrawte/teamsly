@@ -91,14 +91,14 @@ function ChannelFileRow({ item }: { item: MSDriveItem }) {
     <RowEl
       type={previewable ? "button" : undefined}
       onClick={previewable ? onRowClick : undefined}
-      className="group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors duration-[80ms] hover:bg-[#27292d]"
+      className="group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors duration-[80ms] hover:bg-[var(--surface-hover)]"
     >
-      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[#2c2d30] text-[#ababad]">
+      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[var(--surface)] text-[var(--text-secondary)]">
         <Icon size={18} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] font-bold text-[#d1d2d3]">{item.name}</span>
-        <span className="block truncate text-[12px] text-[#6c6f75]">
+        <span className="block truncate text-[13px] font-bold text-[var(--text-primary)]">{item.name}</span>
+        <span className="block truncate text-[12px] text-[var(--text-muted)]">
           {item.lastModifiedDateTime ? `Modified ${relativeTime(item.lastModifiedDateTime)}` : ""}
         </span>
       </span>
@@ -109,7 +109,7 @@ function ChannelFileRow({ item }: { item: MSDriveItem }) {
           rel="noopener noreferrer"
           title={`Open ${item.name} in browser`}
           aria-label={`Open ${item.name} in browser`}
-          className="flex-shrink-0 text-[#ababad] opacity-0 transition-opacity duration-[80ms] group-hover:opacity-100 focus:opacity-100"
+          className="flex-shrink-0 text-[var(--text-secondary)] opacity-0 transition-opacity duration-[80ms] group-hover:opacity-100 focus:opacity-100"
           onClick={(e) => e.stopPropagation()}
         >
           <ExternalLink size={15} />
@@ -142,14 +142,14 @@ function ChatFileRow({ item }: { item: MSChatFileAttachment }) {
     <RowEl
       type={href ? "button" : undefined}
       onClick={href ? onRowClick : undefined}
-      className="group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors duration-[80ms] hover:bg-[#27292d]"
+      className="group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors duration-[80ms] hover:bg-[var(--surface-hover)]"
     >
-      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[#2c2d30] text-[#ababad]">
+      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[var(--surface)] text-[var(--text-secondary)]">
         <Icon size={18} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] font-bold text-[#d1d2d3]">{item.name}</span>
-        <span className="block truncate text-[12px] text-[#6c6f75]">
+        <span className="block truncate text-[13px] font-bold text-[var(--text-primary)]">{item.name}</span>
+        <span className="block truncate text-[12px] text-[var(--text-muted)]">
           {sharer ? `Shared by ${sharer} · ` : ""}
           {item.sharedDateTime ? relativeTime(item.sharedDateTime) : ""}
         </span>
@@ -161,7 +161,7 @@ function ChatFileRow({ item }: { item: MSChatFileAttachment }) {
           rel="noopener noreferrer"
           title={`Open ${item.name} in browser`}
           aria-label={`Open ${item.name} in browser`}
-          className="flex-shrink-0 text-[#ababad] opacity-0 transition-opacity duration-[80ms] group-hover:opacity-100 focus:opacity-100"
+          className="flex-shrink-0 text-[var(--text-secondary)] opacity-0 transition-opacity duration-[80ms] group-hover:opacity-100 focus:opacity-100"
           onClick={(e) => e.stopPropagation()}
         >
           <ExternalLink size={15} />
@@ -223,11 +223,11 @@ export function ContextFilesTab({ mode }: ContextFilesTabProps) {
   if (error) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 py-16 text-center">
-        <FileX size={36} className="text-[#6c6f75]" />
-        <p className="text-[13px] text-[#ababad]">Couldn&apos;t load files</p>
+        <FileX size={36} className="text-[var(--text-muted)]" />
+        <p className="text-[13px] text-[var(--text-secondary)]">Couldn&apos;t load files</p>
         <button
           onClick={fetchFiles}
-          className="flex items-center gap-1.5 rounded-md border border-[#3f4144] px-3 py-1.5 text-[13px] text-[#d1d2d3] transition-colors duration-[80ms] hover:bg-[#27292d]"
+          className="flex items-center gap-1.5 rounded-md border border-[var(--border)] px-3 py-1.5 text-[13px] text-[var(--text-primary)] transition-colors duration-[80ms] hover:bg-[var(--surface-hover)]"
         >
           <RefreshCw size={13} />
           Retry
@@ -239,7 +239,7 @@ export function ContextFilesTab({ mode }: ContextFilesTabProps) {
   if (mode.kind === "channel") {
     if (channelItems.length === 0) {
       return (
-        <div className="flex flex-1 items-center justify-center text-[13px] text-[#6c6f75]">
+        <div className="flex flex-1 items-center justify-center text-[13px] text-[var(--text-muted)]">
           No files have been shared here yet.
         </div>
       );
@@ -256,7 +256,7 @@ export function ContextFilesTab({ mode }: ContextFilesTabProps) {
   // chat mode
   if (chatItems.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center text-[13px] text-[#6c6f75]">
+      <div className="flex flex-1 items-center justify-center text-[13px] text-[var(--text-muted)]">
         No files have been shared here yet.
       </div>
     );

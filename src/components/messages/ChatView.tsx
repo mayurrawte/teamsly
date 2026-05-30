@@ -40,7 +40,9 @@ export function ChatView({ chatId }: { chatId: string }) {
     editMessage,
     revertMessageEdit,
     patchChat,
+    patchChatMembers,
   } = useWorkspaceStore();
+  const isHydrated = useWorkspaceStore((s) => s.isHydrated);
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [forwardMessage, setForwardMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
@@ -139,7 +141,12 @@ export function ChatView({ chatId }: { chatId: string }) {
     let cancelled = false;
     fetch(`/api/chats/${encodeURIComponent(chatId)}/members`)
       .then((r) => r.ok ? r.json() : Promise.reject())
-      .then((data: MSChatMember[]) => { if (!cancelled) setLocalMembers(data); })
+      .then((data: MSChatMember[]) => {
+        if (!cancelled) {
+          setLocalMembers(data);
+          patchChatMembers(chatId, data);
+        }
+      })
       .catch(() => {});
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -157,7 +164,7 @@ export function ChatView({ chatId }: { chatId: string }) {
   useEffect(() => {
     let cancelled = false;
     const cached = getMessages(chatId);
-    const isFirstLoad = cached.length === 0;
+    const isFirstLoad = cached.length === 0 && isHydrated;
 
     if (isFirstLoad) setLoadingMessages(true);
 
@@ -215,7 +222,7 @@ export function ChatView({ chatId }: { chatId: string }) {
     };
     // getMessages is a stable selector — intentionally not in deps to avoid re-running on cache updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chatId, setLoadingMessages, setMessages, showToast, sweepExpired]);
+  }, [chatId, isHydrated, setLoadingMessages, setMessages, showToast, sweepExpired]);
 
   useRealtimeEvents(
     useCallback(
