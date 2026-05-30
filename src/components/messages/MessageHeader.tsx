@@ -42,13 +42,13 @@ function TabRow({
   onTabChange: (tab: Tab) => void;
 }) {
   return (
-    <div className="flex items-end gap-1">
+    <div className="flex items-center gap-1">
       {TAB_LABELS.map(({ id, label }) => (
         <button
           key={id}
           type="button"
           onClick={() => onTabChange(id)}
-          className={`px-3 py-1 text-[13px] font-medium transition-colors focus-ring ${
+          className={`px-3 py-2 text-[13px] font-medium transition-colors focus-ring ${
             activeTab === id
               ? "border-b-2 border-[var(--text-primary)] text-[var(--text-primary)]"
               : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
