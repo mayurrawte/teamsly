@@ -1033,7 +1033,7 @@ export function MessageInput({
 
         <div className="rounded-lg border border-[var(--border-input)] bg-[var(--surface)] transition-[border-color,box-shadow] duration-200 focus-within:border-[var(--accent)] focus-within:shadow-[0_0_0_3px_var(--accent-light)]">
           {/* Formatting toolbar */}
-          <div className="flex items-center gap-0.5 border-b border-[var(--border)] px-2 py-1">
+          <div className="flex items-center gap-0.5 border-b border-[var(--border)] px-3 py-1">
             {toolbarButtons.map((item, idx) => {
               if (item === "divider") {
                 return (
