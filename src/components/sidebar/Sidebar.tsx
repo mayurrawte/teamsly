@@ -554,7 +554,7 @@ export function Sidebar() {
           />
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 ease-out",
+              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
               unreadsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >
@@ -605,7 +605,7 @@ export function Sidebar() {
           />
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 ease-out",
+              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
               threadsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >
@@ -626,7 +626,7 @@ export function Sidebar() {
           />
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 ease-out",
+              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
               starredOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >
@@ -688,7 +688,7 @@ export function Sidebar() {
 
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 ease-out",
+              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
               channelsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >
@@ -734,7 +734,7 @@ export function Sidebar() {
 
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 ease-out",
+              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
               dmsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >
