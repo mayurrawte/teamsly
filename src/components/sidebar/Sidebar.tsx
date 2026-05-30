@@ -2,7 +2,7 @@
 
 import { useWorkspaceStore } from "@/store/workspace";
 import { useRouter, useParams } from "next/navigation";
-import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search, Settings, UserPlus, Moon, LogOut, Inbox, GitBranch, Star, Check, Circle, CircleDot, BellOff, Clock, CircleOff, Smile, MessageCircleQuestion, MoreHorizontal } from "lucide-react";
+import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search, Settings, UserPlus, Moon, LogOut, Inbox, GitBranch, Star, Check, Circle, CircleDot, BellOff, Clock, CircleOff, Smile, MessageCircleQuestion, MoreHorizontal, MailOpen, Mail, CheckCheck } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { signOut } from "next-auth/react";
@@ -639,6 +639,7 @@ export function Sidebar() {
                   voiceCount={voiceCounts[ch.id] ?? 0}
                   onClick={() => goToChannel(ch.id)}
                   contextId={activeTeamId ? `${activeTeamId}:${ch.id}` : undefined}
+                  unreadId={ch.id}
                 />
               ))}
               {unreadChatItems.map((chat) => (
@@ -651,6 +652,7 @@ export function Sidebar() {
                   voiceCount={voiceCounts[chat.id] ?? 0}
                   onClick={() => goToChat(chat.id)}
                   contextId={chat.id}
+                  unreadId={chat.id}
                 />
               ))}
               {totalUnreads === 0 && (
@@ -713,6 +715,7 @@ export function Sidebar() {
                   voiceCount={voiceCounts[ch.id] ?? 0}
                   onClick={() => goToChannel(ch.id)}
                   contextId={activeTeamId ? `${activeTeamId}:${ch.id}` : undefined}
+                  unreadId={ch.id}
                 />
               ))}
               {starredChatItems.map((chat) => (
@@ -725,6 +728,7 @@ export function Sidebar() {
                   voiceCount={voiceCounts[chat.id] ?? 0}
                   onClick={() => goToChat(chat.id)}
                   contextId={chat.id}
+                  unreadId={chat.id}
                 />
               ))}
               {totalStarred === 0 && (
@@ -738,11 +742,12 @@ export function Sidebar() {
 
         {/* Channels section */}
         <div className="mb-2">
-          <button
-            onClick={() => setChannelsOpen((v) => !v)}
-            className="group/section flex w-full items-center justify-between px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] transition-colors duration-[80ms] ease-out hover:text-[var(--text-secondary)] focus:outline-none"
-          >
-            <span className="flex min-w-0 items-center gap-1">
+          <div className="group/section flex w-full items-center justify-between px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+            <button
+              type="button"
+              onClick={() => setChannelsOpen((v) => !v)}
+              className="flex min-w-0 flex-1 items-center gap-1 transition-colors duration-[80ms] ease-out hover:text-[var(--text-secondary)] focus:outline-none"
+            >
               <ChevronRight
                 className={cn(
                   "h-2.5 w-2.5 transition-transform duration-200 ease-out",
@@ -750,9 +755,22 @@ export function Sidebar() {
                 )}
               />
               <span className="truncate">Channels</span>
-            </span>
-            <Plus className="h-3 w-3 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
-          </button>
+            </button>
+            <div className="flex flex-shrink-0 items-center gap-1.5">
+              {teamChannels.some((ch) => (unreadCounts[ch.id] ?? 0) > 0) && (
+                <button
+                  type="button"
+                  aria-label="Mark all channels read"
+                  title="Mark all read"
+                  onClick={() => teamChannels.forEach((ch) => markRead(ch.id))}
+                  className="opacity-0 transition-colors duration-150 hover:text-[var(--text-secondary)] focus:outline-none focus-visible:opacity-100 group-hover/section:opacity-100"
+                >
+                  <CheckCheck className="h-3.5 w-3.5" />
+                </button>
+              )}
+              <Plus className="h-3 w-3 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
+            </div>
+          </div>
 
           <div
             className={cn(
@@ -777,6 +795,7 @@ export function Sidebar() {
                   voiceCount={voiceCounts[ch.id] ?? 0}
                   onClick={() => goToChannel(ch.id)}
                   contextId={activeTeamId ? `${activeTeamId}:${ch.id}` : undefined}
+                  unreadId={ch.id}
                 />
               ))}
             </div>
@@ -785,11 +804,12 @@ export function Sidebar() {
 
         {/* DMs section */}
         <div className="mb-2">
-          <button
-            onClick={() => setDmsOpen((v) => !v)}
-            className="group/section flex w-full items-center justify-between px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] transition-colors duration-[80ms] ease-out hover:text-[var(--text-secondary)] focus:outline-none"
-          >
-            <span className="flex min-w-0 items-center gap-1">
+          <div className="group/section flex w-full items-center justify-between px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+            <button
+              type="button"
+              onClick={() => setDmsOpen((v) => !v)}
+              className="flex min-w-0 flex-1 items-center gap-1 transition-colors duration-[80ms] ease-out hover:text-[var(--text-secondary)] focus:outline-none"
+            >
               <ChevronRight
                 className={cn(
                   "h-2.5 w-2.5 transition-transform duration-200 ease-out",
@@ -797,9 +817,22 @@ export function Sidebar() {
                 )}
               />
               <span className="truncate">Direct Messages</span>
-            </span>
-            <Plus className="h-3 w-3 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
-          </button>
+            </button>
+            <div className="flex flex-shrink-0 items-center gap-1.5">
+              {chats.some((chat) => (unreadCounts[chat.id] ?? 0) > 0) && (
+                <button
+                  type="button"
+                  aria-label="Mark all direct messages read"
+                  title="Mark all read"
+                  onClick={() => chats.forEach((chat) => markRead(chat.id))}
+                  className="opacity-0 transition-colors duration-150 hover:text-[var(--text-secondary)] focus:outline-none focus-visible:opacity-100 group-hover/section:opacity-100"
+                >
+                  <CheckCheck className="h-3.5 w-3.5" />
+                </button>
+              )}
+              <Plus className="h-3 w-3 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
+            </div>
+          </div>
 
           <div
             className={cn(
@@ -818,6 +851,7 @@ export function Sidebar() {
                   voiceCount={voiceCounts[chat.id] ?? 0}
                   onClick={() => goToChat(chat.id)}
                   contextId={chat.id}
+                  unreadId={chat.id}
                 />
               ))}
               {chatsNextLink && (
@@ -888,6 +922,7 @@ function SidebarItem({
   voiceCount = 0,
   onClick,
   contextId,
+  unreadId,
 }: {
   label: string;
   icon: React.ReactNode;
@@ -897,6 +932,8 @@ function SidebarItem({
   onClick: () => void;
   /** Key used for snooze (`teamId:channelId` for channels, `chatId` for DMs). */
   contextId?: string;
+  /** Key used for unread counts (`channelId` for channels, `chatId` for DMs). */
+  unreadId?: string;
 }) {
   const unread = unreadCount > 0 && !active;
   const [pulsing, setPulsing] = useState(false);
@@ -906,6 +943,8 @@ function SidebarItem({
   const snoozedContexts = usePreferencesStore((s) => s.snoozedContexts);
   const snoozeContext = usePreferencesStore((s) => s.snoozeContext);
   const unsnoozeContext = usePreferencesStore((s) => s.unsnoozeContext);
+  const markRead = useWorkspaceStore((s) => s.markRead);
+  const markUnread = useWorkspaceStore((s) => s.markUnread);
 
   const snoozedUntil = contextId ? snoozedContexts[contextId] : undefined;
   const isSnoozed = !!snoozedUntil && snoozedUntil > Date.now();
@@ -994,6 +1033,19 @@ function SidebarItem({
               align="end"
               className="z-50 min-w-[200px] overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--modal-bg)] py-1 shadow-[0_8px_32px_rgba(0,0,0,0.55)] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
             >
+              {unreadId && unreadCount > 0 && (
+                <DropdownMenu.Item onSelect={() => markRead(unreadId)} className={itemClass}>
+                  <MailOpen className="h-4 w-4 flex-shrink-0" />
+                  Mark as read
+                </DropdownMenu.Item>
+              )}
+              {unreadId && unreadCount === 0 && (
+                <DropdownMenu.Item onSelect={() => markUnread(unreadId)} className={itemClass}>
+                  <Mail className="h-4 w-4 flex-shrink-0" />
+                  Mark as unread
+                </DropdownMenu.Item>
+              )}
+              {unreadId && <DropdownMenu.Separator className="my-1 h-px bg-[var(--border)]" />}
               {isSnoozed ? (
                 <DropdownMenu.Item onSelect={() => unsnoozeContext(contextId)} className={itemClass}>
                   <BellOff className="h-4 w-4 flex-shrink-0" />
