@@ -144,36 +144,36 @@ export function ForwardMessageModal({ open, onOpenChange, message, onForward }: 
             event.preventDefault();
             inputRef.current?.focus();
           }}
-          className="fixed left-1/2 top-1/2 z-[70] flex max-h-[80vh] w-[560px] max-w-[94vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-[#3f4144] bg-[#1a1d21] text-[#d1d2d3] shadow-[0_16px_64px_rgba(0,0,0,0.6)] outline-none"
+          className="fixed left-1/2 top-1/2 z-[70] flex max-h-[80vh] w-[560px] max-w-[94vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--modal-bg)] text-[var(--text-primary)] shadow-[0_16px_64px_rgba(0,0,0,0.6)] outline-none"
         >
           <Dialog.Title className="sr-only">Forward message</Dialog.Title>
 
-          <header className="flex h-[49px] flex-shrink-0 items-center justify-between border-b border-[#3f4144] px-4">
-            <h2 className="text-[15px] font-bold text-white">Forward message</h2>
+          <header className="flex h-[49px] flex-shrink-0 items-center justify-between border-b border-[var(--border)] px-4">
+            <h2 className="text-[15px] font-bold text-[var(--text-primary)]">Forward message</h2>
             <Dialog.Close
               aria-label="Close"
-              className="flex h-7 w-7 items-center justify-center rounded text-[#ababad] transition-colors duration-150 hover:bg-[#27292d] hover:text-white"
+              className="flex h-7 w-7 items-center justify-center rounded text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
             >
               <X size={16} />
             </Dialog.Close>
           </header>
 
           {/* Search input */}
-          <div className="flex items-center border-b border-[#3f4144]">
-            <Search className="ml-5 h-4 w-4 flex-shrink-0 text-[#ababad]" />
+          <div className="flex items-center border-b border-[var(--border)]">
+            <Search className="ml-5 h-4 w-4 flex-shrink-0 text-[var(--text-secondary)]" />
             <input
               ref={inputRef}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search chats and channels..."
-              className="h-[44px] min-w-0 flex-1 bg-transparent px-3 text-[14px] text-[#d1d2d3] outline-none placeholder:text-[#6c6f75]"
+              className="h-[44px] min-w-0 flex-1 bg-transparent px-3 text-[14px] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
             />
           </div>
 
           {/* Destination list */}
           <div className="max-h-[280px] flex-1 overflow-y-auto px-3 py-3">
             {!hasResults ? (
-              <div className="px-3 py-8 text-center text-[13px] text-[#6c6f75]">
+              <div className="px-3 py-8 text-center text-[13px] text-[var(--text-muted)]">
                 No matching chats or channels
               </div>
             ) : (
@@ -214,8 +214,8 @@ export function ForwardMessageModal({ open, onOpenChange, message, onForward }: 
           </div>
 
           {/* Note + quoted preview */}
-          <div className="flex flex-col gap-2 border-t border-[#3f4144] px-4 py-3">
-            <label className="text-[11px] font-bold uppercase tracking-wide text-[#6c6f75]">
+          <div className="flex flex-col gap-2 border-t border-[var(--border)] px-4 py-3">
+            <label className="text-[11px] font-bold uppercase tracking-wide text-[var(--text-muted)]">
               Add a note (optional)
             </label>
             <textarea
@@ -223,16 +223,16 @@ export function ForwardMessageModal({ open, onOpenChange, message, onForward }: 
               onChange={(event) => setNote(event.target.value)}
               rows={2}
               placeholder="Write something to go with the forwarded message"
-              className="w-full resize-none rounded border border-[#3f4144] bg-[#222529] px-2 py-1.5 text-[13px] text-[#d1d2d3] placeholder-[#6c6f75] outline-none focus:border-[#565856]"
+              className="w-full resize-none rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-1.5 text-[13px] text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--border-input)]"
             />
 
             {message && (
-              <div className="rounded-md border-l-[3px] border-[var(--accent)] bg-[#222529] px-3 py-1.5">
-                <div className="text-[12px] font-semibold text-[#d1d2d3]">
+              <div className="rounded-md border-l-[3px] border-[var(--accent)] bg-[var(--surface)] px-3 py-1.5">
+                <div className="text-[12px] font-semibold text-[var(--text-primary)]">
                   {message.from?.user?.displayName ?? "Unknown"}
                 </div>
                 {previewText && (
-                  <div className="mt-0.5 line-clamp-2 whitespace-pre-wrap break-words text-[12px] text-[#ababad]">
+                  <div className="mt-0.5 line-clamp-2 whitespace-pre-wrap break-words text-[12px] text-[var(--text-secondary)]">
                     {previewText}
                   </div>
                 )}
@@ -241,7 +241,7 @@ export function ForwardMessageModal({ open, onOpenChange, message, onForward }: 
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-2 border-t border-[#3f4144] px-4 py-3">
+          <div className="flex items-center justify-end gap-2 border-t border-[var(--border)] px-4 py-3">
             <Dialog.Close asChild>
               <button
                 type="button"
@@ -276,7 +276,7 @@ function DestinationSection({
 }) {
   return (
     <section>
-      <h3 className="px-3 pb-1 text-[11px] font-bold uppercase tracking-wide text-[#6c6f75]">
+      <h3 className="px-3 pb-1 text-[11px] font-bold uppercase tracking-wide text-[var(--text-muted)]">
         {title}
       </h3>
       <div className="flex flex-col gap-1">{children}</div>
@@ -303,13 +303,13 @@ function DestinationRow({
       onClick={onSelect}
       className={cn(
         "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition-colors duration-[80ms]",
-        active ? "bg-[#0F5A8F] text-white" : "text-[#d1d2d3] hover:bg-[#27292d]"
+        active ? "bg-[var(--accent)] text-white" : "text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
       )}
     >
       <span
         className={cn(
           "flex h-6 w-6 flex-shrink-0 items-center justify-center rounded",
-          active ? "bg-white/15 text-white" : "bg-[#2c2d30] text-[#ababad]"
+          active ? "bg-white/15 text-white" : "bg-[var(--surface-raised)] text-[var(--text-secondary)]"
         )}
       >
         {icon}
@@ -319,14 +319,14 @@ function DestinationRow({
         <span
           className={cn(
             "block truncate text-[12px]",
-            active ? "text-white/75" : "text-[#6c6f75]"
+            active ? "text-white/75" : "text-[var(--text-muted)]"
           )}
         >
           {subtitle}
         </span>
       </span>
       {active && (
-        <span className="ml-auto flex h-4 w-4 items-center justify-center rounded-full bg-white text-[#0F5A8F]">
+        <span className="ml-auto flex h-4 w-4 items-center justify-center rounded-full bg-white text-[var(--accent)]">
           <svg viewBox="0 0 10 10" className="h-2 w-2" aria-hidden>
             <path d="M1 5l3 3 5-6" fill="none" stroke="currentColor" strokeWidth="2" />
           </svg>
