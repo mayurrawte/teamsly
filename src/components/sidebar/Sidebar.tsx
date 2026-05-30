@@ -588,7 +588,7 @@ export function Sidebar() {
                 />
               ))}
               {totalUnreads === 0 && (
-                <p className="px-4 py-1 text-[12px] text-[var(--text-muted)]">All caught up</p>
+                <p className="motion-fade-up px-4 py-1 text-[12px] text-[var(--text-muted)]">All caught up</p>
               )}
             </div>
           </div>

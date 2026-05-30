@@ -34,7 +34,7 @@ export function ChannelIntroCard({
   createdDateTime,
 }: ChannelIntroCardProps) {
   return (
-    <div className="mx-4 mb-4 mt-4 rounded-lg border border-[var(--border)]/50 bg-[var(--content-bg)] px-5 py-4">
+    <div className="motion-fade-up mx-4 mb-4 mt-4 rounded-lg border border-[var(--border)]/50 bg-[var(--content-bg)] px-5 py-4">
       <div className="mb-2.5 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--accent)]/20">
         <Hash className="h-5 w-5 text-[var(--accent)]" />
       </div>
@@ -77,7 +77,7 @@ export function DmIntroCard({
 
   if (isSelfDm) {
     return (
-      <div className="mx-4 mb-4 mt-4 rounded-lg border border-[var(--border)]/50 bg-[var(--content-bg)] px-5 py-4">
+      <div className="motion-fade-up mx-4 mb-4 mt-4 rounded-lg border border-[var(--border)]/50 bg-[var(--content-bg)] px-5 py-4">
         <div className="mb-2.5 flex -space-x-2">
           {displayMembers.slice(0, 2).map((m) => (
             <Avatar
@@ -97,7 +97,7 @@ export function DmIntroCard({
   }
 
   return (
-    <div className="mx-4 mb-4 mt-4 rounded-lg border border-[var(--border)]/50 bg-[var(--content-bg)] px-5 py-4">
+    <div className="motion-fade-up mx-4 mb-4 mt-4 rounded-lg border border-[var(--border)]/50 bg-[var(--content-bg)] px-5 py-4">
       <div className="mb-2.5 flex -space-x-2">
         {displayMembers.slice(0, 3).map((m) => (
           <div key={m.id} className="ring-2 ring-[var(--content-bg)]" style={{ borderRadius: 4 }}>
