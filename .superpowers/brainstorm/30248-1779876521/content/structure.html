@@ -1,0 +1,40 @@
+<h2>How should the site be structured?</h2>
+<p class="subtitle">The site currently fits on one scrollable page. With download links, self-hosting, features, and a roadmap — we have choices about where things live.</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>One long page — extended</h3>
+      <p>Keep everything in <code>index.html</code>. Add a Roadmap section, expand the Self-host section, add direct download buttons. Visitors scroll through: Hero → Features → Download → Self-host → Roadmap → FAQ. Fast to build, easy to maintain.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Zero routing complexity</li><li>Fastest to ship</li><li>Works with the current static site setup</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Self-hosting docs can get long on the same page</li><li>Can't deep-link to e.g. /install</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Landing page + separate /install page</h3>
+      <p>Index stays focused (hero, features, roadmap, quick download). A dedicated <code>install.html</code> (or <code>/install/</code>) holds the full self-hosting guide — Azure AD steps, env vars, deployment options. Nav links to it.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Self-host docs can be thorough without overwhelming newcomers</li><li>Clean deep links to /install</li><li>Mirrors SELF_HOSTING.md naturally</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>One more file to maintain</li><li>Slightly more nav to wire up</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Multi-page site (landing + install + changelog)</h3>
+      <p>Three pages: landing, a full install/self-host guide, and a changelog/releases page. Nav across all three.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Most organized for growth</li><li>Changelog can auto-pull from GitHub releases eventually</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Most work</li><li>Changelog becomes stale unless automated</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>

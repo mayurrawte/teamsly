@@ -1,0 +1,61 @@
+<h2>How detailed is the /install page?</h2>
+<p class="subtitle">SELF_HOSTING.md has the full guide — Azure AD registration, all 11 Graph API permissions, env vars, deployment options. How much of that goes on the web page?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Full guide — everything inline</h3>
+      <p>Convert all of <code>SELF_HOSTING.md</code> to HTML: step-by-step Azure AD registration, the full permissions table, env var reference, and deployment options (Vercel, Fly, Render, bare Node). One long page, no external links needed.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Zero friction — self-hosters never leave the site</li><li>Looks serious and production-ready</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Longest to write</li><li>Must keep in sync with SELF_HOSTING.md</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Overview + collapsible steps</h3>
+      <p>Three clear phases (Azure AD setup → env vars → deploy), each with a summary. Details are in expandable <code>&lt;details&gt;</code> blocks — e.g. the permissions table is hidden until you open "Add API permissions". Skimmable for people who know Azure; detailed for people who don't.</p>
+      <div class="mockup" style="margin-top:10px">
+        <div class="mockup-header">Preview structure</div>
+        <div class="mockup-body" style="padding:14px;background:#f7f7f8;border-radius:8px;font-size:13px">
+          <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
+            <span style="background:#0F5A8F;color:#fff;border-radius:50%;width:22px;height:22px;display:grid;place-items:center;font-weight:700;font-size:12px;flex-shrink:0">1</span>
+            <div><strong>Register an Azure AD app</strong><br><span style="color:#6b7280">Takes ~5 minutes. Create an app registration in your tenant.</span>
+              <details style="margin-top:6px"><summary style="color:#0F5A8F;cursor:pointer">Show required API permissions (11 permissions)</summary>
+                <div style="margin-top:8px;color:#374151">User.Read, ChannelMessage.Read.All, Chat.ReadWrite…</div>
+              </details>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
+            <span style="background:#0F5A8F;color:#fff;border-radius:50%;width:22px;height:22px;display:grid;place-items:center;font-weight:700;font-size:12px;flex-shrink:0">2</span>
+            <div><strong>Configure environment variables</strong><br><span style="color:#6b7280">Copy <code style="background:#e5e7eb;padding:1px 4px;border-radius:3px">.env.example</code> and fill in 5 values.</span></div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span style="background:#0F5A8F;color:#fff;border-radius:50%;width:22px;height:22px;display:grid;place-items:center;font-weight:700;font-size:12px;flex-shrink:0">3</span>
+            <div><strong>Deploy</strong><br><span style="color:#6b7280">One-click Vercel, Fly, Render, or bare Node 20+.</span>
+              <details style="margin-top:6px"><summary style="color:#0F5A8F;cursor:pointer">Show deployment options</summary>
+                <div style="margin-top:8px;color:#374151">Vercel · Fly.io · Render · Docker · Bare Node</div>
+              </details>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Quick-start only + link to SELF_HOSTING.md</h3>
+      <p>Short page: 3 steps, env var block, deploy command. "For the full Azure AD setup guide, see SELF_HOSTING.md on GitHub." Minimal maintenance, lowest effort.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Fastest to build</li><li>Source of truth stays in one place (the .md file)</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Sends users away from the site mid-setup</li><li>GitHub markdown rendering isn't as polished</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>

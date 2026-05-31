@@ -48,9 +48,18 @@ async function sweepAllDms(
 // and mark it failed otherwise so we don't keep retrying a doomed send.
 async function sweepAllScheduledDms() {
   const now = Date.now();
+  const presence = useWorkspaceStore.getState().presenceMap;
   const due = useScheduledStore
     .getState()
-    .scheduled.filter((m) => m.status === "pending" && m.scheduleTime <= now);
+    .scheduled.filter(
+      (m) =>
+        m.status === "pending" &&
+        // "Send when free" entries release once the recipient is "Available";
+        // time-based ones release once scheduleTime passes.
+        (m.releaseWhenAvailable
+          ? presence[m.releaseWhenAvailable] === "Available"
+          : m.scheduleTime <= now)
+    );
   const { removeScheduled, markFailed } = useScheduledStore.getState();
   for (const m of due) {
     let outgoing = m.content;

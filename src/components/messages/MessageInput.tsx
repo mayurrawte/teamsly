@@ -63,6 +63,8 @@ export interface SendOptions {
   mentions?: PendingMention[];
   disappearMs?: number; // when set, parent wraps the content as a disappearing message
   scheduleTime?: number; // epoch ms; when set, parent queues the message instead of sending now
+  releaseWhenAvailable?: string; // recipient AAD id; when set, parent queues until the recipient is "Available"
+  releaseTargetName?: string; // recipient display name, for the pending banner
 }
 
 interface Props {
@@ -107,6 +109,13 @@ interface Props {
    * due-sweep, so channels must leave this false.
    */
   allowSchedule?: boolean;
+  /**
+   * When this is a 1:1 DM, the recipient's id + name. Enables the "Send when
+   * {name} is free" entry at the top of the schedule menu — the message is
+   * held until the recipient's presence becomes "Available" instead of until
+   * a time. Undefined for group chats / self-DMs.
+   */
+  whenFreeTarget?: { id: string; name: string };
 }
 
 // Sentinel mention id for `@everyone`. The chat/channel API routes turn
@@ -262,6 +271,7 @@ export function MessageInput({
   channelMembers,
   allowDisappearing,
   allowSchedule,
+  whenFreeTarget,
 }: Props) {
   const [value, setValue] = useState("");
   const [sending, setSending] = useState(false);
@@ -659,6 +669,40 @@ export function MessageInput({
           ...(scheduleTime ? { scheduleTime } : {}),
         }
       );
+      setPendingMentions([]);
+      setDisappearMs(null);
+      setScheduleTime(null);
+    } catch {
+      setValue(trimmed);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  // Queue the current message to be held until the recipient is free. Mirrors
+  // the send path in `submit` but passes `releaseWhenAvailable` instead of a
+  // `scheduleTime` so the parent gates delivery on presence, not time.
+  async function sendWhenFree(target: { id: string; name: string }) {
+    setSlashError(null);
+    const trimmed = value.trim();
+    if (!trimmed || isBusy) return;
+    setShowScheduleMenu(false);
+    setSending(true);
+    setValue("");
+    if (contextId) clearDraftInStore(contextId);
+    const mentionsForSend = pendingMentions.filter((m) => {
+      if (m.id === EVERYONE_MENTION_ID) {
+        return /(^|\s)@everyone(\s|$)/.test(trimmed);
+      }
+      return trimmed.includes(`@${m.name}`);
+    });
+    try {
+      await onSend(markdownToHtml(trimmed), {
+        ...(mentionsForSend.length > 0 ? { mentions: mentionsForSend } : {}),
+        ...(disappearMs ? { disappearMs } : {}),
+        releaseWhenAvailable: target.id,
+        releaseTargetName: target.name,
+      });
       setPendingMentions([]);
       setDisappearMs(null);
       setScheduleTime(null);
@@ -1299,6 +1343,19 @@ export function MessageInput({
                 </button>
                 {showScheduleMenu && (
                   <div className="absolute bottom-full right-0 z-50 mb-2 min-w-[200px] rounded-md border border-[var(--border)] bg-[var(--modal-bg)] py-1 shadow-lg">
+                    {whenFreeTarget && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => { void sendWhenFree(whenFreeTarget); }}
+                          className="block w-full truncate px-3 py-1 text-left text-[13px] text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
+                          title={`Send when ${whenFreeTarget.name} is free`}
+                        >
+                          Send when {whenFreeTarget.name} is free
+                        </button>
+                        <div className="my-1 h-px bg-[var(--border)]" aria-hidden="true" />
+                      </>
+                    )}
                     {scheduleTime !== null && (
                       <button
                         type="button"

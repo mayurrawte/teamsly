@@ -121,10 +121,18 @@ export function ChatView({ chatId }: { chatId: string }) {
   // mark it failed so the sweep stops retrying it.
   const sweepScheduled = useCallback(async () => {
     const now = Date.now();
+    const presence = useWorkspaceStore.getState().presenceMap;
     const due = useScheduledStore
       .getState()
       .scheduled.filter(
-        (m) => m.contextId === chatId && m.status === "pending" && m.scheduleTime <= now
+        (m) =>
+          m.contextId === chatId &&
+          m.status === "pending" &&
+          // "Send when free" entries are gated on the recipient's presence;
+          // time-based ones release once scheduleTime passes.
+          (m.releaseWhenAvailable
+            ? presence[m.releaseWhenAvailable] === "Available"
+            : m.scheduleTime <= now)
       );
     for (const m of due) {
       let outgoing = m.content;
@@ -294,8 +302,36 @@ export function ChatView({ chatId }: { chatId: string }) {
 
   async function handleSend(
     content: string,
-    options?: { mentions?: { id: string; name: string }[]; disappearMs?: number; scheduleTime?: number }
+    options?: {
+      mentions?: { id: string; name: string }[];
+      disappearMs?: number;
+      scheduleTime?: number;
+      releaseWhenAvailable?: string;
+      releaseTargetName?: string;
+    }
   ) {
+    // Send when free: queue the message and gate delivery on the recipient's
+    // presence rather than a time. scheduleTime is set to now so the existing
+    // sort/index keep working; the due-sweep checks presenceMap instead.
+    if (options?.releaseWhenAvailable) {
+      addScheduled({
+        contextId: chatId,
+        id: crypto.randomUUID(),
+        content,
+        ...(options.mentions?.length ? { mentions: options.mentions } : {}),
+        ...(options.disappearMs ? { disappearMs: options.disappearMs } : {}),
+        scheduleTime: Date.now(),
+        releaseWhenAvailable: options.releaseWhenAvailable,
+        releaseTargetName: options.releaseTargetName,
+        createdAt: Date.now(),
+        status: "pending",
+      });
+      showToast({
+        title: `Will send when ${options.releaseTargetName ?? "they"} is free`,
+      });
+      return;
+    }
+
     // Send later: queue the message client-side instead of POSTing now. The
     // due-sweep (here + Sidebar) delivers it once scheduleTime arrives. The
     // composer already cleared the draft before calling us.
@@ -604,6 +640,16 @@ export function ChatView({ chatId }: { chatId: string }) {
   const otherMembers = members.filter((m) => (m.userId ?? m.id) !== currentUserId);
   const isSelfDm = otherMembers.length === 0;
 
+  // "Send when free" only makes sense for a 1:1 DM with a single, non-self
+  // recipient — we need exactly one presence to watch.
+  const whenFreeTarget =
+    otherMembers.length === 1 && !isSelfDm
+      ? {
+          id: otherMembers[0].userId ?? otherMembers[0].id,
+          name: otherMembers[0].displayName ?? "them",
+        }
+      : undefined;
+
   // Build mention candidates — exclude current user so they don't @mention themselves
   const mentionCandidates = members
     .filter((m) => (m.userId ?? m.id) !== currentUserId)
@@ -686,7 +732,11 @@ export function ChatView({ chatId }: { chatId: string }) {
                         {messagePlainText(m.content, "html") || "(empty message)"}
                       </span>
                       <span className="flex-shrink-0 text-[12px] text-[var(--text-muted)]">
-                        {new Date(m.scheduleTime).toLocaleString()}
+                        {m.releaseWhenAvailable
+                          ? m.releaseTargetName
+                            ? `Sends when ${m.releaseTargetName} is free`
+                            : "Sends when they're free"
+                          : new Date(m.scheduleTime).toLocaleString()}
                       </span>
                       <button
                         type="button"
@@ -740,6 +790,7 @@ export function ChatView({ chatId }: { chatId: string }) {
             channelMembers={mentionCandidates}
             allowDisappearing
             allowSchedule
+            whenFreeTarget={whenFreeTarget}
           />
         </>
       ) : (

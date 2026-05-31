@@ -1,0 +1,68 @@
+<h2>Download section — how prominent are the direct links?</h2>
+<p class="subtitle">Currently the site shows Homebrew commands and links to "latest release" on GitHub. We can make direct binary downloads more prominent.</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Keep as-is — GitHub release page</h3>
+      <p>Keep the "latest release" link for all direct downloads. The Homebrew command stays prominent on macOS. Simple, always points to the right version automatically.</p>
+      <div class="mockup" style="margin-top:10px">
+        <div class="mockup-header">macOS card</div>
+        <div class="mockup-body" style="padding:14px;background:#fff;border:1px solid #e5e7eb;border-radius:8px">
+          <div style="font-size:15px;font-weight:700;margin-bottom:4px">macOS</div>
+          <div style="font-size:12px;color:#6b7280;margin-bottom:10px">Apple Silicon & Intel · Homebrew recommended</div>
+          <pre style="margin:0 0 10px;padding:10px;background:#f3f4f6;border-radius:6px;font-size:12px">brew tap mayurrawte/teamsly
+brew install --cask teamsly</pre>
+          <div style="font-size:13px;color:#6b7280">Or grab the <code style="background:#f3f4f6;padding:1px 5px;border-radius:3px">.dmg</code> from the <span style="color:#0F5A8F">latest release →</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Direct download buttons per platform</h3>
+      <p>Each card gets a primary download button linking straight to the v0.3.0 binary. Version badge shown. GitHub release link stays as secondary. Needs updating each release — or a small script to inject the version.</p>
+      <div class="mockup" style="margin-top:10px">
+        <div class="mockup-header">macOS card</div>
+        <div class="mockup-body" style="padding:14px;background:#fff;border:1px solid #e5e7eb;border-radius:8px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <div style="font-size:15px;font-weight:700">macOS</div>
+            <span style="font-size:11px;background:#f0f4ff;color:#0F5A8F;border-radius:10px;padding:2px 8px;font-weight:600">v0.3.0</span>
+          </div>
+          <div style="font-size:12px;color:#6b7280;margin-bottom:10px">Apple Silicon & Intel</div>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <span style="background:#0F5A8F;color:#fff;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600">⬇ Apple Silicon (.dmg)</span>
+            <span style="border:1px solid #e5e7eb;color:#374151;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600">Intel (.dmg)</span>
+          </div>
+          <pre style="margin:0 0 8px;padding:10px;background:#f3f4f6;border-radius:6px;font-size:12px">brew tap mayurrawte/teamsly
+brew install --cask teamsly</pre>
+          <div style="font-size:12px;color:#9ca3af">All releases on GitHub →</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Single "Download v0.3.0" hero button + platform tabs</h3>
+      <p>A big download CTA at the top of the section auto-detects the OS (via JS) and offers the right binary. Platform tabs below show Homebrew / direct / Linux options. Slickest UX, most JS to write.</p>
+      <div class="mockup" style="margin-top:10px">
+        <div class="mockup-header">Download section top</div>
+        <div class="mockup-body" style="padding:16px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;text-align:center">
+          <div style="font-size:22px;font-weight:700;margin-bottom:6px">Download Teamsly</div>
+          <div style="font-size:13px;color:#6b7280;margin-bottom:14px">v0.3.0 · macOS, Windows, Linux</div>
+          <div style="background:#0F5A8F;color:#fff;border-radius:8px;padding:11px 24px;font-size:15px;font-weight:700;display:inline-block;margin-bottom:12px">⬇ Download for macOS (Apple Silicon)</div>
+          <div style="display:flex;gap:0;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;width:fit-content;margin:0 auto;font-size:13px">
+            <div style="padding:6px 14px;background:#0F5A8F;color:#fff;font-weight:600">macOS</div>
+            <div style="padding:6px 14px;color:#6b7280">Windows</div>
+            <div style="padding:6px 14px;color:#6b7280">Linux</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
