@@ -20,6 +20,7 @@ import { useToastStore } from "@/store/toasts";
 import { sendUnreadCount } from "@/lib/electron-bridge";
 import { getChatLabel } from "@/lib/utils/chat-label";
 import { RealtimeEventsMount } from "@/hooks/useRealtimeEvents";
+import { MorningBriefScheduler } from "@/components/MorningBriefScheduler";
 import { CatchUpPanel } from "@/components/ai/CatchUpPanel";
 import { useCatchUpStore } from "@/store/catchUp";
 import { useSearchStore } from "@/store/search";
@@ -440,6 +441,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <RealtimeEventsMount />
       <CatchUpPanel />
       <BootNudge />
+      <MorningBriefScheduler />
     </div>
   );
 }
