@@ -16,6 +16,12 @@ export interface DisappearPayload {
   disappearAt: number; // epoch ms
 }
 
+// How long to leave an undecodable disappearing blob (one of OUR OWN messages
+// that fails to decode) before the sweep deletes it as orphaned. Well beyond
+// the 1-hour max duration so a transient decode failure never deletes a valid
+// message — only clearly-stranded blobs the sender can no longer read.
+export const UNDECODABLE_BLOB_GRACE_MS = 24 * 60 * 60 * 1000;
+
 const keyCache = new Map<string, Promise<CryptoKey>>();
 
 export function getContextKey(contextId: string): Promise<CryptoKey> {

@@ -17,7 +17,7 @@ import { useToastStore } from "@/store/toasts";
 import { openTeamsCall } from "@/lib/utils/teams-deeplink";
 import { getChatLabel } from "@/lib/utils/chat-label";
 import { VoiceTrigger } from "@/components/voice/VoiceTrigger";
-import { isDisappearing, unwrapMessage, wrapMessage } from "@/lib/utils/disappear";
+import { isDisappearing, unwrapMessage, wrapMessage, UNDECODABLE_BLOB_GRACE_MS } from "@/lib/utils/disappear";
 import { useRealtimeEvents } from "@/hooks/useRealtimeEvents";
 import { useScheduledStore } from "@/store/scheduled";
 
@@ -101,7 +101,11 @@ export function ChatView({ chatId }: { chatId: string }) {
       if (m.from?.user?.id !== currentUserId) continue; // only delete our own (Graph 403s otherwise)
       if (!isDisappearing(m.body.content)) continue;
       const payload = await unwrapMessage(chatId, m.body.content);
-      if (!payload || payload.disappearAt > now) continue;
+      if (payload) {
+        if (payload.disappearAt > now) continue; // decoded but not yet expired
+      } else if (now - new Date(m.createdDateTime).getTime() < UNDECODABLE_BLOB_GRACE_MS) {
+        continue; // undecodable but recent — skip until it's clearly orphaned
+      }
       try {
         const res = await fetch(
           `/api/chats/${chatId}/messages/${encodeURIComponent(m.id)}`,
