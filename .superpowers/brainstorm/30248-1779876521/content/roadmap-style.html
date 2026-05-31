@@ -1,0 +1,102 @@
+<h2>What should the Roadmap look like?</h2>
+<p class="subtitle">Based on TASKS.md, there's a lot shipped and a lot planned. How much detail goes on the website?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Themed pillars — high level</h3>
+      <p>Group upcoming work into 3–4 themes with short descriptions. No specific items or dates. Looks clean, doesn't go stale quickly.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Preview</div>
+        <div class="mockup-body" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px;background:#f7f7f8">
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px">
+            <div style="font-size:11px;font-weight:700;color:#0F5A8F;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Next up</div>
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px">Real-time DM push</div>
+            <div style="font-size:12px;color:#6b7280">Sub-second delivery via Microsoft Graph webhooks + RSA encryption.</div>
+          </div>
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px">
+            <div style="font-size:11px;font-weight:700;color:#0F5A8F;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Coming soon</div>
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px">Smart send</div>
+            <div style="font-size:12px;color:#6b7280">Schedule messages or hold until the recipient is free.</div>
+          </div>
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px">
+            <div style="font-size:11px;font-weight:700;color:#0F5A8F;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Exploring</div>
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px">AI features</div>
+            <div style="font-size:12px;color:#6b7280">Action-item extractor, voice memos, and daily brief digest.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Shipped + planned list</h3>
+      <p>Two columns: what's already live (with version badges), and what's coming next. Shows momentum and real progress.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Preview</div>
+        <div class="mockup-body" style="display:grid;grid-template-columns:1fr 1fr;gap:0;background:#f7f7f8;padding:16px;gap:16px">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">✓ Shipped</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:8px 12px">
+                <span style="font-size:13px">Disappearing messages</span>
+                <span style="font-size:11px;background:#f0fdf4;color:#059669;border-radius:10px;padding:2px 8px;font-weight:600">v0.3</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:8px 12px">
+                <span style="font-size:13px">Voice rooms</span>
+                <span style="font-size:11px;background:#f0fdf4;color:#059669;border-radius:10px;padding:2px 8px;font-weight:600">v0.2</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:8px 12px">
+                <span style="font-size:13px">Real-time channel push</span>
+                <span style="font-size:11px;background:#f0fdf4;color:#059669;border-radius:10px;padding:2px 8px;font-weight:600">v0.2</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">⟶ Planned</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:8px 12px;font-size:13px">Real-time DM push</div>
+              <div style="background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:8px 12px;font-size:13px">Send later / send-when-free</div>
+              <div style="background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:8px 12px;font-size:13px">AI action-item extractor</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>GitHub-linked releases + roadmap link</h3>
+      <p>Show the last 2–3 releases with highlights, then a "See full roadmap →" link to GitHub Milestones or TASKS.md. Minimal maintenance — the source of truth stays in GitHub.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Preview</div>
+        <div class="mockup-body" style="background:#f7f7f8;padding:16px">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px;display:flex;gap:14px;align-items:flex-start">
+              <span style="font-size:11px;font-weight:700;background:#0F5A8F;color:#fff;border-radius:10px;padding:3px 10px;white-space:nowrap">v0.3.0</span>
+              <div>
+                <div style="font-size:13px;font-weight:600;margin-bottom:3px">Disappearing messages, theming, preferences</div>
+                <div style="font-size:12px;color:#6b7280">May 2026</div>
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px;display:flex;gap:14px;align-items:flex-start">
+              <span style="font-size:11px;font-weight:700;background:#6b7280;color:#fff;border-radius:10px;padding:3px 10px;white-space:nowrap">v0.2.0</span>
+              <div>
+                <div style="font-size:13px;font-weight:600;margin-bottom:3px">Voice rooms, real-time channels, calendar auto-status</div>
+                <div style="font-size:12px;color:#6b7280">May 2026</div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:14px;text-align:center">
+            <span style="font-size:13px;color:#0F5A8F;font-weight:600">See full roadmap on GitHub →</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

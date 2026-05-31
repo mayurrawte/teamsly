@@ -1,0 +1,19 @@
+▗ ▗   ▖ ▖  Claude Code v2.1.141
+           Opus 4.7 (1M context) · Claude Team
+  ▘▘ ▝▝    ~/thepsygeek/teamsly
+
+✻ Conversation compacted (ctrl+o for history)
+
+  ⎿  Referenced file STATUS.md
+  ⎿  Referenced file WIP.md
+  ⎿  Referenced file src/components/sidebar/Sidebar.tsx
+  ⎿  Read src/components/layout/AppShell.tsx (315 lines)
+  ⎿  Read src/components/modals/SearchModal.tsx (277 lines)
+
+⏺ Task "Composer drafts, bookmarks, structured mentions" completed in background
+
+⏺ Task "Notification mute, focus guard, activity defaults" completed in background
+  ⎿  You've hit your limit · resets 6:50pm (Asia/Calcutta)
+     /extra-usage to finish what you’re working on.
+
+✻ Cooked for 3s

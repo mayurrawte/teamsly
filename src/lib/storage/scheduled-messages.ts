@@ -36,6 +36,16 @@ export interface ScheduledMessage {
   disappearMs?: number;
   /** Epoch ms at which the message becomes due to send. */
   scheduleTime: number;
+  /**
+   * AAD user id of a 1:1 DM recipient to gate delivery on presence instead of
+   * time ("send when free"). When set, the due-sweep delivers the message once
+   * `presenceMap[releaseWhenAvailable]` is "Available" rather than when
+   * `scheduleTime` passes; `scheduleTime` is set to the queue time so the
+   * existing sort/index keep working.
+   */
+  releaseWhenAvailable?: string;
+  /** Recipient display name, cached for the pending banner. */
+  releaseTargetName?: string;
   /** Epoch ms the schedule was created. */
   createdAt: number;
   status: "pending" | "failed";
