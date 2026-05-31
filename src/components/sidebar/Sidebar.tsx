@@ -2,7 +2,7 @@
 
 import { useWorkspaceStore } from "@/store/workspace";
 import { useRouter, useParams } from "next/navigation";
-import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search, Settings, UserPlus, Moon, LogOut, Inbox, GitBranch, Star, Check, Circle, CircleDot, BellOff, Clock, CircleOff, Smile, MessageCircleQuestion } from "lucide-react";
+import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search, Settings, UserPlus, Moon, LogOut, Inbox, GitBranch, Star, Check, Circle, CircleDot, BellOff, Clock, CircleOff, Smile, MessageCircleQuestion, MoreHorizontal, MailOpen, Mail, CheckCheck } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { signOut } from "next-auth/react";
@@ -91,6 +91,32 @@ import { PresenceDot } from "@/components/ui/PresenceDot";
 import { useToastStore } from "@/store/toasts";
 import { getChatLabel } from "@/lib/utils/chat-label";
 import { useSearchStore } from "@/store/search";
+import { usePreferencesStore } from "@/store/preferences";
+
+// --- Snooze expiry helpers (plain Date math, local time) ---
+
+/** Now + 1 hour. */
+function snoozeOneHour(): number {
+  return Date.now() + 60 * 60 * 1000;
+}
+
+/** Next calendar day at 09:00 local time. */
+function snoozeUntilTomorrow(): number {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(9, 0, 0, 0);
+  return d.getTime();
+}
+
+/** Upcoming Monday at 09:00 local time (always strictly in the future). */
+function snoozeUntilMonday(): number {
+  const d = new Date();
+  // getDay(): 0=Sun … 1=Mon … 6=Sat. Days until the *next* Monday.
+  const daysUntilMonday = ((8 - d.getDay()) % 7) || 7;
+  d.setDate(d.getDate() + daysUntilMonday);
+  d.setHours(9, 0, 0, 0);
+  return d.getTime();
+}
 
 // localStorage keys for per-section collapsed state
 const COLLAPSE_KEYS = {
@@ -612,6 +638,8 @@ export function Sidebar() {
                   unreadCount={unreadCounts[ch.id] ?? 0}
                   voiceCount={voiceCounts[ch.id] ?? 0}
                   onClick={() => goToChannel(ch.id)}
+                  contextId={activeTeamId ? `${activeTeamId}:${ch.id}` : undefined}
+                  unreadId={ch.id}
                 />
               ))}
               {unreadChatItems.map((chat) => (
@@ -623,6 +651,8 @@ export function Sidebar() {
                   unreadCount={unreadCounts[chat.id] ?? 0}
                   voiceCount={voiceCounts[chat.id] ?? 0}
                   onClick={() => goToChat(chat.id)}
+                  contextId={chat.id}
+                  unreadId={chat.id}
                 />
               ))}
               {totalUnreads === 0 && (
@@ -684,6 +714,8 @@ export function Sidebar() {
                   unreadCount={unreadCounts[ch.id] ?? 0}
                   voiceCount={voiceCounts[ch.id] ?? 0}
                   onClick={() => goToChannel(ch.id)}
+                  contextId={activeTeamId ? `${activeTeamId}:${ch.id}` : undefined}
+                  unreadId={ch.id}
                 />
               ))}
               {starredChatItems.map((chat) => (
@@ -695,6 +727,8 @@ export function Sidebar() {
                   unreadCount={unreadCounts[chat.id] ?? 0}
                   voiceCount={voiceCounts[chat.id] ?? 0}
                   onClick={() => goToChat(chat.id)}
+                  contextId={chat.id}
+                  unreadId={chat.id}
                 />
               ))}
               {totalStarred === 0 && (
@@ -708,11 +742,12 @@ export function Sidebar() {
 
         {/* Channels section */}
         <div className="mb-2">
-          <button
-            onClick={() => setChannelsOpen((v) => !v)}
-            className="group/section flex w-full items-center justify-between px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] transition-colors duration-[80ms] ease-out hover:text-[var(--text-secondary)] focus:outline-none"
-          >
-            <span className="flex min-w-0 items-center gap-1">
+          <div className="group/section flex w-full items-center justify-between px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+            <button
+              type="button"
+              onClick={() => setChannelsOpen((v) => !v)}
+              className="flex min-w-0 flex-1 items-center gap-1 transition-colors duration-[80ms] ease-out hover:text-[var(--text-secondary)] focus:outline-none"
+            >
               <ChevronRight
                 className={cn(
                   "h-2.5 w-2.5 transition-transform duration-200 ease-out",
@@ -720,9 +755,22 @@ export function Sidebar() {
                 )}
               />
               <span className="truncate">Channels</span>
-            </span>
-            <Plus className="h-3 w-3 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
-          </button>
+            </button>
+            <div className="flex flex-shrink-0 items-center gap-1.5">
+              {teamChannels.some((ch) => (unreadCounts[ch.id] ?? 0) > 0) && (
+                <button
+                  type="button"
+                  aria-label="Mark all channels read"
+                  title="Mark all read"
+                  onClick={() => teamChannels.forEach((ch) => markRead(ch.id))}
+                  className="opacity-0 transition-colors duration-150 hover:text-[var(--text-secondary)] focus:outline-none focus-visible:opacity-100 group-hover/section:opacity-100"
+                >
+                  <CheckCheck className="h-3.5 w-3.5" />
+                </button>
+              )}
+              <Plus className="h-3 w-3 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
+            </div>
+          </div>
 
           <div
             className={cn(
@@ -746,6 +794,8 @@ export function Sidebar() {
                   unreadCount={unreadCounts[ch.id] ?? 0}
                   voiceCount={voiceCounts[ch.id] ?? 0}
                   onClick={() => goToChannel(ch.id)}
+                  contextId={activeTeamId ? `${activeTeamId}:${ch.id}` : undefined}
+                  unreadId={ch.id}
                 />
               ))}
             </div>
@@ -754,11 +804,12 @@ export function Sidebar() {
 
         {/* DMs section */}
         <div className="mb-2">
-          <button
-            onClick={() => setDmsOpen((v) => !v)}
-            className="group/section flex w-full items-center justify-between px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] transition-colors duration-[80ms] ease-out hover:text-[var(--text-secondary)] focus:outline-none"
-          >
-            <span className="flex min-w-0 items-center gap-1">
+          <div className="group/section flex w-full items-center justify-between px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+            <button
+              type="button"
+              onClick={() => setDmsOpen((v) => !v)}
+              className="flex min-w-0 flex-1 items-center gap-1 transition-colors duration-[80ms] ease-out hover:text-[var(--text-secondary)] focus:outline-none"
+            >
               <ChevronRight
                 className={cn(
                   "h-2.5 w-2.5 transition-transform duration-200 ease-out",
@@ -766,9 +817,22 @@ export function Sidebar() {
                 )}
               />
               <span className="truncate">Direct Messages</span>
-            </span>
-            <Plus className="h-3 w-3 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
-          </button>
+            </button>
+            <div className="flex flex-shrink-0 items-center gap-1.5">
+              {chats.some((chat) => (unreadCounts[chat.id] ?? 0) > 0) && (
+                <button
+                  type="button"
+                  aria-label="Mark all direct messages read"
+                  title="Mark all read"
+                  onClick={() => chats.forEach((chat) => markRead(chat.id))}
+                  className="opacity-0 transition-colors duration-150 hover:text-[var(--text-secondary)] focus:outline-none focus-visible:opacity-100 group-hover/section:opacity-100"
+                >
+                  <CheckCheck className="h-3.5 w-3.5" />
+                </button>
+              )}
+              <Plus className="h-3 w-3 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
+            </div>
+          </div>
 
           <div
             className={cn(
@@ -786,6 +850,8 @@ export function Sidebar() {
                   unreadCount={unreadCounts[chat.id] ?? 0}
                   voiceCount={voiceCounts[chat.id] ?? 0}
                   onClick={() => goToChat(chat.id)}
+                  contextId={chat.id}
+                  unreadId={chat.id}
                 />
               ))}
               {chatsNextLink && (
@@ -840,7 +906,7 @@ function SectionHeader({
       <span className="flex-shrink-0 opacity-70">{icon}</span>
       <span className="truncate">{label}</span>
       {count > 0 && (
-        <span className="ml-auto flex h-[15px] min-w-[15px] flex-shrink-0 items-center justify-center rounded-full bg-[#cd2553] px-[4px] text-[10px] font-bold text-white">
+        <span className="ml-auto flex h-[15px] min-w-[15px] flex-shrink-0 items-center justify-center rounded-full bg-[var(--text-mention)] px-[4px] text-[10px] font-bold text-white">
           {count > 99 ? "99+" : count}
         </span>
       )}
@@ -855,6 +921,8 @@ function SidebarItem({
   unreadCount = 0,
   voiceCount = 0,
   onClick,
+  contextId,
+  unreadId,
 }: {
   label: string;
   icon: React.ReactNode;
@@ -862,10 +930,24 @@ function SidebarItem({
   unreadCount?: number;
   voiceCount?: number;
   onClick: () => void;
+  /** Key used for snooze (`teamId:channelId` for channels, `chatId` for DMs). */
+  contextId?: string;
+  /** Key used for unread counts (`channelId` for channels, `chatId` for DMs). */
+  unreadId?: string;
 }) {
   const unread = unreadCount > 0 && !active;
   const [pulsing, setPulsing] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const prevCountRef = useRef(unreadCount);
+
+  const snoozedContexts = usePreferencesStore((s) => s.snoozedContexts);
+  const snoozeContext = usePreferencesStore((s) => s.snoozeContext);
+  const unsnoozeContext = usePreferencesStore((s) => s.unsnoozeContext);
+  const markRead = useWorkspaceStore((s) => s.markRead);
+  const markUnread = useWorkspaceStore((s) => s.markUnread);
+
+  const snoozedUntil = contextId ? snoozedContexts[contextId] : undefined;
+  const isSnoozed = !!snoozedUntil && snoozedUntil > Date.now();
 
   useEffect(() => {
     if (unreadCount > prevCountRef.current) {
@@ -876,45 +958,129 @@ function SidebarItem({
     prevCountRef.current = unreadCount;
   }, [unreadCount]);
 
+  const itemClass =
+    "flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-75 data-[highlighted]:bg-[var(--accent)] data-[highlighted]:text-white";
+
   return (
-    <button
-      onClick={onClick}
-      style={{
-        paddingTop: "var(--density-sidebar-row-py)",
-        paddingBottom: "var(--density-sidebar-row-py)",
-        fontSize: "var(--density-sidebar-font-size)",
-      }}
-      className={cn(
-        "press-snap mx-2 flex w-[calc(100%-16px)] items-center gap-2 rounded-md px-2 transition-colors [transition-duration:var(--motion-fast)] [transition-timing-function:var(--ease-out-soft)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
-        active
-          ? "bg-[var(--accent)] text-[var(--text-white)]"
-          : "text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-primary)]"
-      )}
-    >
-      <span className="flex-shrink-0 opacity-70">{icon}</span>
-      <span className={cn("truncate", unread && "font-bold text-white")}>{label}</span>
-      {voiceCount > 0 && (
-        <span className={cn(
-          "ml-auto inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium",
+    <div className="group/row relative">
+      <button
+        onClick={onClick}
+        style={{
+          paddingTop: "var(--density-sidebar-row-py)",
+          paddingBottom: "var(--density-sidebar-row-py)",
+          fontSize: "var(--density-sidebar-font-size)",
+        }}
+        className={cn(
+          "press-snap mx-2 flex w-[calc(100%-16px)] items-center gap-2 rounded-md px-2 transition-colors [transition-duration:var(--motion-fast)] [transition-timing-function:var(--ease-out-soft)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
           active
-            ? "bg-white/20 text-white"
-            : "bg-emerald-500/15 text-emerald-400"
-        )}>
-          🎙 {voiceCount}
-        </span>
+            ? "bg-[var(--accent)] text-[var(--text-white)]"
+            : "text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-primary)]"
+        )}
+      >
+        <span className="flex-shrink-0 opacity-70">{icon}</span>
+        <span className={cn("truncate", unread && "font-bold text-white")}>{label}</span>
+        {isSnoozed && (
+          <BellOff
+            className={cn(
+              "h-3 w-3 flex-shrink-0 text-[var(--text-muted)]",
+              // Hide while the trailing badge/menu would overlap on hover.
+              voiceCount > 0 ? "ml-1" : "ml-auto"
+            )}
+          />
+        )}
+        {voiceCount > 0 && (
+          <span className={cn(
+            "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium",
+            isSnoozed ? "ml-1" : "ml-auto",
+            active
+              ? "bg-white/20 text-white"
+              : "bg-emerald-500/15 text-emerald-400"
+          )}>
+            🎙 {voiceCount}
+          </span>
+        )}
+        {unread && (
+          <span
+            className={cn(
+              "flex h-[16px] min-w-[16px] flex-shrink-0 items-center justify-center rounded-full bg-[var(--text-mention)] px-[4px] text-[10px] font-bold text-white",
+              voiceCount > 0 || isSnoozed ? "ml-1" : "ml-auto"
+            )}
+            style={pulsing ? { animation: 'badge-pulse 300ms ease-out' } : undefined}
+          >
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        )}
+      </button>
+
+      {contextId && (
+        <DropdownMenu.Root open={menuOpen} onOpenChange={setMenuOpen}>
+          <DropdownMenu.Trigger asChild>
+            <button
+              type="button"
+              aria-label="Conversation options"
+              onClick={(e) => e.stopPropagation()}
+              className={cn(
+                "absolute right-3 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded text-[var(--text-secondary)] transition-opacity duration-100 hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-primary)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
+                menuOpen ? "opacity-100" : "opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100"
+              )}
+            >
+              <MoreHorizontal className="h-3.5 w-3.5" />
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              sideOffset={4}
+              align="end"
+              className="z-50 min-w-[200px] overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--modal-bg)] py-1 shadow-[0_8px_32px_rgba(0,0,0,0.55)] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
+            >
+              {unreadId && unreadCount > 0 && (
+                <DropdownMenu.Item onSelect={() => markRead(unreadId)} className={itemClass}>
+                  <MailOpen className="h-4 w-4 flex-shrink-0" />
+                  Mark as read
+                </DropdownMenu.Item>
+              )}
+              {unreadId && unreadCount === 0 && (
+                <DropdownMenu.Item onSelect={() => markUnread(unreadId)} className={itemClass}>
+                  <Mail className="h-4 w-4 flex-shrink-0" />
+                  Mark as unread
+                </DropdownMenu.Item>
+              )}
+              {unreadId && <DropdownMenu.Separator className="my-1 h-px bg-[var(--border)]" />}
+              {isSnoozed ? (
+                <DropdownMenu.Item onSelect={() => unsnoozeContext(contextId)} className={itemClass}>
+                  <BellOff className="h-4 w-4 flex-shrink-0" />
+                  Unsnooze
+                </DropdownMenu.Item>
+              ) : (
+                <>
+                  <DropdownMenu.Item
+                    onSelect={() => snoozeContext(contextId, snoozeOneHour())}
+                    className={itemClass}
+                  >
+                    <Clock className="h-4 w-4 flex-shrink-0" />
+                    Snooze 1 hour
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onSelect={() => snoozeContext(contextId, snoozeUntilTomorrow())}
+                    className={itemClass}
+                  >
+                    <Clock className="h-4 w-4 flex-shrink-0" />
+                    Snooze until tomorrow
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onSelect={() => snoozeContext(contextId, snoozeUntilMonday())}
+                    className={itemClass}
+                  >
+                    <Clock className="h-4 w-4 flex-shrink-0" />
+                    Snooze until Monday
+                  </DropdownMenu.Item>
+                </>
+              )}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
       )}
-      {unread && (
-        <span
-          className={cn(
-            "flex h-[16px] min-w-[16px] flex-shrink-0 items-center justify-center rounded-full bg-[#cd2553] px-[4px] text-[10px] font-bold text-white",
-            voiceCount > 0 ? "ml-1" : "ml-auto"
-          )}
-          style={pulsing ? { animation: 'badge-pulse 300ms ease-out' } : undefined}
-        >
-          {unreadCount > 99 ? "99+" : unreadCount}
-        </span>
-      )}
-    </button>
+    </div>
   );
 }
 

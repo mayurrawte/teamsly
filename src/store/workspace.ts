@@ -106,6 +106,7 @@ interface WorkspaceState {
   initUnreadCounts: (counts: Record<string, number>) => void;
   setUnreadCount: (id: string, count: number) => void;
   markRead: (id: string) => void;
+  markUnread: (id: string) => void;
   toggleStar: (id: string) => void;
   setPendingAnchorMessageId: (id: string | null) => void;
 }
@@ -420,6 +421,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           if (!s.unreadCounts[id]) return s;
           const next = { ...s.unreadCounts };
           delete next[id];
+          writeUnreadCounts(next);
+          return { unreadCounts: next };
+        }),
+      markUnread: (id) =>
+        set((s) => {
+          if (s.unreadCounts[id] > 0) return s;
+          const next = { ...s.unreadCounts, [id]: 1 };
           writeUnreadCounts(next);
           return { unreadCounts: next };
         }),
