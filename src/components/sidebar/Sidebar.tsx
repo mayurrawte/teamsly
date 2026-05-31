@@ -11,7 +11,7 @@ import { clearAll as clearDraftsCache } from "@/lib/storage/drafts";
 import { clearAll as clearBookmarksCache } from "@/lib/storage/bookmarks";
 import { clearAllScheduled } from "@/lib/storage/scheduled-messages";
 import { cn } from "@/lib/utils";
-import { isDisappearing, unwrapMessage, wrapMessage } from "@/lib/utils/disappear";
+import { isDisappearing, unwrapMessage, wrapMessage, UNDECODABLE_BLOB_GRACE_MS } from "@/lib/utils/disappear";
 import { useScheduledStore } from "@/store/scheduled";
 
 async function sweepAllDms(
@@ -27,7 +27,11 @@ async function sweepAllDms(
       if (m.from?.user?.id !== currentUserId) continue; // only delete our own (Graph 403s otherwise)
       if (!isDisappearing(m.body.content)) continue;
       const payload = await unwrapMessage(chatId, m.body.content);
-      if (!payload || payload.disappearAt > now) continue;
+      if (payload) {
+        if (payload.disappearAt > now) continue; // decoded but not yet expired
+      } else if (now - new Date(m.createdDateTime).getTime() < UNDECODABLE_BLOB_GRACE_MS) {
+        continue; // undecodable but recent — skip until it's clearly orphaned
+      }
       try {
         const res = await fetch(
           `/api/chats/${chatId}/messages/${encodeURIComponent(m.id)}`,
