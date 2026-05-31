@@ -733,7 +733,9 @@ export function ChatView({ chatId }: { chatId: string }) {
                       </span>
                       <span className="flex-shrink-0 text-[12px] text-[var(--text-muted)]">
                         {m.releaseWhenAvailable
-                          ? `When ${m.releaseTargetName ?? "they"}'re free`
+                          ? m.releaseTargetName
+                            ? `Sends when ${m.releaseTargetName} is free`
+                            : "Sends when they're free"
                           : new Date(m.scheduleTime).toLocaleString()}
                       </span>
                       <button
