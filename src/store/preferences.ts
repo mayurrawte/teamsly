@@ -111,6 +111,8 @@ export interface Preferences {
   /** Last day (YYYY-MM-DD) the boot nudge was shown. Used so each tip
    *  appears at most once per local day. */
   lastNudgeDay: string | null;
+  /** Last day (YYYY-MM-DD) the morning brief fired, so it shows at most once per local day. */
+  lastMorningBriefDay: string | null;
 }
 
 interface PreferencesState extends Preferences {
@@ -147,6 +149,7 @@ interface PreferencesState extends Preferences {
   setMorningBriefEnabled: (v: boolean) => void;
   setMorningBriefTime: (t: string) => void;
   setLastNudgeDay: (day: string | null) => void;
+  setLastMorningBriefDay: (day: string | null) => void;
   reset: () => void;
 }
 
@@ -183,6 +186,7 @@ const DEFAULTS: Preferences = {
   morningBriefEnabled: false,
   morningBriefTime: "09:00",
   lastNudgeDay: null,
+  lastMorningBriefDay: null,
 };
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -237,6 +241,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       setMorningBriefEnabled: (morningBriefEnabled) => set({ morningBriefEnabled }),
       setMorningBriefTime: (morningBriefTime) => set({ morningBriefTime }),
       setLastNudgeDay: (lastNudgeDay) => set({ lastNudgeDay }),
+      setLastMorningBriefDay: (lastMorningBriefDay) => set({ lastMorningBriefDay }),
       reset: () => set(DEFAULTS),
     }),
     {
