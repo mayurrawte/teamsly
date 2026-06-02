@@ -24,7 +24,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout teamsly (template source)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Resolve tag and version
         id: tag
@@ -53,7 +53,7 @@ jobs:
           echo "intel: $INTEL_SHA"
 
       - name: Checkout tap repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: mayurrawte/homebrew-teamsly
           token: ${{ secrets.TAP_REPO_TOKEN }}
