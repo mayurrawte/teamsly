@@ -10,6 +10,11 @@ const isDev = !app.isPackaged;
 const TEAMSLY_URL =
   process.env.TEAMSLY_URL || (isDev ? 'http://localhost:3000' : 'https://teamsly.vercel.app');
 
+// In dev the app name defaults to "Electron" (the name of the dev binary), so
+// the macOS menu bar, About panel, and notification source all read "Electron".
+// Set it explicitly so every native surface reads "Teamsly".
+app.setName('Teamsly');
+
 // Windows requires the App User Model ID to be set before the app is ready so
 // that renderer-side Notification shows the correct app name in Action Center.
 if (process.platform === 'win32') {
