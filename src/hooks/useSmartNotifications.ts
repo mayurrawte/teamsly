@@ -98,17 +98,31 @@ export function useSmartNotifications({
       playNotificationSound();
     }
 
-    // Desktop OS notifications are a Pro feature.
-    if (process.env.NEXT_PUBLIC_PRO !== "true") return;
+    // Desktop OS notifications are Pro on the web, but always on in the desktop
+    // app — a desktop chat client that can't notify isn't really a desktop client.
+    const isElectron = typeof window !== "undefined" && !!window.electron;
+    if (!isElectron && process.env.NEXT_PUBLIC_PRO !== "true") return;
     if (!desktopNotifications || typeof window === "undefined" || !("Notification" in window)) return;
 
+    const targetPath = notificationPath(contextId, contextKind);
+    const fire = () => {
+      const n = new Notification(`${author} in ${contextName}`, { body: text.slice(0, 160) });
+      // Click-to-focus-and-route: bring the desktop window forward (Electron)
+      // and jump straight to the conversation the notification came from.
+      n.onclick = () => {
+        window.electron?.focusWindow?.();
+        window.focus();
+        if (targetPath && window.location.pathname !== targetPath) {
+          window.location.assign(targetPath);
+        }
+      };
+    };
+
     if (Notification.permission === "granted") {
-      new Notification(`${author} in ${contextName}`, { body: text.slice(0, 160) });
+      fire();
     } else if (Notification.permission === "default") {
       Notification.requestPermission().then((permission) => {
-        if (permission === "granted") {
-          new Notification(`${author} in ${contextName}`, { body: text.slice(0, 160) });
-        }
+        if (permission === "granted") fire();
       });
     }
   }, [
@@ -128,6 +142,12 @@ export function useSmartNotifications({
     snoozedContexts,
     focusMode,
   ]);
+}
+
+/** Route a notification click to the conversation it came from. */
+function notificationPath(contextId?: string, contextKind?: "chat" | "channel"): string | null {
+  if (!contextId || !contextKind) return null;
+  return contextKind === "chat" ? `/workspace/dm/${contextId}` : `/workspace/t/${contextId}`;
 }
 
 function shouldNotify(text: string, mentionsOnly: boolean, notificationKeywords: string): boolean {

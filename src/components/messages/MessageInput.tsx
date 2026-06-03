@@ -1152,7 +1152,7 @@ export function MessageInput({
           </div>
         )}
 
-        <div className="rounded-lg border border-[var(--border-input)] bg-[var(--surface)] transition-[border-color,box-shadow] duration-200 focus-within:border-[var(--accent)] focus-within:shadow-[0_0_0_3px_var(--accent-light)]">
+        <div className="rounded-md border border-[var(--border-input)] bg-[var(--surface)] transition-[border-color,box-shadow] duration-150 focus-within:border-[var(--accent)] focus-within:shadow-[0_0_0_2px_var(--accent-light)]">
           {/* Formatting toolbar */}
           <div className="flex items-center gap-0.5 border-b border-[var(--border)] px-3 py-1">
             {toolbarButtons.map((item, idx) => {
@@ -1176,7 +1176,7 @@ export function MessageInput({
                     e.preventDefault();
                     applyFormat(item.action);
                   }}
-                  className="flex h-6 w-6 items-center justify-center rounded text-[var(--text-secondary)] transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-white active:bg-[var(--accent)] active:text-white focus-ring"
+                  className="flex h-6 w-6 items-center justify-center rounded text-[var(--text-secondary)] transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] active:bg-[var(--accent)] active:text-white focus-ring"
                 >
                   {item.icon}
                 </button>
@@ -1193,7 +1193,7 @@ export function MessageInput({
                 aria-label="Attach file"
                 disabled={isBusy}
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-shrink-0 rounded p-1 text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-white focus-ring disabled:opacity-40"
+                className="flex-shrink-0 rounded p-1 text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-ring disabled:opacity-40"
               >
                 <Paperclip className="h-4 w-4" />
               </button>
@@ -1232,7 +1232,7 @@ export function MessageInput({
                   aria-label="Insert emoji"
                   onClick={() => setEmojiOpen((o) => !o)}
                   className={cn(
-                    "rounded p-1 transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-white focus-ring",
+                    "rounded p-1 transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-ring",
                     emojiOpen ? "bg-[var(--surface-hover)] text-white" : "text-[var(--text-secondary)]"
                   )}
                 >
@@ -1272,7 +1272,7 @@ export function MessageInput({
                   }
                 }}
                 className={cn(
-                  "rounded px-1.5 py-0.5 transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-white focus-ring",
+                  "rounded px-1.5 py-0.5 transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-ring",
                   slashMenuOpen ? "bg-[var(--surface-hover)] text-white" : "text-[var(--text-secondary)]"
                 )}
               >
@@ -1285,7 +1285,7 @@ export function MessageInput({
                   type="button"
                   aria-label="Send a GIF"
                   disabled={isBusy}
-                  className="rounded px-1.5 py-0.5 text-[10px] font-bold text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-white focus-ring disabled:opacity-40"
+                  className="rounded px-1.5 py-0.5 text-[10px] font-bold text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-ring disabled:opacity-40"
                 >
                   GIF
                 </button>
@@ -1299,7 +1299,7 @@ export function MessageInput({
                   aria-label="Disappearing message"
                   onClick={() => setShowDisappearMenu((v) => !v)}
                   className={`rounded p-1 text-[15px] transition-colors press-snap ${
-                    disappearMs ? "text-[var(--accent)]" : "text-[var(--text-secondary)] hover:text-white"
+                    disappearMs ? "text-[var(--accent)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                   }`}
                 >
                   ⏱{disappearMs ? <span className="ml-[2px] text-[10px]">on</span> : null}
@@ -1336,7 +1336,7 @@ export function MessageInput({
                   aria-label="Schedule message"
                   onClick={() => setShowScheduleMenu((v) => !v)}
                   className={`rounded p-1 text-[15px] transition-colors press-snap ${
-                    scheduleTime ? "text-[var(--accent)]" : "text-[var(--text-secondary)] hover:text-white"
+                    scheduleTime ? "text-[var(--accent)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                   }`}
                 >
                   📅{scheduleTime ? <span className="ml-[2px] text-[10px]">{formatScheduleLabel(scheduleTime)}</span> : null}
@@ -1416,7 +1416,7 @@ export function MessageInput({
                   "relative overflow-hidden flex h-8 items-center justify-center rounded transition-[background,color,transform] duration-150 ease-out focus-ring",
                   scheduleTime ? "w-auto gap-1 px-2.5 text-[13px] font-medium" : "w-8",
                   canSend
-                    ? "bg-[var(--status-online)] text-white hover:opacity-90 hover:scale-105 active:scale-95"
+                    ? "bg-[var(--accent)] text-white hover:opacity-90"
                     : "text-[var(--text-muted)]"
                 )}
               >
@@ -1461,7 +1461,7 @@ export function MessageInput({
                       type="button"
                       aria-label={`Remove attachment ${pendingFile.name}`}
                       onClick={() => setPendingFile(null)}
-                      className="flex-shrink-0 rounded p-0.5 text-[var(--text-secondary)] transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-white focus-ring"
+                      className="flex-shrink-0 rounded p-0.5 text-[var(--text-secondary)] transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-ring"
                     >
                       <X className="h-3 w-3" />
                     </button>

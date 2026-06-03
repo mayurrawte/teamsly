@@ -21,6 +21,19 @@ if (process.platform === 'win32') {
   app.setAppUserModelId('co.shipthis.teamsly');
 }
 
+// Single-instance lock: a second launch should focus the existing window rather
+// than spawn a duplicate process — standard native-app behavior.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (!mainWindow) return;
+    if (!mainWindow.isVisible()) mainWindow.show();
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  });
+}
+
 // Flag to distinguish user-requested quit (via tray menu) from window close.
 let isQuitting = false;
 
@@ -41,11 +54,12 @@ function updateUnreadIndicators(n: number): void {
   const label = n > 0 ? `Teamsly — ${n} unread` : 'Teamsly';
   tray?.setToolTip(label);
 
-  if (process.platform === 'darwin') {
-    app.dock?.setBadge(n > 0 ? String(n) : '');
+  // setBadgeCount drives the macOS dock badge and the Linux (Unity) launcher
+  // count in one call. On Windows it's a no-op (Windows needs a taskbar overlay
+  // icon, deferred — it requires a generated icon resource).
+  if (process.platform === 'darwin' || process.platform === 'linux') {
+    app.setBadgeCount(n > 0 ? n : 0);
   }
-  // Windows overlay icon (e.g. a red dot) is deferred to a future release
-  // because it requires an additional icon resource and signing infrastructure.
 }
 
 // ─── Auto-updater ─────────────────────────────────────────────────────────────
@@ -276,6 +290,9 @@ function createWindow(): void {
       // Keep timers/notifications alive when the window is backgrounded (e.g.
       // hidden to tray) so realtime updates and unread counts don't stall.
       backgroundThrottling: false,
+      // Native spellcheck (red squiggles) in the composer; languages default
+      // to the OS locale.
+      spellcheck: true,
     },
   });
 
@@ -294,13 +311,40 @@ function createWindow(): void {
 
   void mainWindow.loadURL(TEAMSLY_URL);
 
-  // Suppress the default Chromium context menu in production so users don't
-  // see "Inspect Element" and other devtools options in a packaged build.
-  if (!isDev) {
-    mainWindow.webContents.on('context-menu', (event) => {
-      event.preventDefault();
-    });
-  }
+  // Native right-click menu: spelling suggestions + Cut/Copy/Paste/Select All,
+  // with DevTools only in dev. Packaged builds previously suppressed the menu
+  // entirely, which left users with no copy/paste or spell-check menu at all.
+  mainWindow.webContents.on('context-menu', (_event, params) => {
+    const items: Electron.MenuItemConstructorOptions[] = [];
+
+    for (const suggestion of params.dictionarySuggestions) {
+      items.push({
+        label: suggestion,
+        click: () => mainWindow?.webContents.replaceMisspelling(suggestion),
+      });
+    }
+    if (params.dictionarySuggestions.length > 0) items.push({ type: 'separator' });
+    if (params.misspelledWord) {
+      items.push({
+        label: 'Add to Dictionary',
+        click: () =>
+          mainWindow?.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord),
+      });
+      items.push({ type: 'separator' });
+    }
+
+    if (params.editFlags.canCut) items.push({ role: 'cut' });
+    if (params.editFlags.canCopy) items.push({ role: 'copy' });
+    if (params.editFlags.canPaste) items.push({ role: 'paste' });
+    if (params.editFlags.canSelectAll) items.push({ role: 'selectAll' });
+    if (isDev) {
+      items.push({ type: 'separator' }, { role: 'toggleDevTools' });
+    }
+
+    if (items.length > 0) {
+      Menu.buildFromTemplate(items).popup({ window: mainWindow ?? undefined });
+    }
+  });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
@@ -324,6 +368,14 @@ function createWindow(): void {
 
 ipcMain.on('unread-count', (_event, n: number) => {
   updateUnreadIndicators(n);
+});
+
+// Notification click-to-focus: bring the window to the front and reveal it.
+ipcMain.on('focus-window', () => {
+  if (!mainWindow) return;
+  if (!mainWindow.isVisible()) mainWindow.show();
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.focus();
 });
 
 ipcMain.on('update-check', () => {

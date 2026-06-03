@@ -29,6 +29,10 @@ contextBridge.exposeInMainWorld('electron', {
   isFocused: (): boolean => {
     return ipcRenderer.sendSync('window-is-focused') === true;
   },
+  /** Bring the desktop window to the front (used on notification click). */
+  focusWindow: (): void => {
+    ipcRenderer.send('focus-window');
+  },
 
   // ─── Auto-update ──────────────────────────────────────────────────────────
 

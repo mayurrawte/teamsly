@@ -51,6 +51,20 @@ big-ticket Electron items (notarization, local-asset bundling) are **deferred**.
 A1 → A2 → C0 → C1 → B1 → C2 → A3 → A4 → B2 → C3/C4 → B3. (C0 promoted near the
 front since the owner flagged the Electron logo and it's a quick win.)
 
+## Delivery status (2026-06-03)
+- **Shipped, own PRs:** A1 (#62), C0 (#63), A2 (#64), C1 (#65).
+- **Shipped, consolidated PR** (this branch, builds on the four above): A3
+  (headers + composer), A4 (date-divider flatten), C2 (notification
+  click-to-focus-and-route + Pro-gate decoupled in Electron), C3 (native
+  context menu + spellcheck), C4 (single-instance lock + cross-platform badge
+  via setBadgeCount).
+- **Deferred (follow-up):** A4 broad motion/radius/shadow token system
+  (cross-cutting); B1–B3 web reactivity (per-context loading flag, route
+  prefetch, append-on-push, smooth scroll, memo rows); C3 Windows custom title
+  bar; C4 `teamsly://` deep links + Windows overlay badge icon; screen-share
+  `setDisplayMediaRequestHandler` for voice rooms; C5 notarization; C6
+  local-asset bundling.
+
 ## Verification
 Each PR: `npm run build` green. UI changes are CSS-var/Tailwind tweaks reviewable in
 the running dev server across palettes + light/dark.
