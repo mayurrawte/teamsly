@@ -369,9 +369,10 @@ export function MessageItem({
             onDelete={deleteHandler}
           />
         )}
-        {/* Fixed-width gutter matching the head row's avatar column (w-9 + gap-2 = ~44px → rounded to 60px to include avatar margin) */}
+        {/* Gutter width = head row's avatar column: 32px avatar + gap-2 (8px) = 40px,
+            so continuation text aligns pixel-for-pixel under the group head's body. */}
         <span
-          className="flex w-[60px] flex-shrink-0 select-none items-start justify-end gap-0.5 pr-3 pt-[3px] text-right text-[11px] tabular-nums leading-[18px] text-[var(--text-muted)] opacity-0 transition-opacity duration-100 group-hover:opacity-100"
+          className="flex w-10 flex-shrink-0 select-none items-start justify-end gap-0.5 pr-2 pt-[3px] text-right text-[11px] tabular-nums leading-[18px] text-[var(--text-muted)] opacity-0 transition-opacity duration-100 group-hover:opacity-100"
           title={formatFullTimestamp(message.createdDateTime)}
         >
           {message.__pending && (
@@ -446,18 +447,18 @@ export function MessageItem({
         />
       )}
       <UserProfilePopover userId={userId} displayName={author}>
-        <button type="button" className="h-9 w-9 flex-shrink-0 rounded text-left focus-ring">
-          <Avatar userId={userId} displayName={author} size={36} />
+        <button type="button" className="h-8 w-8 flex-shrink-0 rounded-full text-left focus-ring">
+          <Avatar userId={userId} displayName={author} size={32} />
         </button>
       </UserProfilePopover>
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
-          <span className="cursor-pointer text-[14px] font-bold text-[var(--text-primary)] hover:underline">
+          <span className="cursor-pointer text-[14px] font-semibold text-[var(--text-primary)] hover:underline">
             {author}
           </span>
           <span className="flex items-center gap-1">
             <span
-              className="text-xs text-[var(--text-muted)]"
+              className="text-[11px] text-[var(--text-muted)]"
               title={formatFullTimestamp(message.createdDateTime)}
             >
               {formatMessageTime(message.createdDateTime)}

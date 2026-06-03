@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { avatarColor, avatarInitials } from "@/lib/utils/avatar";
 
-type AvatarSize = 18 | 20 | 24 | 36;
+type AvatarSize = 18 | 20 | 24 | 28 | 32 | 36;
 
 interface AvatarProps {
   userId: string;
@@ -17,15 +17,16 @@ const FONT_SIZE: Record<AvatarSize, number> = {
   18: 9,
   20: 10,
   24: 11,
+  28: 12,
+  32: 13,
   36: 14,
 };
 
-const RADIUS: Record<AvatarSize, number> = {
-  18: 3,
-  20: 3,
-  24: 4,
-  36: 4,
-};
+// People avatars are circular in Teams. Avatar is only ever used for people
+// (message authors, members, DMs, profile) — team/channel icons use their own
+// chrome — so a fixed circular radius is safe and size-independent (works even
+// when callers override the box size via className).
+const AVATAR_RADIUS = "50%";
 
 export function Avatar({ userId, displayName, size = 36, photoUrl, className }: AvatarProps) {
   const [imageError, setImageError] = useState(false);
@@ -40,7 +41,7 @@ export function Avatar({ userId, displayName, size = 36, photoUrl, className }: 
   const bg = avatarColor(userId);
   const initials = avatarInitials(displayName);
   const px = `${size}px`;
-  const radius = `${RADIUS[size]}px`;
+  const radius = AVATAR_RADIUS;
   const font = `${FONT_SIZE[size]}px`;
 
   const initialsEl = (
