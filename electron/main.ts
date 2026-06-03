@@ -215,6 +215,32 @@ function buildAppMenu(): void {
 
 // ─── Main window ──────────────────────────────────────────────────────────────
 
+// Branded offline page (as a data: URL) shown when the renderer can't reach the
+// app. The Retry button re-navigates to the real app URL; if it's still
+// unreachable, did-fail-load fires again and brings the user back here.
+function offlineFallbackUrl(targetUrl: string): string {
+  const safeUrl = targetUrl.replace(/'/g, '%27');
+  const html = `<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html,body{height:100%;margin:0}
+  body{display:flex;align-items:center;justify-content:center;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    background:#0B0F1A;color:#d1d2d3}
+  .box{text-align:center;max-width:340px;padding:24px}
+  h1{font-size:16px;font-weight:600;margin:0 0 8px}
+  p{font-size:13px;color:#6c6f75;margin:0 0 20px;line-height:1.5}
+  button{font:inherit;font-size:13px;font-weight:600;color:#fff;background:#6366F1;
+    border:0;border-radius:6px;padding:9px 20px;cursor:pointer}
+  button:hover{background:#4F46E5}
+</style></head><body><div class="box">
+  <h1>Can&rsquo;t reach Teamsly</h1>
+  <p>Check your internet connection and try again.</p>
+  <button onclick="location.href='${safeUrl}'">Retry</button>
+</div></body></html>`;
+  return 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+}
+
 function createWindow(): void {
   const appIcon = nativeImage.createFromPath(
     path.join(__dirname, '..', 'build-resources', 'icon.png')
@@ -234,12 +260,31 @@ function createWindow(): void {
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     // icon is used by Windows/Linux; macOS reads it from the .app bundle
     icon: appIcon,
+    // Start hidden and reveal on first paint so launch shows the rendered app
+    // instead of an empty window while the renderer loads (no startup flash).
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      // Keep timers/notifications alive when the window is backgrounded (e.g.
+      // hidden to tray) so realtime updates and unread counts don't stall.
+      backgroundThrottling: false,
     },
+  });
+
+  // Reveal once the first frame is painted — the no-flash launch.
+  mainWindow.once('ready-to-show', () => mainWindow?.show());
+
+  // If the app URL can't be reached (offline / host down), show a branded retry
+  // page instead of a raw Chromium error, and make sure the window is visible
+  // (ready-to-show may never fire when the very first load fails).
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, _desc, _url, isMainFrame) => {
+    // ERR_ABORTED (-3) fires on ordinary in-app navigations; ignore it + subframes.
+    if (!isMainFrame || errorCode === -3) return;
+    void mainWindow?.loadURL(offlineFallbackUrl(TEAMSLY_URL));
+    mainWindow?.show();
   });
 
   void mainWindow.loadURL(TEAMSLY_URL);
