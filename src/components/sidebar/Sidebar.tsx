@@ -458,7 +458,7 @@ export function Sidebar() {
         <DropdownMenu.Trigger asChild>
           <button
             type="button"
-            className="flex h-[49px] w-full items-center justify-between border-b border-[var(--border)] px-4 transition-colors duration-[80ms] ease-out hover:bg-[var(--sidebar-hover)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+            className="flex h-[var(--chrome-header-h)] w-full items-center justify-between border-b border-[var(--border)] px-4 transition-colors duration-[80ms] ease-out hover:bg-[var(--sidebar-hover)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
           >
             <span className="truncate text-[15px] font-black text-white">
               {activeTeam?.displayName ?? "Teamsly"}
@@ -475,7 +475,7 @@ export function Sidebar() {
           >
             {sortedTeams.length > 0 && (
               <>
-                <DropdownMenu.Label className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                <DropdownMenu.Label className="px-3 py-1 text-[12px] font-semibold text-[var(--text-muted)]">
                   Switch team
                 </DropdownMenu.Label>
                 <div className="max-h-[280px] overflow-y-auto">
@@ -755,7 +755,7 @@ export function Sidebar() {
 
         {/* Channels section */}
         <div className="mb-2">
-          <div className="group/section flex w-full items-center justify-between px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+          <div className="group/section flex w-full items-center justify-between px-4 py-1 text-[12px] font-semibold text-[var(--text-muted)]">
             <button
               type="button"
               onClick={() => setChannelsOpen((v) => !v)}
@@ -817,7 +817,7 @@ export function Sidebar() {
 
         {/* DMs section */}
         <div className="mb-2">
-          <div className="group/section flex w-full items-center justify-between px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+          <div className="group/section flex w-full items-center justify-between px-4 py-1 text-[12px] font-semibold text-[var(--text-muted)]">
             <button
               type="button"
               onClick={() => setDmsOpen((v) => !v)}
@@ -908,7 +908,7 @@ function SectionHeader({
     <button
       type="button"
       onClick={onToggle}
-      className="group/section flex w-full items-center gap-1.5 px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] transition-colors duration-[80ms] ease-out hover:text-[var(--text-secondary)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+      className="group/section flex w-full items-center gap-1.5 px-4 py-1 text-[12px] font-semibold text-[var(--text-muted)] transition-colors duration-[80ms] ease-out hover:text-[var(--text-secondary)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
     >
       <ChevronRight
         className={cn(
@@ -916,10 +916,10 @@ function SectionHeader({
           open && "rotate-90"
         )}
       />
-      <span className="flex-shrink-0 opacity-70">{icon}</span>
+      <span className="flex-shrink-0">{icon}</span>
       <span className="truncate">{label}</span>
       {count > 0 && (
-        <span className="ml-auto flex h-[15px] min-w-[15px] flex-shrink-0 items-center justify-center rounded-full bg-[var(--text-mention)] px-[4px] text-[10px] font-bold text-white">
+        <span className="ml-auto flex h-[15px] min-w-[15px] flex-shrink-0 items-center justify-center rounded-full bg-[var(--badge-unread)] px-[4px] text-[10px] font-bold text-white">
           {count > 99 ? "99+" : count}
         </span>
       )}
@@ -976,6 +976,12 @@ function SidebarItem({
 
   return (
     <div className="group/row relative">
+      {active && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[var(--accent)]"
+        />
+      )}
       <button
         onClick={onClick}
         style={{
@@ -986,12 +992,12 @@ function SidebarItem({
         className={cn(
           "press-snap mx-2 flex w-[calc(100%-16px)] items-center gap-2 rounded-md px-2 transition-colors [transition-duration:var(--motion-fast)] [transition-timing-function:var(--ease-out-soft)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
           active
-            ? "bg-[var(--accent)] text-[var(--text-white)]"
+            ? "bg-[var(--accent)]/15 font-semibold text-[var(--text-primary)]"
             : "text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-primary)]"
         )}
       >
-        <span className="flex-shrink-0 opacity-70">{icon}</span>
-        <span className={cn("truncate", unread && "font-bold text-white")}>{label}</span>
+        <span className="flex-shrink-0">{icon}</span>
+        <span className={cn("truncate", unread && "font-semibold text-[var(--text-primary)]")}>{label}</span>
         {isSnoozed && (
           <BellOff
             className={cn(
@@ -1003,11 +1009,8 @@ function SidebarItem({
         )}
         {voiceCount > 0 && (
           <span className={cn(
-            "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium",
-            isSnoozed ? "ml-1" : "ml-auto",
-            active
-              ? "bg-white/20 text-white"
-              : "bg-emerald-500/15 text-emerald-400"
+            "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium bg-emerald-500/15 text-emerald-400",
+            isSnoozed ? "ml-1" : "ml-auto"
           )}>
             🎙 {voiceCount}
           </span>
@@ -1015,7 +1018,7 @@ function SidebarItem({
         {unread && (
           <span
             className={cn(
-              "flex h-[16px] min-w-[16px] flex-shrink-0 items-center justify-center rounded-full bg-[var(--text-mention)] px-[4px] text-[10px] font-bold text-white",
+              "flex h-[16px] min-w-[16px] flex-shrink-0 items-center justify-center rounded-full bg-[var(--badge-unread)] px-[4px] text-[10px] font-bold text-white",
               voiceCount > 0 || isSnoozed ? "ml-1" : "ml-auto"
             )}
             style={pulsing ? { animation: 'badge-pulse 300ms ease-out' } : undefined}

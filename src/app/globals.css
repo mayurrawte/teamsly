@@ -69,6 +69,15 @@ button:disabled,
   --reaction-active-bg: rgba(99, 102, 241, 0.2);
   --reaction-active-border: #6366F1;
 
+  /* Unread count badge fill. Teams tints these with the brand accent (not the
+     mention-text color). Tracks the runtime accent. */
+  --badge-unread: var(--accent);
+
+  /* Shared height for the top app header, team header, and conversation header
+     so the divider line is continuous across the rail/sidebar/content seam.
+     Teams' chrome header is ~48px. */
+  --chrome-header-h: 48px;
+
   /* Left-rail (56) + sidebar (260) = 316. Used by floating modals/popovers
      that want to be visually centered in the main content area rather than
      in the viewport. Update both numbers if either column resizes. */
