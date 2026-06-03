@@ -179,7 +179,7 @@ export function ChannelMessageHeader({
   return (
     <div className="flex flex-col border-b border-[var(--border)] bg-[var(--content-bg)] px-4 shadow-sm">
       {/* Top row */}
-      <div className="flex h-[49px] items-center justify-between gap-4">
+      <div className="flex h-[var(--chrome-header-h)] items-center justify-between gap-4">
         {/* Left: icon + name + description */}
         <div className="flex min-w-0 items-center gap-2">
           <Hash className="h-4 w-4 flex-shrink-0 text-[var(--text-secondary)]" />
@@ -234,7 +234,7 @@ export function DmMessageHeader({
   return (
     <div className="flex flex-col border-b border-[var(--border)] bg-[var(--content-bg)] px-4 shadow-sm">
       {/* Top row */}
-      <div className="flex h-[49px] items-center justify-between gap-4">
+      <div className="flex h-[var(--chrome-header-h)] items-center justify-between gap-4">
         {/* Left: avatars + name */}
         <div className="flex min-w-0 items-center gap-2">
           {displayMembers.length > 0 ? (
