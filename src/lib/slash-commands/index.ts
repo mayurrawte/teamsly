@@ -1,3 +1,5 @@
+import { parsePollCommand, buildPollBody } from "@/lib/polls";
+
 export interface SlashCommandContext {
   currentUserName: string;
   currentUserId: string;
@@ -201,6 +203,19 @@ export const SLASH_COMMANDS: SlashCommand[] = [
         return { kind: "error", message: "Provide a search term: /giphy <query>" };
       }
       return { kind: "gif", query };
+    },
+  },
+  {
+    name: "poll",
+    description: "Post a quick poll",
+    usage: "/poll Question | Option A | Option B",
+    requiresArgs: true,
+    execute(args) {
+      const parsed = parsePollCommand(args);
+      if ("error" in parsed) {
+        return { kind: "error", message: parsed.error };
+      }
+      return { kind: "text", text: buildPollBody(parsed.question, parsed.options) };
     },
   },
   {
