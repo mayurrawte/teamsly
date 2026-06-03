@@ -145,7 +145,7 @@ function MemberAvatarStack({
     >
       <div className="flex -space-x-1.5">
         {shown.map((m) => (
-          <div key={m.id} className="ring-2 ring-[var(--content-bg)]" style={{ borderRadius: 4 }}>
+          <div key={m.id} className="rounded-full ring-2 ring-[var(--content-bg)]">
             <Avatar
               userId={m.userId ?? m.id}
               displayName={m.displayName}
