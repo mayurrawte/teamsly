@@ -103,6 +103,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { PresenceDot } from "@/components/ui/PresenceDot";
 import { useToastStore } from "@/store/toasts";
 import { getChatLabel } from "@/lib/utils/chat-label";
+import { isChatUnread } from "@/lib/utils/chat-unread";
 import { useSearchStore } from "@/store/search";
 import { usePreferencesStore } from "@/store/preferences";
 
@@ -209,6 +210,13 @@ export function Sidebar() {
         const data = (await response.json()) as { chats: MSChat[]; nextLink: string | null };
         setChats(data.chats, data.nextLink);
         const ws = useWorkspaceStore.getState();
+        // Surface unread DMs. The poll only *adds* unread (a message newer than
+        // you've seen, from someone other than you); clearing is markRead's job
+        // (on open / mark-read), so a chat you've read doesn't re-flag here.
+        data.chats.forEach((c) => {
+          if (ws.unreadCounts[c.id]) return;
+          if (isChatUnread(c, ws.currentUserId, ws.chatReadAt[c.id])) ws.markUnread(c.id);
+        });
         void sweepAllDms(
           data.chats.map((c) => c.id),
           ws.getMessages,

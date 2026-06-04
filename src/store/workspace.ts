@@ -33,6 +33,10 @@ interface WorkspaceState {
   presenceMap: Record<string, MSPresence["availability"]>;
   statusMessageMap: Record<string, MSPresence["statusMessage"]>;
   unreadCounts: Record<string, number>;
+  /** Epoch ms the user last read each chat locally. Set on open/mark-read.
+   *  Graph's viewpoint doesn't advance from this app, so this is what stops a
+   *  chat from re-marking itself unread on the next poll after you've read it. */
+  chatReadAt: Record<string, number>;
   currentUserId: string;
   currentUserName: string;
   starredIds: string[];
@@ -134,6 +138,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       presenceMap: {},
       statusMessageMap: {},
       unreadCounts: {},
+      chatReadAt: {},
       currentUserId: "you",
       currentUserName: "You",
       starredIds: [],
@@ -418,11 +423,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }),
       markRead: (id) =>
         set((s) => {
-          if (!s.unreadCounts[id]) return s;
+          // Always record the local read time so the unread poll doesn't
+          // re-flag this chat until a newer message arrives.
+          const chatReadAt = { ...s.chatReadAt, [id]: Date.now() };
+          if (!s.unreadCounts[id]) return { chatReadAt };
           const next = { ...s.unreadCounts };
           delete next[id];
           writeUnreadCounts(next);
-          return { unreadCounts: next };
+          return { unreadCounts: next, chatReadAt };
         }),
       markUnread: (id) =>
         set((s) => {
@@ -462,6 +470,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         currentUserId: state.currentUserId,
         currentUserName: state.currentUserName,
         starredIds: state.starredIds,
+        chatReadAt: state.chatReadAt,
       }),
     }
   )
