@@ -192,12 +192,15 @@ export default async function LandingPage() {
               </a>
             </div>
             <div className="mt-8 lg:mt-0 lg:w-[440px]">
-              <CodeBlock>{`// .mcp.json — auto-discovered by Claude Code
+              <CodeBlock>{`// one command — published on npm, no clone:
+$ claude mcp add teamsly -- npx -y @teamsly/mcp
+
+// or add to .mcp.json:
 {
   "mcpServers": {
     "teamsly": {
       "command": "npx",
-      "args": ["tsx", "mcp-server/index.ts"]
+      "args": ["-y", "@teamsly/mcp"]
     }
   }
 }
