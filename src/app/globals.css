@@ -389,14 +389,20 @@ body {
   to   { opacity: 1; }
 }
 
+/* Entrance animates the standalone `scale` + `opacity` properties only —
+   NOT `transform`. The modals center with Tailwind's `-translate-x/y-1/2`,
+   which in Tailwind v4 compile to the `translate:` property; animating
+   `transform: translate(-50%,-50%)` here as well stacked a second translation
+   on top, shoving every modal to the top-left. `scale` is its own property and
+   composes cleanly with `translate`, so centering is preserved. */
 @keyframes search-modal-content-in {
   from {
     opacity: 0;
-    transform: translate(-50%, calc(-50% + 6px)) scale(0.97);
+    scale: 0.97;
   }
   to {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    scale: 1;
   }
 }
 
