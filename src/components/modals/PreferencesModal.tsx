@@ -836,20 +836,13 @@ const MCP_TOOLS = [
   "send_channel_message",
 ];
 
-const MCP_REPO_CONFIG = `{
-  "mcpServers": {
-    "teamsly": {
-      "command": "npx",
-      "args": ["tsx", "mcp-server/index.ts"]
-    }
-  }
-}`;
+const MCP_ADD_CMD = `claude mcp add teamsly -- npx -y @teamsly/mcp`;
 
-const MCP_GLOBAL_CONFIG = `{
+const MCP_CONFIG = `{
   "mcpServers": {
     "teamsly": {
       "command": "npx",
-      "args": ["tsx", "/absolute/path/to/teamsly/mcp-server/index.ts"]
+      "args": ["-y", "@teamsly/mcp"]
     }
   }
 }`;
@@ -858,10 +851,10 @@ function McpPanel() {
   return (
     <div className="flex flex-col gap-5">
       <p className="text-[12px] leading-relaxed text-[var(--text-muted)]">
-        Teamsly ships an MCP server so AI assistants like Claude and Cursor can
-        find people, send DMs, and post to channels on your behalf. It runs from
-        the Teamsly repo — clone it, add a config below to your MCP client, then
-        sign in once via the device-code prompt on first run.
+        Teamsly publishes an MCP server on npm so AI assistants like Claude and
+        Cursor can find people, send DMs, and post to channels on your behalf.
+        Add it with one command — no clone needed — then sign in once via the
+        device-code prompt on first run.
       </p>
 
       <div>
@@ -879,16 +872,13 @@ function McpPanel() {
       </div>
 
       <div>
-        <SettingLabel>Claude Code — project (.mcp.json in the repo root)</SettingLabel>
-        <CopyBlock text={MCP_REPO_CONFIG} />
+        <SettingLabel>Claude Code — one command</SettingLabel>
+        <CopyBlock text={MCP_ADD_CMD} />
       </div>
 
       <div>
-        <SettingLabel>Claude Desktop / Cursor — use an absolute path</SettingLabel>
-        <CopyBlock text={MCP_GLOBAL_CONFIG} />
-        <p className="mt-1.5 text-[11px] text-[var(--text-muted)]">
-          Replace <code className="font-mono">/absolute/path/to/teamsly</code> with where you cloned the repo.
-        </p>
+        <SettingLabel>Claude Desktop / Cursor / others — add to your MCP config</SettingLabel>
+        <CopyBlock text={MCP_CONFIG} />
       </div>
 
       <a
