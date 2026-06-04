@@ -88,6 +88,10 @@ export interface Preferences {
   /** Epoch ms; the office-hours banner stays hidden while now < this. Set on
    *  dismiss to the next boundary so it won't re-nag during the same off-period. */
   officeHoursDismissedUntil: number | null;
+  /** Per-conversation disappearing-message default. contextId (chatId or
+   *  `teamId:channelId`) → duration ms. When set, the composer opens with the
+   *  ⏱ timer pre-armed at that duration for that conversation. */
+  disappearDefaults: Record<string, number>;
   colorMode: ColorMode;
   /** Background + neutrals choice. Orthogonal to accent. Some palettes
    *  force a specific color mode (see PALETTES.lockedMode). */
@@ -144,6 +148,7 @@ interface PreferencesState extends Preferences {
   setOfficeHoursEnd: (v: string) => void;
   setOfficeHoursDays: (days: number[]) => void;
   setOfficeHoursDismissedUntil: (ts: number | null) => void;
+  setDisappearDefault: (contextId: string, ms: number | null) => void;
   setColorMode: (m: ColorMode) => void;
   setPalette: (p: Palette) => void;
   setAccent: (a: AccentTheme) => void;
@@ -187,6 +192,7 @@ const DEFAULTS: Preferences = {
   officeHoursEnd: "17:00",
   officeHoursDays: [1, 2, 3, 4, 5],
   officeHoursDismissedUntil: null,
+  disappearDefaults: {},
   colorMode: "dark",
   palette: "slate",
   accent: "slate",
@@ -232,6 +238,13 @@ export const usePreferencesStore = create<PreferencesState>()(
       setOfficeHoursDays: (officeHoursDays) =>
         set({ officeHoursDays: [...officeHoursDays].sort((a, b) => a - b) }),
       setOfficeHoursDismissedUntil: (officeHoursDismissedUntil) => set({ officeHoursDismissedUntil }),
+      setDisappearDefault: (contextId, ms) =>
+        set((s) => {
+          const next = { ...s.disappearDefaults };
+          if (ms == null) delete next[contextId];
+          else next[contextId] = ms;
+          return { disappearDefaults: next };
+        }),
       setColorMode: (colorMode) => set({ colorMode }),
       setPalette: (palette) => set({ palette }),
       setAccent: (accent) => set({ accent }),
@@ -286,7 +299,9 @@ export const usePreferencesStore = create<PreferencesState>()(
       // the wider union.
       // v4 (2026-06-03): adds officeHours* (enabled/start/end/days/dismissedUntil).
       // Default-merge grafts them from DEFAULTS; no explicit migrate needed.
-      version: 4,
+      // v5 (2026-06-04): adds disappearDefaults (per-conversation disappearing
+      // default). Same default-merge graft; no migrate needed.
+      version: 5,
       storage: createJSONStorage(() => (typeof window !== "undefined" ? localStorage : undefined as unknown as Storage)),
     },
   ),

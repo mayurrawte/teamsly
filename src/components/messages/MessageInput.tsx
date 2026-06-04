@@ -29,6 +29,7 @@ import { GifPicker } from "./GifPicker";
 import { SlashCommandMenu, useSlashMenu } from "./SlashCommandMenu";
 import { parseSlashCommand, type SlashCommand } from "@/lib/slash-commands";
 import { useCatchUpStore } from "@/store/catchUp";
+import { usePreferencesStore } from "@/store/preferences";
 import { DISAPPEAR_DURATIONS } from "@/lib/utils/disappear";
 
 // emoji-mart ships a heavy data bundle — load lazily to keep the initial JS small
@@ -282,7 +283,14 @@ export function MessageInput({
   const [sending, setSending] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [emojiOpen, setEmojiOpen] = useState(false);
-  const [disappearMs, setDisappearMs] = useState<number | null>(null);
+  // Disappearing timer, pre-armed from this conversation's saved default (if any).
+  const setDisappearDefault = usePreferencesStore((s) => s.setDisappearDefault);
+  const convoDisappearDefault = usePreferencesStore((s) =>
+    contextId ? (s.disappearDefaults[contextId] ?? null) : null,
+  );
+  const [disappearMs, setDisappearMs] = useState<number | null>(() =>
+    contextId ? (usePreferencesStore.getState().disappearDefaults[contextId] ?? null) : null,
+  );
   const [showDisappearMenu, setShowDisappearMenu] = useState(false);
   const [scheduleTime, setScheduleTime] = useState<number | null>(null);
   const [showScheduleMenu, setShowScheduleMenu] = useState(false);
@@ -312,10 +320,13 @@ export function MessageInput({
     setShowScheduleMenu(false);
     if (!contextId) {
       setValue("");
+      setDisappearMs(null);
       return;
     }
     const existing = useDraftsStore.getState().drafts[contextId] ?? "";
     setValue(existing);
+    // Arm the disappearing timer from this conversation's saved default.
+    setDisappearMs(usePreferencesStore.getState().disappearDefaults[contextId] ?? null);
     // We intentionally reset on every contextId change so switching chats
     // doesn't leak the previous chat's typing into the new one.
   }, [contextId]);
@@ -1328,6 +1339,32 @@ export function MessageInput({
                         {d.label}
                       </button>
                     ))}
+                    {contextId && (
+                      <>
+                        <div className="my-1 h-px bg-[var(--border)]" />
+                        <button
+                          type="button"
+                          role="checkbox"
+                          aria-checked={convoDisappearDefault != null}
+                          onClick={() => {
+                            if (convoDisappearDefault != null) {
+                              setDisappearDefault(contextId, null);
+                            } else {
+                              // Save the current pick (default to 1h if none selected).
+                              const ms = disappearMs ?? 60 * 60_000;
+                              setDisappearMs(ms);
+                              setDisappearDefault(contextId, ms);
+                            }
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
+                        >
+                          <span className={`flex h-3.5 w-3.5 flex-shrink-0 items-center justify-center rounded-[3px] border ${convoDisappearDefault != null ? "border-[var(--accent)] bg-[var(--accent)] text-white" : "border-[var(--border-input)]"}`}>
+                            {convoDisappearDefault != null ? "✓" : ""}
+                          </span>
+                          Default for this conversation
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
