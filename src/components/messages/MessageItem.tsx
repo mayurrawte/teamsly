@@ -12,6 +12,8 @@ import { AddReactionPill, ReactionPill } from "./ReactionPill";
 import { formatMessageTime, formatFullTimestamp } from "@/lib/utils/dates";
 import { messagePlainText, renderMessageBody } from "@/lib/utils/render-message";
 import { isDisappearing, unwrapMessage } from "@/lib/utils/disappear";
+import { isPoll, parsePoll } from "@/lib/polls";
+import { PollCard } from "./PollCard";
 import type { ReactionType } from "@/lib/utils/reactions";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useBookmarksStore } from "@/store/bookmarks";
@@ -184,6 +186,9 @@ export function MessageItem({
 
   const rawContent = message.body.content;
   const disappearing = isDisappearing(rawContent);
+  // Polls render as an interactive card in place of the body; their reactions
+  // are the votes, so the normal reaction row is suppressed for them.
+  const poll = !disappearing && isPoll(rawContent) ? parsePoll(rawContent) : null;
   const [decoded, setDecoded] = useState<{ body: string; disappearAt: number } | null>(null);
   const [decodeFailed, setDecodeFailed] = useState(false);
   // true once the disappear timer fires — hides the row immediately
@@ -234,6 +239,30 @@ export function MessageItem({
   const deleteHandler = isOwn && !message.__pending && !message.__failed ? onDelete : undefined;
   const editHandler = isOwn && !message.__pending && !message.__failed ? onEdit : undefined;
   const content = messagePlainText(message.body.content, message.body.contentType);
+
+  const pollVotingDisabled = Boolean(message.__pending || message.__failed) || !onToggleReaction;
+  // Single-choice voting: toggling an option you've already picked clears it;
+  // picking a new one first clears any other option you'd voted, then sets it.
+  const handlePollVote = (reactionType: ReactionType) => {
+    if (!poll || !onToggleReaction) return;
+    const reactions = message.reactions ?? [];
+    const votedOption = (opt: { reactionType: ReactionType; emoji: string }) =>
+      reactions.some(
+        (r) => r.user.id === currentUserId && (r.reactionType === opt.reactionType || r.reactionType === opt.emoji),
+      );
+    const chosen = poll.options.find((o) => o.reactionType === reactionType);
+    if (!chosen) return;
+    if (votedOption(chosen)) {
+      onToggleReaction(message.id, reactionType); // toggle this choice off
+      return;
+    }
+    for (const opt of poll.options) {
+      if (opt.reactionType !== reactionType && votedOption(opt)) {
+        onToggleReaction(message.id, opt.reactionType); // clear the previous choice
+      }
+    }
+    onToggleReaction(message.id, reactionType); // set the new choice
+  };
 
   const allAttachments = message.attachments ?? [];
   const referenceAttachments = allAttachments.filter((a) => isMessageReference(a.contentType));
@@ -387,6 +416,14 @@ export function MessageItem({
           <MessageReferences attachments={referenceAttachments} />
           {isEditing ? (
             editingArea
+          ) : poll ? (
+            <PollCard
+              poll={poll}
+              message={message}
+              currentUserId={currentUserId}
+              onVote={handlePollVote}
+              disabled={pollVotingDisabled}
+            />
           ) : (
             hasBody && (
               <>
@@ -411,7 +448,7 @@ export function MessageItem({
             )
           )}
           <Attachments attachments={otherAttachments} />
-          {!message.__pending && !message.__failed && (
+          {!poll && !message.__pending && !message.__failed && (
             <ReactionsRow
               messageId={message.id}
               reactions={message.reactions ?? []}
@@ -474,6 +511,14 @@ export function MessageItem({
         <MessageReferences attachments={referenceAttachments} />
         {isEditing ? (
           editingArea
+        ) : poll ? (
+          <PollCard
+            poll={poll}
+            message={message}
+            currentUserId={currentUserId}
+            onVote={handlePollVote}
+            disabled={pollVotingDisabled}
+          />
         ) : (
           hasBody && (
             <>
@@ -494,7 +539,7 @@ export function MessageItem({
           )
         )}
         <Attachments attachments={otherAttachments} />
-        {!message.__pending && !message.__failed && (
+        {!poll && !message.__pending && !message.__failed && (
           <ReactionsRow
             messageId={message.id}
             reactions={message.reactions ?? []}
