@@ -51,21 +51,30 @@ export async function DELETE(_req: Request, { params }: { params: Params }) {
 
   const { chatId, messageId } = await params;
   try {
+    // Graph has no HTTP DELETE for chat messages — deletion is the softDelete
+    // action: POST with an empty body, delegated Chat.ReadWrite. Scoping it to
+    // /me limits it to the signed-in user, the only one Graph permits to delete
+    // their own message (others get 403). A plain HTTP DELETE here is rejected,
+    // which is why expired disappearing messages were vanishing locally but
+    // surviving in native Teams.
     const res = await fetch(
-      `https://graph.microsoft.com/v1.0/chats/${chatId}/messages/${messageId}`,
+      `https://graph.microsoft.com/v1.0/me/chats/${chatId}/messages/${messageId}/softDelete`,
       {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${session.accessToken}` },
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.accessToken}`,
+          "Content-Length": "0",
+        },
       }
     );
     if (!res.ok) {
       const body = await res.text().catch(() => "");
-      console.error("Graph delete chat message failed", res.status, body);
+      console.error("Graph softDelete chat message failed", res.status, body);
       return NextResponse.json({ error: "Graph delete failed" }, { status: 502 });
     }
     return new NextResponse(null, { status: 204 });
   } catch (err) {
-    console.error("Graph delete chat message error", err);
+    console.error("Graph softDelete chat message error", err);
     return NextResponse.json({ error: "Graph delete failed" }, { status: 502 });
   }
 }
