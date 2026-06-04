@@ -74,6 +74,20 @@ export interface Preferences {
   quietHoursStart: string;
   /** HH:MM 24-hour. Wraps around midnight when start > end (e.g. 22:00 → 08:00). */
   quietHoursEnd: string;
+  /** Personal office-hours window. When enabled and the current time is OUTSIDE
+   *  the window, a self-facing banner nudges the user that they're off the clock.
+   *  Purely local (these prefs never leave the browser) — not a teammate-visible
+   *  status. Distinct from quietHours (notification muting) and autoStatus. */
+  officeHoursEnabled: boolean;
+  /** HH:MM 24-hour, same-day window (start < end). */
+  officeHoursStart: string;
+  /** HH:MM 24-hour. */
+  officeHoursEnd: string;
+  /** Enabled weekdays as JS day indices (0=Sun … 6=Sat). Default Mon–Fri. */
+  officeHoursDays: number[];
+  /** Epoch ms; the office-hours banner stays hidden while now < this. Set on
+   *  dismiss to the next boundary so it won't re-nag during the same off-period. */
+  officeHoursDismissedUntil: number | null;
   colorMode: ColorMode;
   /** Background + neutrals choice. Orthogonal to accent. Some palettes
    *  force a specific color mode (see PALETTES.lockedMode). */
@@ -125,6 +139,11 @@ interface PreferencesState extends Preferences {
   setQuietHoursEnabled: (v: boolean) => void;
   setQuietHoursStart: (v: string) => void;
   setQuietHoursEnd: (v: string) => void;
+  setOfficeHoursEnabled: (v: boolean) => void;
+  setOfficeHoursStart: (v: string) => void;
+  setOfficeHoursEnd: (v: string) => void;
+  setOfficeHoursDays: (days: number[]) => void;
+  setOfficeHoursDismissedUntil: (ts: number | null) => void;
   setColorMode: (m: ColorMode) => void;
   setPalette: (p: Palette) => void;
   setAccent: (a: AccentTheme) => void;
@@ -163,6 +182,11 @@ const DEFAULTS: Preferences = {
   quietHoursEnabled: false,
   quietHoursStart: "22:00",
   quietHoursEnd: "08:00",
+  officeHoursEnabled: false,
+  officeHoursStart: "09:00",
+  officeHoursEnd: "17:00",
+  officeHoursDays: [1, 2, 3, 4, 5],
+  officeHoursDismissedUntil: null,
   colorMode: "dark",
   palette: "slate",
   accent: "slate",
@@ -202,6 +226,12 @@ export const usePreferencesStore = create<PreferencesState>()(
       setQuietHoursEnabled: (quietHoursEnabled) => set({ quietHoursEnabled }),
       setQuietHoursStart: (quietHoursStart) => set({ quietHoursStart }),
       setQuietHoursEnd: (quietHoursEnd) => set({ quietHoursEnd }),
+      setOfficeHoursEnabled: (officeHoursEnabled) => set({ officeHoursEnabled }),
+      setOfficeHoursStart: (officeHoursStart) => set({ officeHoursStart }),
+      setOfficeHoursEnd: (officeHoursEnd) => set({ officeHoursEnd }),
+      setOfficeHoursDays: (officeHoursDays) =>
+        set({ officeHoursDays: [...officeHoursDays].sort((a, b) => a - b) }),
+      setOfficeHoursDismissedUntil: (officeHoursDismissedUntil) => set({ officeHoursDismissedUntil }),
       setColorMode: (colorMode) => set({ colorMode }),
       setPalette: (palette) => set({ palette }),
       setAccent: (accent) => set({ accent }),
@@ -254,7 +284,9 @@ export const usePreferencesStore = create<PreferencesState>()(
       // new fields from in-code DEFAULTS, so no explicit migrate is required;
       // existing `density: "comfortable" | "compact"` values remain valid under
       // the wider union.
-      version: 3,
+      // v4 (2026-06-03): adds officeHours* (enabled/start/end/days/dismissedUntil).
+      // Default-merge grafts them from DEFAULTS; no explicit migrate needed.
+      version: 4,
       storage: createJSONStorage(() => (typeof window !== "undefined" ? localStorage : undefined as unknown as Storage)),
     },
   ),

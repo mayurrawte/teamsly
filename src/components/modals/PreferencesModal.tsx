@@ -694,18 +694,86 @@ function MessagesPanel() {
 
 // ─── Availability ────────────────────────────────────────────────────────────
 
+const DAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
 function AvailabilityPanel() {
   const autoStatusEnabled = usePreferencesStore((s) => s.autoStatusEnabled);
   const setAutoStatusEnabled = usePreferencesStore((s) => s.setAutoStatusEnabled);
+  const officeHoursEnabled = usePreferencesStore((s) => s.officeHoursEnabled);
+  const setOfficeHoursEnabled = usePreferencesStore((s) => s.setOfficeHoursEnabled);
+  const officeHoursStart = usePreferencesStore((s) => s.officeHoursStart);
+  const setOfficeHoursStart = usePreferencesStore((s) => s.setOfficeHoursStart);
+  const officeHoursEnd = usePreferencesStore((s) => s.officeHoursEnd);
+  const setOfficeHoursEnd = usePreferencesStore((s) => s.setOfficeHoursEnd);
+  const officeHoursDays = usePreferencesStore((s) => s.officeHoursDays);
+  const setOfficeHoursDays = usePreferencesStore((s) => s.setOfficeHoursDays);
+
+  function toggleDay(day: number) {
+    setOfficeHoursDays(
+      officeHoursDays.includes(day)
+        ? officeHoursDays.filter((d) => d !== day)
+        : [...officeHoursDays, day],
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-7">
       <ToggleRow
         label="Auto status from calendar"
         hint="Sets your status to 'In a meeting' / 'Heads-down' / 'Out of office' based on your Outlook calendar. Clears automatically when each event ends. Manual status changes pause auto-status for 1 hour."
         value={autoStatusEnabled}
         onChange={setAutoStatusEnabled}
       />
+
+      <FieldGroup
+        label="Office hours"
+        hint="A private reminder for you — when you're outside these hours, Teamsly shows a gentle 'you're off the clock' banner. Local only; teammates never see it."
+      >
+        <ToggleRow label="" value={officeHoursEnabled} onChange={setOfficeHoursEnabled} />
+        <div className="mt-1 flex items-center gap-2">
+          <input
+            type="time"
+            value={officeHoursStart}
+            onChange={(e) => setOfficeHoursStart(e.target.value)}
+            disabled={!officeHoursEnabled}
+            aria-label="Office hours start"
+            className="h-8 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[13px] text-[var(--text-primary)] outline-none disabled:opacity-50 focus:border-[var(--border-input)]"
+          />
+          <span className="text-[13px] text-[var(--text-muted)]">to</span>
+          <input
+            type="time"
+            value={officeHoursEnd}
+            onChange={(e) => setOfficeHoursEnd(e.target.value)}
+            disabled={!officeHoursEnabled}
+            aria-label="Office hours end"
+            className="h-8 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[13px] text-[var(--text-primary)] outline-none disabled:opacity-50 focus:border-[var(--border-input)]"
+          />
+        </div>
+        <div className="mt-2 flex gap-1.5">
+          {DAY_LABELS.map((label, day) => {
+            const active = officeHoursDays.includes(day);
+            return (
+              <button
+                key={day}
+                type="button"
+                disabled={!officeHoursEnabled}
+                onClick={() => toggleDay(day)}
+                aria-pressed={active}
+                aria-label={DAY_NAMES[day]}
+                title={DAY_NAMES[day]}
+                className={`h-7 w-7 rounded-full text-[12px] font-medium transition-colors disabled:opacity-50 focus-ring ${
+                  active
+                    ? "bg-[var(--accent)] text-white"
+                    : "border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:border-[var(--border-input)]"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </FieldGroup>
     </div>
   );
 }

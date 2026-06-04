@@ -27,6 +27,7 @@ import { useSearchStore } from "@/store/search";
 import { markVisit } from "@/lib/storage/visit-counter";
 import { warmTopVisited } from "@/lib/storage/prefetch";
 import { BootNudge } from "@/components/ui/BootNudge";
+import { OfficeHoursBanner } from "@/components/ui/OfficeHoursBanner";
 import { usePreferencesStore } from "@/store/preferences";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -441,6 +442,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <RealtimeEventsMount />
       <CatchUpPanel />
       <BootNudge />
+      <OfficeHoursBanner />
       <MorningBriefScheduler />
     </div>
   );
