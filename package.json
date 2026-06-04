@@ -68,7 +68,7 @@
     "eslint-config-next": "15.5.18",
     "postcss": "8.5.15",
     "tailwindcss": "^4.3.0",
-    "typescript": "^5",
+    "typescript": "^6",
     "wait-on": "^8.0.0"
   },
   "overrides": {
