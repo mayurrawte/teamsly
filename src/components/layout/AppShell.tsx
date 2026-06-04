@@ -370,7 +370,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       )}
       {/* Global top search bar */}
-      <header className="flex h-[50px] flex-shrink-0 items-center gap-3 border-b border-[var(--border)] bg-[var(--sidebar-bg)] px-4">
+      <header className="flex h-[var(--chrome-header-h)] flex-shrink-0 items-center gap-3 border-b border-[var(--border)] bg-[var(--sidebar-bg)] px-4">
         {/* Left: logomark */}
         <div className="flex w-[56px] flex-shrink-0 items-center justify-center">
           <Logo size={22} className="text-[var(--accent)]" />

@@ -190,7 +190,7 @@ export function LeftRail() {
                 {showBadge && (
                   <span
                     aria-hidden="true"
-                    className="absolute -right-1 -top-1 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-[var(--text-mention)] px-[3px] text-[9px] font-bold leading-none text-white"
+                    className="absolute -right-1 -top-1 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-[var(--badge-unread)] px-[3px] text-[9px] font-bold leading-none text-white"
                   >
                     {badgeCount > 99 ? "99+" : badgeCount}
                   </span>

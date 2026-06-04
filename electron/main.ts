@@ -10,10 +10,28 @@ const isDev = !app.isPackaged;
 const TEAMSLY_URL =
   process.env.TEAMSLY_URL || (isDev ? 'http://localhost:3000' : 'https://teamsly.vercel.app');
 
+// In dev the app name defaults to "Electron" (the name of the dev binary), so
+// the macOS menu bar, About panel, and notification source all read "Electron".
+// Set it explicitly so every native surface reads "Teamsly".
+app.setName('Teamsly');
+
 // Windows requires the App User Model ID to be set before the app is ready so
 // that renderer-side Notification shows the correct app name in Action Center.
 if (process.platform === 'win32') {
   app.setAppUserModelId('co.shipthis.teamsly');
+}
+
+// Single-instance lock: a second launch should focus the existing window rather
+// than spawn a duplicate process — standard native-app behavior.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (!mainWindow) return;
+    if (!mainWindow.isVisible()) mainWindow.show();
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  });
 }
 
 // Flag to distinguish user-requested quit (via tray menu) from window close.
@@ -36,11 +54,12 @@ function updateUnreadIndicators(n: number): void {
   const label = n > 0 ? `Teamsly — ${n} unread` : 'Teamsly';
   tray?.setToolTip(label);
 
-  if (process.platform === 'darwin') {
-    app.dock?.setBadge(n > 0 ? String(n) : '');
+  // setBadgeCount drives the macOS dock badge and the Linux (Unity) launcher
+  // count in one call. On Windows it's a no-op (Windows needs a taskbar overlay
+  // icon, deferred — it requires a generated icon resource).
+  if (process.platform === 'darwin' || process.platform === 'linux') {
+    app.setBadgeCount(n > 0 ? n : 0);
   }
-  // Windows overlay icon (e.g. a red dot) is deferred to a future release
-  // because it requires an additional icon resource and signing infrastructure.
 }
 
 // ─── Auto-updater ─────────────────────────────────────────────────────────────
@@ -215,6 +234,32 @@ function buildAppMenu(): void {
 
 // ─── Main window ──────────────────────────────────────────────────────────────
 
+// Branded offline page (as a data: URL) shown when the renderer can't reach the
+// app. The Retry button re-navigates to the real app URL; if it's still
+// unreachable, did-fail-load fires again and brings the user back here.
+function offlineFallbackUrl(targetUrl: string): string {
+  const safeUrl = targetUrl.replace(/'/g, '%27');
+  const html = `<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html,body{height:100%;margin:0}
+  body{display:flex;align-items:center;justify-content:center;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    background:#0B0F1A;color:#d1d2d3}
+  .box{text-align:center;max-width:340px;padding:24px}
+  h1{font-size:16px;font-weight:600;margin:0 0 8px}
+  p{font-size:13px;color:#6c6f75;margin:0 0 20px;line-height:1.5}
+  button{font:inherit;font-size:13px;font-weight:600;color:#fff;background:#6366F1;
+    border:0;border-radius:6px;padding:9px 20px;cursor:pointer}
+  button:hover{background:#4F46E5}
+</style></head><body><div class="box">
+  <h1>Can&rsquo;t reach Teamsly</h1>
+  <p>Check your internet connection and try again.</p>
+  <button onclick="location.href='${safeUrl}'">Retry</button>
+</div></body></html>`;
+  return 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+}
+
 function createWindow(): void {
   const appIcon = nativeImage.createFromPath(
     path.join(__dirname, '..', 'build-resources', 'icon.png')
@@ -234,23 +279,72 @@ function createWindow(): void {
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     // icon is used by Windows/Linux; macOS reads it from the .app bundle
     icon: appIcon,
+    // Start hidden and reveal on first paint so launch shows the rendered app
+    // instead of an empty window while the renderer loads (no startup flash).
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      // Keep timers/notifications alive when the window is backgrounded (e.g.
+      // hidden to tray) so realtime updates and unread counts don't stall.
+      backgroundThrottling: false,
+      // Native spellcheck (red squiggles) in the composer; languages default
+      // to the OS locale.
+      spellcheck: true,
     },
+  });
+
+  // Reveal once the first frame is painted — the no-flash launch.
+  mainWindow.once('ready-to-show', () => mainWindow?.show());
+
+  // If the app URL can't be reached (offline / host down), show a branded retry
+  // page instead of a raw Chromium error, and make sure the window is visible
+  // (ready-to-show may never fire when the very first load fails).
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, _desc, _url, isMainFrame) => {
+    // ERR_ABORTED (-3) fires on ordinary in-app navigations; ignore it + subframes.
+    if (!isMainFrame || errorCode === -3) return;
+    void mainWindow?.loadURL(offlineFallbackUrl(TEAMSLY_URL));
+    mainWindow?.show();
   });
 
   void mainWindow.loadURL(TEAMSLY_URL);
 
-  // Suppress the default Chromium context menu in production so users don't
-  // see "Inspect Element" and other devtools options in a packaged build.
-  if (!isDev) {
-    mainWindow.webContents.on('context-menu', (event) => {
-      event.preventDefault();
-    });
-  }
+  // Native right-click menu: spelling suggestions + Cut/Copy/Paste/Select All,
+  // with DevTools only in dev. Packaged builds previously suppressed the menu
+  // entirely, which left users with no copy/paste or spell-check menu at all.
+  mainWindow.webContents.on('context-menu', (_event, params) => {
+    const items: Electron.MenuItemConstructorOptions[] = [];
+
+    for (const suggestion of params.dictionarySuggestions) {
+      items.push({
+        label: suggestion,
+        click: () => mainWindow?.webContents.replaceMisspelling(suggestion),
+      });
+    }
+    if (params.dictionarySuggestions.length > 0) items.push({ type: 'separator' });
+    if (params.misspelledWord) {
+      items.push({
+        label: 'Add to Dictionary',
+        click: () =>
+          mainWindow?.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord),
+      });
+      items.push({ type: 'separator' });
+    }
+
+    if (params.editFlags.canCut) items.push({ role: 'cut' });
+    if (params.editFlags.canCopy) items.push({ role: 'copy' });
+    if (params.editFlags.canPaste) items.push({ role: 'paste' });
+    if (params.editFlags.canSelectAll) items.push({ role: 'selectAll' });
+    if (isDev) {
+      items.push({ type: 'separator' }, { role: 'toggleDevTools' });
+    }
+
+    if (items.length > 0) {
+      Menu.buildFromTemplate(items).popup({ window: mainWindow ?? undefined });
+    }
+  });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
@@ -274,6 +368,14 @@ function createWindow(): void {
 
 ipcMain.on('unread-count', (_event, n: number) => {
   updateUnreadIndicators(n);
+});
+
+// Notification click-to-focus: bring the window to the front and reveal it.
+ipcMain.on('focus-window', () => {
+  if (!mainWindow) return;
+  if (!mainWindow.isVisible()) mainWindow.show();
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.focus();
 });
 
 ipcMain.on('update-check', () => {

@@ -9,7 +9,7 @@ export function DateDivider({ date }: Props) {
     <div role="separator" className="flex items-center px-4 my-3 select-none">
       <div className="h-px flex-1 bg-[var(--border)]" />
       <div
-        className="mx-3 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1 leading-tight text-[11px] font-bold text-[var(--text-muted)]"
+        className="mx-3 leading-tight text-[11px] font-semibold text-[var(--text-muted)]"
       >
         {formatDateDivider(date)}
       </div>

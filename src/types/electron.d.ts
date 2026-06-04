@@ -20,6 +20,8 @@ declare global {
        * document.visibilityState".
        */
       isFocused?: () => boolean;
+      /** Bring the desktop window to the front (notification click-to-focus). */
+      focusWindow?: () => void;
       // Auto-update
       checkForUpdates: () => void;
       installUpdate: () => void;

@@ -50,7 +50,7 @@ function TabRow({
           onClick={() => onTabChange(id)}
           className={`px-3 py-2 text-[13px] font-medium transition-colors focus-ring ${
             activeTab === id
-              ? "border-b-2 border-[var(--text-primary)] text-[var(--text-primary)]"
+              ? "border-b-2 border-[var(--accent)] text-[var(--text-primary)]"
               : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           }`}
         >
@@ -145,7 +145,7 @@ function MemberAvatarStack({
     >
       <div className="flex -space-x-1.5">
         {shown.map((m) => (
-          <div key={m.id} className="ring-2 ring-[var(--content-bg)]" style={{ borderRadius: 4 }}>
+          <div key={m.id} className="rounded-full ring-2 ring-[var(--content-bg)]">
             <Avatar
               userId={m.userId ?? m.id}
               displayName={m.displayName}
@@ -177,16 +177,16 @@ export function ChannelMessageHeader({
   onVideoMeetNow?: () => void;
 }) {
   return (
-    <div className="flex flex-col border-b border-[var(--border)] bg-[var(--content-bg)] px-4 shadow-sm">
+    <div className="flex flex-col border-b border-[var(--border)] bg-[var(--content-bg)] px-4">
       {/* Top row */}
-      <div className="flex h-[49px] items-center justify-between gap-4">
+      <div className="flex h-[var(--chrome-header-h)] items-center justify-between gap-4">
         {/* Left: icon + name + description */}
         <div className="flex min-w-0 items-center gap-2">
           <Hash className="h-4 w-4 flex-shrink-0 text-[var(--text-secondary)]" />
-          <span className="truncate text-[17px] font-bold text-[var(--text-primary)]">{name}</span>
+          <span className="truncate text-[15px] font-semibold text-[var(--text-primary)]">{name}</span>
           {description && (
             <>
-              <span className="text-[var(--border)]">|</span>
+              <span className="h-4 w-px flex-shrink-0 bg-[var(--border)]" aria-hidden />
               <span className="truncate text-[13px] text-[var(--text-muted)]">{description}</span>
             </>
           )}
@@ -232,9 +232,9 @@ export function DmMessageHeader({
   const displayLabel = label || otherMembers[0]?.displayName || "Direct message";
 
   return (
-    <div className="flex flex-col border-b border-[var(--border)] bg-[var(--content-bg)] px-4 shadow-sm">
+    <div className="flex flex-col border-b border-[var(--border)] bg-[var(--content-bg)] px-4">
       {/* Top row */}
-      <div className="flex h-[49px] items-center justify-between gap-4">
+      <div className="flex h-[var(--chrome-header-h)] items-center justify-between gap-4">
         {/* Left: avatars + name */}
         <div className="flex min-w-0 items-center gap-2">
           {displayMembers.length > 0 ? (
@@ -244,7 +244,7 @@ export function DmMessageHeader({
               onOpenMembers={onOpenMembers}
             />
           ) : null}
-          <span className="truncate text-[17px] font-bold text-[var(--text-primary)]">{displayLabel}</span>
+          <span className="truncate text-[15px] font-semibold text-[var(--text-primary)]">{displayLabel}</span>
         </div>
         {/* Right: voice trigger + icon cluster */}
         <div className="flex flex-shrink-0 items-center gap-0.5">
