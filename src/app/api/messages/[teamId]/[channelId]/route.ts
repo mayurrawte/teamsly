@@ -25,8 +25,15 @@ export async function POST(req: Request, { params }: { params: Params }) {
   const session = await auth();
   if (!session?.accessToken) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { teamId, channelId } = await params;
-  const body = (await req.json()) as { content?: string; mentions?: ClientMention[] };
+  const body = (await req.json()) as {
+    content?: string;
+    mentions?: ClientMention[];
+    contentType?: "html" | "text";
+  };
   const { content, mentions } = body;
+  // Disappearing messages send the pre-wrapped blob as "text" so Graph doesn't
+  // HTML-escape it; everything else is "html".
+  const contentType = body.contentType === "text" ? "text" : "html";
   if (!content?.trim()) return NextResponse.json({ error: "Empty message" }, { status: 400 });
 
   // Translate client mentions into Graph's `mentions[]` shape and wrap each
@@ -51,7 +58,8 @@ export async function POST(req: Request, { params }: { params: Params }) {
       teamId,
       channelId,
       finalContent,
-      graphMentions
+      graphMentions,
+      contentType
     );
     return NextResponse.json(msg);
   } catch {
@@ -59,7 +67,7 @@ export async function POST(req: Request, { params }: { params: Params }) {
     // so we still ship the `<at>` markup even if Graph rejects the shape.
     if (graphMentions) {
       try {
-        const msg = await sendMessage(session.accessToken, teamId, channelId, finalContent);
+        const msg = await sendMessage(session.accessToken, teamId, channelId, finalContent, undefined, contentType);
         return NextResponse.json(msg);
       } catch {
         return NextResponse.json({ error: "Graph send failed" }, { status: 502 });

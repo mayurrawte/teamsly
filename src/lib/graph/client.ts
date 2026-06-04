@@ -55,16 +55,33 @@ export async function sendMessage(
    * markup; otherwise Graph errors with `Mention id X must be referenced in
    * the message body`.
    */
-  mentions?: unknown[]
+  mentions?: unknown[],
+  /** Graph body contentType. Use "text" for disappearing messages so the
+   *  encrypted blob isn't HTML-wrapped/escaped (mirrors sendChatMessage). */
+  contentType: "html" | "text" = "html"
 ) {
   const client = getGraphClient(accessToken);
   const payload: Record<string, unknown> = {
-    body: { content, contentType: "html" },
+    body: { content, contentType },
   };
   if (mentions?.length) {
     payload.mentions = mentions;
   }
   return client.api(`/teams/${teamId}/channels/${channelId}/messages`).post(payload);
+}
+
+/** Soft-delete a channel message (Graph has no HTTP DELETE — only the
+ *  softDelete action). Only the author may delete; others get 403. */
+export async function softDeleteChannelMessage(
+  accessToken: string,
+  teamId: string,
+  channelId: string,
+  messageId: string
+) {
+  const client = getGraphClient(accessToken);
+  return client
+    .api(`/teams/${teamId}/channels/${channelId}/messages/${messageId}/softDelete`)
+    .post({});
 }
 
 export async function sendChannelReply(

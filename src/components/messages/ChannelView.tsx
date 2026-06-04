@@ -18,6 +18,7 @@ import { openTeamsChannelMeeting } from "@/lib/utils/teams-deeplink";
 import { markdownToHtml } from "@/lib/utils/markdown-to-html";
 import { VoiceTrigger } from "@/components/voice/VoiceTrigger";
 import { useRealtimeEvents } from "@/hooks/useRealtimeEvents";
+import { isDisappearing, unwrapMessage, wrapMessage, UNDECODABLE_BLOB_GRACE_MS } from "@/lib/utils/disappear";
 
 export function ChannelView({ teamId, channelId }: { teamId: string; channelId: string }) {
   const {
@@ -31,6 +32,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
     replaceMessage,
     markMessageFailed,
     removeMessage,
+    expireMessage,
     setContextLoading,
     toggleReaction,
   } = useWorkspaceStore();
@@ -75,6 +77,34 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
   // dependency of the SSE event callback (which would re-register on every render).
   const loadRef = useRef<() => Promise<void>>(async () => {});
 
+  // Sweep expired disappearing messages we sent — only the author can
+  // softDelete a channel message (Graph 403s otherwise). Receivers just hide
+  // them locally via the per-message timer (onExpire below). Defined before the
+  // load effect that calls it.
+  const sweepExpired = useCallback(async (msgs: MSMessage[]) => {
+    const now = Date.now();
+    for (const m of msgs) {
+      if (m.__pending || m.__failed) continue;
+      if (m.from?.user?.id !== currentUserId) continue;
+      if (!isDisappearing(m.body.content)) continue;
+      const payload = await unwrapMessage(contextId, m.body.content);
+      if (payload) {
+        if (payload.disappearAt > now) continue;
+      } else if (now - new Date(m.createdDateTime).getTime() < UNDECODABLE_BLOB_GRACE_MS) {
+        continue;
+      }
+      try {
+        const res = await fetch(
+          `/api/messages/${teamId}/${channelId}/${encodeURIComponent(m.id)}`,
+          { method: "DELETE" }
+        );
+        if (res.ok) removeMessage(contextId, m.id);
+      } catch {
+        /* best-effort; retried on next sweep */
+      }
+    }
+  }, [teamId, channelId, contextId, currentUserId, removeMessage]);
+
   useEffect(() => {
     let cancelled = false;
     const cached = getMessages(contextId);
@@ -87,7 +117,11 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
         const response = await fetch(`/api/messages/${teamId}/${channelId}`);
         if (!response.ok) throw new Error("Failed to load messages");
         const data = (await response.json()) as MSMessage[];
-        if (!cancelled) setMessages(contextId, sortByCreated(data));
+        if (!cancelled) {
+          const sorted = sortByCreated(data);
+          setMessages(contextId, sorted);
+          void sweepExpired(sorted);
+        }
       } catch {
         if (isFirstLoad && !cancelled) showToast({ title: "Could not load messages", tone: "error" });
       } finally {
@@ -100,6 +134,10 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
 
     // Webhook push is primary; poll kept at 30s as safety net for missed events.
     const interval = setInterval(load, 30_000);
+
+    // Disappearing-message sweep on a fast cadence (network-free unless one of
+    // our own messages has actually expired) — matches the DM view's behavior.
+    const sweep = setInterval(() => void sweepExpired(getMessages(contextId)), 4000);
 
     // Fire-and-forget: create a Graph change notification subscription so the
     // webhook endpoint can push new messages via SSE instead of waiting for poll.
@@ -121,11 +159,12 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
     return () => {
       cancelled = true;
       clearInterval(interval);
+      clearInterval(sweep);
       clearInterval(resubscribe);
     };
     // getMessages is a stable selector — intentionally not in deps to avoid re-running on cache updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teamId, channelId, contextId, isHydrated, setContextLoading, setMessages, showToast]);
+  }, [teamId, channelId, contextId, isHydrated, setContextLoading, setMessages, showToast, sweepExpired]);
 
   useRealtimeEvents(
     useCallback(
@@ -144,14 +183,22 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
 
   async function handleSend(
     content: string,
-    options?: { mentions?: { id: string; name: string }[] }
+    options?: { mentions?: { id: string; name: string }[]; disappearMs?: number }
   ) {
     const tempId = `temp-${crypto.randomUUID()}`;
     const now = new Date().toISOString();
+    // Disappearing messages: wrap the body into the opaque blob and send it as
+    // "text" so Graph stores it verbatim (same as DMs). The contextId key must
+    // match what MessageItem decodes with (bookmarkContextId = contextId).
+    const outgoing = options?.disappearMs
+      ? await wrapMessage(contextId, content, Date.now() + options.disappearMs)
+      : content;
     const optimistic: MSMessage = {
       id: tempId,
       createdDateTime: now,
-      body: { contentType: "html", content: textToHtml(content) },
+      body: options?.disappearMs
+        ? { contentType: "text", content: outgoing }
+        : { contentType: "html", content: textToHtml(content) },
       from: { user: { id: currentUserId, displayName: currentUserName } },
       reactions: [],
       attachments: [],
@@ -165,10 +212,11 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          content,
+          content: outgoing,
           // Server route turns this into Graph's `mentions[]` array and
           // wraps each `@Name` in the body with `<at id="i">…</at>` markup.
           ...(options?.mentions?.length ? { mentions: options.mentions } : {}),
+          ...(options?.disappearMs ? { contentType: "text" } : {}),
         }),
       });
       if (!res.ok) throw new Error("Failed to send message");
@@ -179,6 +227,19 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
       showToast({ title: "Could not send message", tone: "error" });
     }
   }
+
+  // Called by MessageItem when a disappearing message's countdown hits zero:
+  // hide it locally now, and softDelete server-side for our own messages.
+  const handleMessageExpire = useCallback((messageId: string) => {
+    const msg = getMessages(contextId).find((m) => m.id === messageId);
+    const isOwn = msg?.from?.user?.id === currentUserId;
+    expireMessage(contextId, messageId);
+    if (isOwn) {
+      void fetch(`/api/messages/${teamId}/${channelId}/${encodeURIComponent(messageId)}`, {
+        method: "DELETE",
+      });
+    }
+  }, [teamId, channelId, contextId, currentUserId, getMessages, expireMessage]);
 
   function handleAttachAndSend(content: string, file: File): Promise<void> {
     return new Promise<void>((resolve, reject) => {
@@ -399,6 +460,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
             onToggleReaction={handleToggleReaction}
             onRetry={handleRetry}
             onDiscard={handleDiscard}
+            onExpire={handleMessageExpire}
           />
           <MessageInput
             placeholder={`Message #${channel?.displayName ?? "channel"}`}
@@ -407,6 +469,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
             uploading={uploading}
             contextId={contextId}
             allowEveryone
+            allowDisappearing
             currentUserId={currentUserId}
             currentUserName={currentUserName}
           />
