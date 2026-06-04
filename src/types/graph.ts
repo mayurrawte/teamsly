@@ -76,7 +76,12 @@ interface MSChat {
   lastUpdatedDateTime: string;
   lastMessagePreview?: {
     createdDateTime?: string;
+    from?: { user?: { id?: string } | null } | null;
   };
+  /** Per-user read state. lastMessageReadDateTime advances when the user reads
+   *  the chat in official Teams; this app doesn't write it, so unread is also
+   *  gated by a local read timestamp. */
+  viewpoint?: { lastMessageReadDateTime?: string } | null;
   members?: MSChatMember[];
 }
 
