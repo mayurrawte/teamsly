@@ -24,7 +24,6 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
     teams,
     channels,
     getMessages,
-    isLoadingMessages,
     currentUserId,
     currentUserName,
     setMessages,
@@ -32,10 +31,14 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
     replaceMessage,
     markMessageFailed,
     removeMessage,
-    setLoadingMessages,
+    setContextLoading,
     toggleReaction,
   } = useWorkspaceStore();
   const isHydrated = useWorkspaceStore((s) => s.isHydrated);
+  // First-load flag for THIS channel only — a cached channel never shows the skeleton.
+  const loadingThisChannel = useWorkspaceStore(
+    (s) => s.loadingContexts[`${teamId}:${channelId}`] ?? false,
+  );
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [forwardMessage, setForwardMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
@@ -77,7 +80,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
     const cached = getMessages(contextId);
     const isFirstLoad = cached.length === 0 && isHydrated;
 
-    if (isFirstLoad) setLoadingMessages(true);
+    if (isFirstLoad) setContextLoading(contextId, true);
 
     async function load() {
       try {
@@ -88,7 +91,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
       } catch {
         if (isFirstLoad && !cancelled) showToast({ title: "Could not load messages", tone: "error" });
       } finally {
-        if (!cancelled) setLoadingMessages(false);
+        if (!cancelled) setContextLoading(contextId, false);
       }
     }
 
@@ -122,7 +125,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
     };
     // getMessages is a stable selector — intentionally not in deps to avoid re-running on cache updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teamId, channelId, contextId, isHydrated, setLoadingMessages, setMessages, showToast]);
+  }, [teamId, channelId, contextId, isHydrated, setContextLoading, setMessages, showToast]);
 
   useRealtimeEvents(
     useCallback(
@@ -381,7 +384,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
         <>
           <MessageFeed
             messages={messages}
-            loading={isLoadingMessages}
+            loading={loadingThisChannel}
             contextName={channel?.displayName ? `#${channel.displayName}` : "Channel"}
             bookmarkContextId={contextId}
             contextLabel={channel?.displayName ? `#${channel.displayName}` : "Channel"}
