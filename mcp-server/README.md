@@ -4,6 +4,14 @@ Exposes your Microsoft Teams as MCP tools — send DMs, read messages, list chat
 
 Works with any MCP-compatible client: Claude Code, Claude Desktop, Cursor, Zed, Windsurf, and others.
 
+## Install
+
+```bash
+claude mcp add teamsly -- npx -y @teamsly/mcp
+```
+
+That's it — no clone required. On first use you'll do a one-time Microsoft sign-in (see **Auth** below). For other clients, use the config blocks further down.
+
 ## Auth (one-time setup)
 
 On first run, a sign-in prompt appears in your terminal:
@@ -37,8 +45,6 @@ Open the URL, enter the code, sign in with your Microsoft account. Done — toke
 
 ## Configuration
 
-The server runs via `npx tsx mcp-server/index.ts` from the repo root. Replace the path with an absolute path if configuring globally.
-
 ---
 
 ### Claude Code
@@ -50,7 +56,7 @@ The server runs via `npx tsx mcp-server/index.ts` from the repo root. Replace th
   "mcpServers": {
     "teamsly": {
       "command": "npx",
-      "args": ["tsx", "mcp-server/index.ts"]
+      "args": ["-y", "@teamsly/mcp"]
     }
   }
 }
@@ -59,7 +65,7 @@ The server runs via `npx tsx mcp-server/index.ts` from the repo root. Replace th
 **User-level** (available in all your projects):
 
 ```bash
-claude mcp add teamsly -- npx tsx /absolute/path/to/teamsly/mcp-server/index.ts
+claude mcp add teamsly -- npx -y @teamsly/mcp
 ```
 
 ---
@@ -73,7 +79,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) o
   "mcpServers": {
     "teamsly": {
       "command": "npx",
-      "args": ["tsx", "/absolute/path/to/teamsly/mcp-server/index.ts"]
+      "args": ["-y", "@teamsly/mcp"]
     }
   }
 }
@@ -92,7 +98,7 @@ Edit `~/.cursor/mcp.json` (user-level) or `.cursor/mcp.json` in your project (pr
   "mcpServers": {
     "teamsly": {
       "command": "npx",
-      "args": ["tsx", "/absolute/path/to/teamsly/mcp-server/index.ts"]
+      "args": ["-y", "@teamsly/mcp"]
     }
   }
 }
@@ -108,10 +114,7 @@ Edit `~/.config/zed/settings.json`:
 {
   "context_servers": {
     "teamsly": {
-      "command": {
-        "path": "npx",
-        "args": ["tsx", "/absolute/path/to/teamsly/mcp-server/index.ts"]
-      }
+      "command": { "path": "npx", "args": ["-y", "@teamsly/mcp"] }
     }
   }
 }
@@ -128,11 +131,23 @@ Edit `~/.codeium/windsurf/mcp_config.json`:
   "mcpServers": {
     "teamsly": {
       "command": "npx",
-      "args": ["tsx", "/absolute/path/to/teamsly/mcp-server/index.ts"]
+      "args": ["-y", "@teamsly/mcp"]
     }
   }
 }
 ```
+
+---
+
+### Develop from source
+
+Working on the server itself? Run it straight from the repo with no build:
+
+```bash
+npx tsx mcp-server/index.ts
+```
+
+The repo's `.mcp.json` already points Claude Code at this for local development.
 
 ---
 
