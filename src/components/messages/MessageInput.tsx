@@ -273,7 +273,12 @@ export function MessageInput({
   allowSchedule,
   whenFreeTarget,
 }: Props) {
-  const [value, setValue] = useState("");
+  // Lazy-init from the saved draft so a context with a draft paints filled on
+  // first render instead of flashing empty for a frame before the seed effect
+  // below runs. The effect still handles in-place contextId changes.
+  const [value, setValue] = useState(() =>
+    contextId ? (useDraftsStore.getState().drafts[contextId] ?? "") : "",
+  );
   const [sending, setSending] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [emojiOpen, setEmojiOpen] = useState(false);

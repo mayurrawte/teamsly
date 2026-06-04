@@ -405,6 +405,16 @@ export function Sidebar() {
     router.push(`/workspace/dm/${chatId}`);
   }
 
+  // Warm the RSC route on hover/focus so the click feels instant — the message
+  // body already paints from the IDB cache, but the page-level navigation
+  // otherwise pays a server round-trip on first visit to each route.
+  function prefetchChannel(channelId: string) {
+    if (activeTeamId) router.prefetch(`/workspace/t/${activeTeamId}/${channelId}`);
+  }
+  function prefetchChat(chatId: string) {
+    router.prefetch(`/workspace/dm/${chatId}`);
+  }
+
   function switchTeam(teamId: string) {
     if (teamId === activeTeamId) return;
     setActiveTeam(teamId);
@@ -651,6 +661,7 @@ export function Sidebar() {
                   unreadCount={unreadCounts[ch.id] ?? 0}
                   voiceCount={voiceCounts[ch.id] ?? 0}
                   onClick={() => goToChannel(ch.id)}
+                  onHover={() => prefetchChannel(ch.id)}
                   contextId={activeTeamId ? `${activeTeamId}:${ch.id}` : undefined}
                   unreadId={ch.id}
                 />
@@ -664,6 +675,7 @@ export function Sidebar() {
                   unreadCount={unreadCounts[chat.id] ?? 0}
                   voiceCount={voiceCounts[chat.id] ?? 0}
                   onClick={() => goToChat(chat.id)}
+                  onHover={() => prefetchChat(chat.id)}
                   contextId={chat.id}
                   unreadId={chat.id}
                 />
@@ -727,6 +739,7 @@ export function Sidebar() {
                   unreadCount={unreadCounts[ch.id] ?? 0}
                   voiceCount={voiceCounts[ch.id] ?? 0}
                   onClick={() => goToChannel(ch.id)}
+                  onHover={() => prefetchChannel(ch.id)}
                   contextId={activeTeamId ? `${activeTeamId}:${ch.id}` : undefined}
                   unreadId={ch.id}
                 />
@@ -740,6 +753,7 @@ export function Sidebar() {
                   unreadCount={unreadCounts[chat.id] ?? 0}
                   voiceCount={voiceCounts[chat.id] ?? 0}
                   onClick={() => goToChat(chat.id)}
+                  onHover={() => prefetchChat(chat.id)}
                   contextId={chat.id}
                   unreadId={chat.id}
                 />
@@ -807,6 +821,7 @@ export function Sidebar() {
                   unreadCount={unreadCounts[ch.id] ?? 0}
                   voiceCount={voiceCounts[ch.id] ?? 0}
                   onClick={() => goToChannel(ch.id)}
+                  onHover={() => prefetchChannel(ch.id)}
                   contextId={activeTeamId ? `${activeTeamId}:${ch.id}` : undefined}
                   unreadId={ch.id}
                 />
@@ -863,6 +878,7 @@ export function Sidebar() {
                   unreadCount={unreadCounts[chat.id] ?? 0}
                   voiceCount={voiceCounts[chat.id] ?? 0}
                   onClick={() => goToChat(chat.id)}
+                  onHover={() => prefetchChat(chat.id)}
                   contextId={chat.id}
                   unreadId={chat.id}
                 />
@@ -934,6 +950,7 @@ function SidebarItem({
   unreadCount = 0,
   voiceCount = 0,
   onClick,
+  onHover,
   contextId,
   unreadId,
 }: {
@@ -943,6 +960,8 @@ function SidebarItem({
   unreadCount?: number;
   voiceCount?: number;
   onClick: () => void;
+  /** Fired on hover/focus — used to prefetch the row's route so the click is instant. */
+  onHover?: () => void;
   /** Key used for snooze (`teamId:channelId` for channels, `chatId` for DMs). */
   contextId?: string;
   /** Key used for unread counts (`channelId` for channels, `chatId` for DMs). */
@@ -984,6 +1003,8 @@ function SidebarItem({
       )}
       <button
         onClick={onClick}
+        onMouseEnter={onHover}
+        onFocus={onHover}
         style={{
           paddingTop: "var(--density-sidebar-row-py)",
           paddingBottom: "var(--density-sidebar-row-py)",

@@ -25,7 +25,6 @@ export function ChatView({ chatId }: { chatId: string }) {
   const {
     chats,
     getMessages,
-    isLoadingMessages,
     currentUserId,
     currentUserName,
     setMessages,
@@ -34,7 +33,7 @@ export function ChatView({ chatId }: { chatId: string }) {
     markMessageFailed,
     removeMessage,
     expireMessage,
-    setLoadingMessages,
+    setContextLoading,
     toggleReaction,
     deleteMessage,
     restoreMessage,
@@ -44,6 +43,8 @@ export function ChatView({ chatId }: { chatId: string }) {
     patchChatMembers,
   } = useWorkspaceStore();
   const isHydrated = useWorkspaceStore((s) => s.isHydrated);
+  // First-load flag for THIS chat only — a cached chat never shows the skeleton.
+  const loadingThisChat = useWorkspaceStore((s) => s.loadingContexts[chatId] ?? false);
   const scheduledMessages = useScheduledStore((s) => s.scheduled);
   const addScheduled = useScheduledStore((s) => s.addScheduled);
   const removeScheduled = useScheduledStore((s) => s.removeScheduled);
@@ -229,7 +230,7 @@ export function ChatView({ chatId }: { chatId: string }) {
     const cached = getMessages(chatId);
     const isFirstLoad = cached.length === 0 && isHydrated;
 
-    if (isFirstLoad) setLoadingMessages(true);
+    if (isFirstLoad) setContextLoading(chatId, true);
 
     async function load() {
       try {
@@ -244,7 +245,7 @@ export function ChatView({ chatId }: { chatId: string }) {
       } catch {
         if (isFirstLoad && !cancelled) showToast({ title: "Could not load messages", tone: "error" });
       } finally {
-        if (!cancelled) setLoadingMessages(false);
+        if (!cancelled) setContextLoading(chatId, false);
       }
     }
 
@@ -291,7 +292,7 @@ export function ChatView({ chatId }: { chatId: string }) {
     };
     // getMessages is a stable selector — intentionally not in deps to avoid re-running on cache updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chatId, isHydrated, setLoadingMessages, setMessages, showToast, sweepExpired, sweepScheduled]);
+  }, [chatId, isHydrated, setContextLoading, setMessages, showToast, sweepExpired, sweepScheduled]);
 
   useRealtimeEvents(
     useCallback(
@@ -759,7 +760,7 @@ export function ChatView({ chatId }: { chatId: string }) {
           )}
           <MessageFeed
             messages={messages}
-            loading={isLoadingMessages}
+            loading={loadingThisChat}
             contextName={label}
             bookmarkContextId={chatId}
             contextLabel={label}

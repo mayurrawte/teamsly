@@ -29,7 +29,10 @@ interface WorkspaceState {
   // Per-context message cache: keyed by chatId or channelId.
   // Preserved across navigation so re-visiting a context doesn't show a spinner.
   messagesByContext: Record<string, MSMessage[]>;
-  isLoadingMessages: boolean;
+  // Per-context first-load flag. A single global boolean made every channel
+  // switch flash a skeleton / reset scroll even when the target was cached;
+  // keying by context means only an actually-uncached context shows loading.
+  loadingContexts: Record<string, boolean>;
   presenceMap: Record<string, MSPresence["availability"]>;
   statusMessageMap: Record<string, MSPresence["statusMessage"]>;
   unreadCounts: Record<string, number>;
@@ -99,7 +102,7 @@ interface WorkspaceState {
   restoreMessage: (contextId: string, message: MSMessage, index: number) => void;
   editMessage: (contextId: string, messageId: string, newContent: string) => { previousContent: string; previousContentType: MSMessage["body"]["contentType"]; index: number } | null;
   revertMessageEdit: (contextId: string, messageId: string, previousContent: string, previousContentType: MSMessage["body"]["contentType"]) => void;
-  setLoadingMessages: (v: boolean) => void;
+  setContextLoading: (contextId: string, v: boolean) => void;
   setPresenceMap: (presenceMap: Record<string, MSPresence["availability"]>) => void;
   setStatusMessage: (userId: string, statusMessage: MSPresence["statusMessage"]) => void;
   setCurrentUser: (user: { id: string; displayName: string }) => void;
@@ -130,7 +133,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       chatsNextLink: null,
       activeChatId: null,
       messagesByContext: {},
-      isLoadingMessages: false,
+      loadingContexts: {},
       presenceMap: {},
       statusMessageMap: {},
       unreadCounts: {},
@@ -399,7 +402,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           };
         }),
 
-      setLoadingMessages: (v) => set({ isLoadingMessages: v }),
+      setContextLoading: (contextId, v) =>
+        set((s) => {
+          if (v) return { loadingContexts: { ...s.loadingContexts, [contextId]: true } };
+          if (!s.loadingContexts[contextId]) return s;
+          const next = { ...s.loadingContexts };
+          delete next[contextId];
+          return { loadingContexts: next };
+        }),
       setPresenceMap: (presenceMap) => set({ presenceMap }),
       setStatusMessage: (userId, statusMessage) =>
         set((s) => ({ statusMessageMap: { ...s.statusMessageMap, [userId]: statusMessage } })),

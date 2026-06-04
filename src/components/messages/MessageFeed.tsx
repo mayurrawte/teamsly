@@ -99,8 +99,21 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
     setNewMessagesCount(0);
   }, []);
 
-  // On initial load or when the context changes (new channel/DM opened):
-  // always scroll to bottom immediately and reset counters.
+  // Reset scroll state whenever the open context changes (channel/DM switch).
+  // We key on contextId rather than the `loading` flag because a *cached*
+  // context never flips loading true — so relying on loading meant opening a
+  // cached chat left the feed wherever it was instead of pinned to the latest
+  // message. Defined before the scroll-to-bottom effect so the ref is reset
+  // first within the same commit.
+  useEffect(() => {
+    isInitialLoad.current = true;
+    prevMessageCountRef.current = 0;
+    setIsNearBottom(true);
+    setNewMessagesCount(0);
+  }, [contextId]);
+
+  // On initial load or context change: once messages are present and not
+  // loading, scroll straight to the latest message.
   useEffect(() => {
     if (loading) return;
     if (isInitialLoad.current && messages.length > 0) {
@@ -108,17 +121,7 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
       prevMessageCountRef.current = messages.length;
       scrollToBottom("instant");
     }
-  }, [loading, messages.length, scrollToBottom]);
-
-  // Reset state when a new context loads (loading flips back to true).
-  useEffect(() => {
-    if (loading) {
-      isInitialLoad.current = true;
-      prevMessageCountRef.current = 0;
-      setIsNearBottom(true);
-      setNewMessagesCount(0);
-    }
-  }, [loading]);
+  }, [loading, messages.length, scrollToBottom, contextId]);
 
   // React to new messages arriving after initial load.
   useEffect(() => {
