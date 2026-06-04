@@ -3,6 +3,9 @@
     "target": "ES2022",
     "module": "CommonJS",
     "moduleResolution": "node",
+    // TS6 deprecates the node10/"node" resolver (errors without this). Silence
+    // for now; migrate this CJS config to node16/bundler before TS7.
+    "ignoreDeprecations": "6.0",
     "outDir": "./dist",
     "rootDir": ".",
     "strict": true,
