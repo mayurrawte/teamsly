@@ -126,24 +126,25 @@ the UI.
 ### Auth — PKCE public client
 
 Microsoft sign-in uses the Authorization Code + PKCE flow with no client
-secret. The OAuth redirect is handled by a custom `teamsly://` deep-link URI
-registered at install time. For the packaged dynamic-port loopback flow to work
-you must also add an `http://localhost` redirect URI to the Azure app
-registration under **Authentication → Mobile and desktop applications** (the
-"Mobile & desktop platform" section). The exact port does not need to be
-specified — Azure accepts any port on `http://localhost` for native clients.
+secret. Sign-in opens in the system browser and redirects back to the local
+server's loopback callback (`http://localhost:<port>/api/auth/callback/microsoft-entra-id`).
+For this to work you must add an `http://localhost` redirect URI to the Azure
+app registration under **Authentication → Mobile and desktop applications**. The
+exact port does not need to be specified — Azure accepts any port on
+`http://localhost` for public/native clients.
 
 ### AI features — BYO keys
 
-AI capabilities (meeting summaries, TL;DR, action-item extraction) and voice
-memo transcription rely on keys you supply yourself. Enter them in
-**Preferences → Advanced** inside the app:
+AI capabilities (catch-up digests, TL;DR, action-item extraction) and voice
+rooms rely on keys you supply yourself. Enter them in **Preferences → Advanced**
+inside the app:
 
-- **OpenAI API key** — powers all AI/LLM features.
-- **Azure Speech key** (optional) — required for voice memo transcription.
+- **OpenAI / Azure key** (+ optional base URL) — powers the AI features.
+- **LiveKit** API key, secret, and URL — power voice rooms.
 
-Keys are stored in the OS keychain / Electron `safeStorage` and are never sent
-anywhere except the respective provider APIs.
+Keys are stored via Electron `safeStorage` (OS keychain) and are injected only
+into the local server process; they are never sent anywhere except the
+respective provider APIs.
 
 ### Release build process
 

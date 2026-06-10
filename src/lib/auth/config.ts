@@ -61,6 +61,12 @@ async function refreshAccessToken(refreshToken: string) {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // The bundled desktop server runs on a loopback host under NODE_ENV=production
+  // with no VERCEL/AUTH_URL, so NextAuth would otherwise default trustHost to
+  // false and reject every /api/auth request (UntrustedHost). Trust the host
+  // only in desktop mode — on web this key is absent, so Vercel's own
+  // env-based detection (VERCEL=1 → true) is preserved unchanged.
+  ...(DESKTOP ? { trustHost: true } : {}),
   providers: [
     MicrosoftEntraID({
       clientId: process.env.AZURE_AD_CLIENT_ID!,
