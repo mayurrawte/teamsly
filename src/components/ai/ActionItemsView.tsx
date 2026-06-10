@@ -5,16 +5,17 @@ import { ArrowUpRight, Clock } from "lucide-react";
 import type { CatchUpWindow } from "@/store/catchUp";
 import type { ActionItem } from "@/lib/ai/conversation-gather";
 import { useRemindersStore } from "@/store/reminders";
-import { SkeletonCard, NotConfiguredCard } from "./catchup-shared";
+import { SkeletonCard, NotConfiguredCard, LimitReachedCard } from "./catchup-shared";
 import type { CatchUpMeta } from "./DigestView";
 
 interface ActionItemsResponse {
-  status: "ok" | "not_configured" | "error";
+  status: "ok" | "not_configured" | "error" | "rate_limited";
   generatedAt?: string;
   since?: string;
   cached: boolean;
   items?: ActionItem[];
   message?: string;
+  resetAt?: number;
 }
 
 type Ownership = ActionItem["ownership"];
@@ -115,6 +116,9 @@ export function ActionItemsView({
   }
   if (data?.status === "not_configured") {
     return <NotConfiguredCard feature="structured action-item extraction" />;
+  }
+  if (data?.status === "rate_limited") {
+    return <LimitReachedCard resetAt={data.resetAt} />;
   }
   if (data?.status === "error") {
     return (

@@ -2,16 +2,17 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { CatchUpWindow } from "@/store/catchUp";
-import { SkeletonCard, NotConfiguredCard } from "./catchup-shared";
+import { SkeletonCard, NotConfiguredCard, LimitReachedCard } from "./catchup-shared";
 
 interface DigestResponse {
-  status: "ok" | "not_configured" | "error";
+  status: "ok" | "not_configured" | "error" | "rate_limited";
   generatedAt?: string;
   since?: string;
   conversationCount?: number;
   cached: boolean;
   digest?: string;
   message?: string;
+  resetAt?: number;
 }
 
 const WINDOW_LABELS: Record<CatchUpWindow, string> = {
@@ -76,6 +77,9 @@ export function DigestView({
   }
   if (digest?.status === "not_configured") {
     return <NotConfiguredCard feature="cross-channel AI catch-up digests" />;
+  }
+  if (digest?.status === "rate_limited") {
+    return <LimitReachedCard resetAt={digest.resetAt} />;
   }
   if (digest?.status === "error") {
     return (

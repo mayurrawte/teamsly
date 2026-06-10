@@ -18,7 +18,7 @@ export function SkeletonCard() {
 export function NotConfiguredCard({ feature }: { feature: string }) {
   const [copied, setCopied] = useState(false);
   function handleCopy() {
-    void navigator.clipboard.writeText("ANTHROPIC_API_KEY");
+    void navigator.clipboard.writeText("OPENAI_API_KEY");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -29,7 +29,7 @@ export function NotConfiguredCard({ feature }: { feature: string }) {
         Add your Anthropic API key to unlock {feature}.
       </p>
       <div className="flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--message-bg)] px-3 py-2">
-        <code className="flex-1 text-[12px] text-[var(--text-secondary)]">ANTHROPIC_API_KEY</code>
+        <code className="flex-1 text-[12px] text-[var(--text-secondary)]">OPENAI_API_KEY</code>
         <button
           type="button"
           onClick={handleCopy}
@@ -41,6 +41,21 @@ export function NotConfiguredCard({ feature }: { feature: string }) {
       </div>
       <p className="mt-3 text-[12px] text-[var(--text-muted)]">
         Set this in Vercel environment variables, then redeploy.
+      </p>
+    </div>
+  );
+}
+
+/** Shown when the user has hit their daily AI request limit (HTTP 429). */
+export function LimitReachedCard({ resetAt }: { resetAt?: number }) {
+  const resetLabel = resetAt
+    ? new Date(resetAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    : null;
+  return (
+    <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] p-5">
+      <p className="mb-1 text-[14px] font-semibold text-[var(--text-primary)]">Daily AI limit reached</p>
+      <p className="text-[13px] text-[var(--text-secondary)]">
+        You&apos;ve used today&apos;s AI requests{resetLabel ? `. Resets at ${resetLabel}.` : "."}
       </p>
     </div>
   );
