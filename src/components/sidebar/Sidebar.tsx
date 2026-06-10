@@ -10,6 +10,7 @@ import { clearAll as clearMessageCache } from "@/lib/storage/message-cache";
 import { clearAll as clearDraftsCache } from "@/lib/storage/drafts";
 import { clearAll as clearBookmarksCache } from "@/lib/storage/bookmarks";
 import { clearAllScheduled } from "@/lib/storage/scheduled-messages";
+import { clearAllReminders } from "@/lib/storage/reminders";
 import { cn } from "@/lib/utils";
 import { isDisappearing, unwrapMessage, wrapMessage, UNDECODABLE_BLOB_GRACE_MS } from "@/lib/utils/disappear";
 import { useScheduledStore } from "@/store/scheduled";
@@ -90,9 +91,9 @@ async function sweepAllScheduledDms() {
 
 async function handleSignOut() {
   // Drop the IDB caches before redirect so a previous user's messages,
-  // drafts, and saved bookmarks don't leak to the next sign-in on the
-  // same device.
-  await Promise.all([clearMessageCache(), clearDraftsCache(), clearBookmarksCache(), clearAllScheduled()]);
+  // drafts, saved bookmarks, reminders, and scheduled sends don't leak to
+  // the next sign-in on the same device.
+  await Promise.all([clearMessageCache(), clearDraftsCache(), clearBookmarksCache(), clearAllScheduled(), clearAllReminders()]);
   await signOut({ callbackUrl: "/" });
 }
 import { UserFooter } from "./UserFooter";

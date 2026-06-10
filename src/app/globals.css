@@ -630,3 +630,47 @@ body.focus-mode .focus-mode-hide {
 /* Electron macOS drag regions — no-ops in the browser */
 .app-drag    { -webkit-app-region: drag; }
 .app-no-drag { -webkit-app-region: no-drag; }
+
+/* Catch-up panel markdown + section styles. Shared by DigestView (rendered
+   digest markdown) and ActionItemsView (`.catch-up-h3` group headings), so
+   they live here rather than in any one component's scoped <style>. */
+.catch-up-h2 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 20px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.catch-up-h2:first-child { margin-top: 0; }
+.catch-up-h3 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 12px 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.catch-up-ul {
+  margin: 4px 0 8px 16px;
+  list-style: disc;
+}
+.catch-up-ul li {
+  margin-bottom: 3px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.catch-up-p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.prose-digest strong { color: var(--text-primary); }
+.prose-digest code {
+  background: var(--surface-raised);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 12px;
+}

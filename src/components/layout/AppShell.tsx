@@ -15,12 +15,14 @@ import { EMPTY_MESSAGES, useWorkspaceStore } from "@/store/workspace";
 import { useDraftsStore } from "@/store/drafts";
 import { useBookmarksStore } from "@/store/bookmarks";
 import { useScheduledStore } from "@/store/scheduled";
+import { useRemindersStore } from "@/store/reminders";
 import { ToastViewport } from "@/components/ui/ToastViewport";
 import { useToastStore } from "@/store/toasts";
 import { sendUnreadCount } from "@/lib/electron-bridge";
 import { getChatLabel } from "@/lib/utils/chat-label";
 import { RealtimeEventsMount } from "@/hooks/useRealtimeEvents";
 import { MorningBriefScheduler } from "@/components/MorningBriefScheduler";
+import { ReminderScheduler } from "@/components/ReminderScheduler";
 import { CatchUpPanel } from "@/components/ai/CatchUpPanel";
 import { useCatchUpStore } from "@/store/catchUp";
 import { useSearchStore } from "@/store/search";
@@ -134,6 +136,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     void useDraftsStore.getState().hydrate();
     void useBookmarksStore.getState().hydrate();
     void useScheduledStore.getState().hydrate();
+    void useRemindersStore.getState().hydrate();
   }, [hydrateMessageCache]);
 
   // Record visits so the next cold-start prefetch knows what to warm. We watch
@@ -444,6 +447,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <BootNudge />
       <OfficeHoursBanner />
       <MorningBriefScheduler />
+      <ReminderScheduler />
     </div>
   );
 }

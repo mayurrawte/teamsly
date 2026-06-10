@@ -2,10 +2,9 @@ import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@/lib/auth/config";
 import { getGraphClient } from "@/lib/graph/client";
 import { NextRequest, NextResponse } from "next/server";
+import { gatherConversations, messageText, sinceWindow, type ConvBundle } from "@/lib/ai/conversation-gather";
 
 const MAX_CONVERSATIONS = 12;
-const MESSAGES_PER_CONVERSATION = 30;
-const MAX_BODY_CHARS = 200;
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const RATE_LIMIT_MS = 60 * 1000;
 
@@ -26,32 +25,6 @@ interface TldrResponse {
 }
 
 const cache = new Map<string, CacheEntry>();
-
-function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function messageText(msg: MSMessage): string {
-  const raw = msg.body?.content ?? "";
-  const plain = msg.body?.contentType === "html" ? stripHtml(raw) : raw;
-  return plain.length > MAX_BODY_CHARS ? plain.slice(0, MAX_BODY_CHARS - 1) + "…" : plain;
-}
-
-function sinceWindow(window: string): Date {
-  const now = new Date();
-  if (window === "3d") now.setDate(now.getDate() - 3);
-  else if (window === "7d") now.setDate(now.getDate() - 7);
-  else now.setHours(now.getHours() - 24);
-  return now;
-}
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -100,88 +73,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  type ConvBundle = { label: string; messages: MSMessage[]; count: number };
-  const conversations: ConvBundle[] = [];
-
-  try {
-    const chatsRes = await client
-      .api("/me/chats")
-      .select("id,chatType,topic,lastUpdatedDateTime")
-      .top(30)
-      .get();
-    const chats = (chatsRes.value as MSChat[]).filter(
-      (c) => !c.lastUpdatedDateTime || new Date(c.lastUpdatedDateTime) >= sinceDate
-    );
-
-    const chatBundles = await Promise.allSettled(
-      chats.slice(0, 20).map(async (chat) => {
-        const res = await client
-          .api(`/me/chats/${chat.id}/messages`)
-          .top(MESSAGES_PER_CONVERSATION)
-          .get();
-        const messages = (res.value as MSMessage[]).filter(
-          (m) => !m.deletedDateTime && new Date(m.createdDateTime) >= sinceDate
-        );
-        const label =
-          chat.topic ||
-          (chat.chatType === "oneOnOne" ? "Direct Message" : "Group Chat");
-        return { label, messages, count: messages.length };
-      })
-    );
-
-    for (const result of chatBundles) {
-      if (result.status === "fulfilled" && result.value.count > 0) {
-        conversations.push(result.value);
-      }
-    }
-  } catch (err) {
-    console.error("[api/ai/tldr] chats fetch failed:", err);
-  }
-
-  try {
-    const teamsRes = await client
-      .api("/me/joinedTeams")
-      .select("id,displayName")
-      .get();
-    const teams = (teamsRes.value as MSTeam[]).slice(0, 3);
-
-    for (const team of teams) {
-      try {
-        const chRes = await client
-          .api(`/teams/${team.id}/channels`)
-          .select("id,displayName")
-          .get();
-        const channels = (chRes.value as MSChannel[]).slice(0, 8);
-
-        const channelBundles = await Promise.allSettled(
-          channels.map(async (channel) => {
-            const res = await client
-              .api(`/teams/${team.id}/channels/${channel.id}/messages`)
-              .top(MESSAGES_PER_CONVERSATION)
-              .get();
-            const messages = (res.value as MSMessage[]).filter(
-              (m) => !m.deletedDateTime && new Date(m.createdDateTime) >= sinceDate
-            );
-            return {
-              label: `#${channel.displayName} (${team.displayName})`,
-              messages,
-              count: messages.length,
-            };
-          })
-        );
-
-        for (const result of channelBundles) {
-          if (result.status === "fulfilled" && result.value.count > 0) {
-            conversations.push(result.value);
-          }
-        }
-      } catch {
-        // continue with next team
-      }
-    }
-  } catch (err) {
-    console.error("[api/ai/tldr] teams fetch failed:", err);
-  }
+  const conversations: ConvBundle[] = await gatherConversations(client, sinceDate);
 
   conversations.sort((a, b) => b.count - a.count);
   const top = conversations.slice(0, MAX_CONVERSATIONS);
@@ -202,8 +94,6 @@ export async function GET(request: NextRequest) {
   const transcript = top
     .map((conv) => {
       const lines = conv.messages
-        .slice()
-        .sort((a, b) => new Date(a.createdDateTime).getTime() - new Date(b.createdDateTime).getTime())
         .map((m) => {
           const name = m.from?.user?.displayName ?? "Unknown";
           return `${name}: ${messageText(m)}`;
