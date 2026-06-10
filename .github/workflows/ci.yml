@@ -1,0 +1,33 @@
+name: CI
+
+# Build + type-check on every PR to main. Catches what `tsc` alone misses
+# (Next's react-hooks/rules-of-hooks lint, page-export restrictions) and keeps
+# Dependabot bumps honest. No secrets needed: `next build` doesn't execute the
+# dynamic API routes, so missing runtime env vars don't fail the build.
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build & type-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (Next.js)
+        run: npm run build
+
+      - name: Compile Electron main process
+        run: npm run electron:compile

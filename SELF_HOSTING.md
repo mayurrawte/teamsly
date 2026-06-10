@@ -70,9 +70,29 @@ NEXTAUTH_URL=http://localhost:3000   # change to your production URL for prod
 # Optional: MCP server secret (required only if using the MCP integration)
 TEAMSLY_MCP_SECRET=your-mcp-secret   # generate with: openssl rand -hex 32
 
-# Optional: Enable AI message summaries (requires Anthropic API key)
-NEXT_PUBLIC_AI_ENABLED=false
-ANTHROPIC_API_KEY=sk-ant-...         # only needed if AI is enabled
+# Optional: AI features (catch-up digests, action items, chat summaries)
+NEXT_PUBLIC_AI_ENABLED=false         # gates the inline chat-summary banner
+OPENAI_API_KEY=sk-...                # required for any AI feature to work
+AI_DAILY_REQUEST_LIMIT=50            # per-user/day cap (needs Redis below to enforce)
+
+# Optional: Voice rooms (LiveKit Cloud — https://cloud.livekit.io)
+# Without these, the voice-room UI returns 503.
+LIVEKIT_API_KEY=
+LIVEKIT_API_SECRET=
+NEXT_PUBLIC_LIVEKIT_URL=
+
+# Optional: near-real-time push via Graph change notifications.
+# Without it, channels/DMs fall back to a ~30s poll (still works).
+# Requires a publicly reachable URL (use an ngrok tunnel in local dev).
+GRAPH_WEBHOOK_BASE_URL=
+
+# Optional: Upstash Redis. When set, realtime push works reliably across
+# serverless instances AND the per-user AI quota is enforced. When unset, the
+# app uses an in-memory transport + the 30s poll, and the AI quota fails open.
+# The Upstash Vercel integration provisions the KV_* names; manual setups can
+# use the UPSTASH_* names instead.
+KV_REST_API_URL=                     # or UPSTASH_REDIS_REST_URL
+KV_REST_API_TOKEN=                   # or UPSTASH_REDIS_REST_TOKEN
 ```
 
 ---

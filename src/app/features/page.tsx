@@ -39,7 +39,7 @@ const GROUPS: Group[] = [
       {
         icon: Zap,
         title: "Real-time messages",
-        body: "DMs and channels update sub-second via Microsoft Graph change notifications — no waiting on a poll.",
+        body: "DMs and channels update in near-real-time via Microsoft Graph change notifications, with a fast poll as a fallback.",
       },
       {
         icon: Timer,
