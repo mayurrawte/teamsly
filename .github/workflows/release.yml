@@ -38,6 +38,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build Next standalone
+        run: npm run build
+
+      - name: Prepare standalone (copy static + public)
+        run: node scripts/prepare-standalone.mjs
+
       - name: Compile Electron main
         run: npm run electron:compile
 
