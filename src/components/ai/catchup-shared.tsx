@@ -26,7 +26,7 @@ export function NotConfiguredCard({ feature }: { feature: string }) {
     <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] p-5">
       <p className="mb-1 text-[14px] font-semibold text-[var(--text-primary)]">AI features not enabled</p>
       <p className="mb-4 text-[13px] text-[var(--text-secondary)]">
-        Add your Anthropic API key to unlock {feature}.
+        Add your OpenAI API key to unlock {feature}.
       </p>
       <div className="flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--message-bg)] px-3 py-2">
         <code className="flex-1 text-[12px] text-[var(--text-secondary)]">OPENAI_API_KEY</code>
