@@ -22,6 +22,7 @@ import { signOut } from "next-auth/react";
 import { clearAll as clearMessageCache } from "@/lib/storage/message-cache";
 import { clearAll as clearDraftsCache } from "@/lib/storage/drafts";
 import { clearAll as clearBookmarksCache } from "@/lib/storage/bookmarks";
+import { clearAllReminders } from "@/lib/storage/reminders";
 import { PreferencesModal } from "@/components/modals/PreferencesModal";
 import { FeedbackModal } from "@/components/modals/FeedbackModal";
 import { useWorkspaceStore } from "@/store/workspace";
@@ -32,7 +33,7 @@ async function handleSignOut() {
   // Drop the IDB caches before redirect so a previous user's messages,
   // drafts, and saved bookmarks don't leak to the next sign-in on the
   // same device.
-  await Promise.all([clearMessageCache(), clearDraftsCache(), clearBookmarksCache()]);
+  await Promise.all([clearMessageCache(), clearDraftsCache(), clearBookmarksCache(), clearAllReminders()]);
   await signOut({ callbackUrl: "/" });
 }
 
