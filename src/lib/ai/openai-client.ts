@@ -8,7 +8,12 @@ let cached: OpenAI | null | undefined;
 export function getOpenAI(): OpenAI | null {
   if (cached !== undefined) return cached;
   const key = process.env.OPENAI_API_KEY;
-  cached = key ? new OpenAI({ apiKey: key }) : null;
+  // OPENAI_BASE_URL lets this point at any OpenAI-compatible endpoint — e.g.
+  // an Azure AI Foundry deployment's `/openai/v1/` surface (model = deployment
+  // name). Unset → the SDK default (api.openai.com).
+  cached = key
+    ? new OpenAI({ apiKey: key, baseURL: process.env.OPENAI_BASE_URL })
+    : null;
   return cached;
 }
 
