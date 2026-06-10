@@ -91,8 +91,8 @@ async function sweepAllScheduledDms() {
 
 async function handleSignOut() {
   // Drop the IDB caches before redirect so a previous user's messages,
-  // drafts, and saved bookmarks don't leak to the next sign-in on the
-  // same device.
+  // drafts, saved bookmarks, reminders, and scheduled sends don't leak to
+  // the next sign-in on the same device.
   await Promise.all([clearMessageCache(), clearDraftsCache(), clearBookmarksCache(), clearAllScheduled(), clearAllReminders()]);
   await signOut({ callbackUrl: "/" });
 }
