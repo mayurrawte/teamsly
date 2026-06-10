@@ -103,6 +103,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async session({ session, token }) {
       session.accessToken = token.accessToken as string;
+      session.userId = (token.sub as string) ?? "";
       if (token.error) {
         (session as unknown as { error?: string }).error = token.error as string;
       }

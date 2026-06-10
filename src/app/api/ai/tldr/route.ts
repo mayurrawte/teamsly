@@ -1,4 +1,5 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { getOpenAI, chatComplete } from "@/lib/ai/openai-client";
+import { consume, refund } from "@/lib/ai/usage-quota";
 import { auth } from "@/lib/auth/config";
 import { getGraphClient } from "@/lib/graph/client";
 import { NextRequest, NextResponse } from "next/server";
@@ -15,13 +16,14 @@ interface CacheEntry {
 }
 
 interface TldrResponse {
-  status: "ok" | "not_configured" | "error";
+  status: "ok" | "not_configured" | "error" | "rate_limited";
   generatedAt?: string;
   since?: string;
   conversationCount?: number;
   cached: boolean;
   digest?: string;
   message?: string;
+  resetAt?: number;
 }
 
 const cache = new Map<string, CacheEntry>();
@@ -32,11 +34,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!getOpenAI()) {
     return NextResponse.json({
       status: "not_configured",
       cached: false,
-      message: "Set ANTHROPIC_API_KEY in Vercel env to enable AI digests.",
+      message: "Set OPENAI_API_KEY in Vercel env to enable AI digests.",
     } satisfies TldrResponse);
   }
 
@@ -103,13 +105,25 @@ export async function GET(request: NextRequest) {
     })
     .join("\n\n");
 
+  const quota = await consume(session.userId);
+  if (!quota.allowed) {
+    return NextResponse.json(
+      {
+        status: "rate_limited",
+        cached: false,
+        message: "You've reached today's AI limit.",
+        resetAt: quota.resetAt,
+      } satisfies TldrResponse,
+      { status: 429 }
+    );
+  }
+
   let digest = "";
   try {
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1500,
-      messages: [
+    const openai = getOpenAI()!;
+    const completion = await chatComplete(
+      openai,
+      [
         {
           role: "user",
           content: `You are a chat catch-up assistant. The user has been away. Summarize the conversations below into a digest. For each conversation that has actionable content, output:
@@ -123,16 +137,14 @@ Be concise. Use markdown. No preamble.
 ${transcript}`,
         },
       ],
-    });
-
-    digest = response.content
-      .map((block) => (block.type === "text" ? block.text : ""))
-      .join("")
-      .trim();
+      { maxTokens: 1800 }
+    );
+    digest = completion.choices[0]?.message?.content?.trim() ?? "";
   } catch (err) {
-    console.error("[api/ai/tldr] Anthropic request failed:", err);
+    console.error("[api/ai/tldr] OpenAI request failed:", err);
+    await refund(session.userId);
     return NextResponse.json(
-      { status: "error", cached: false, message: "AI digest generation failed" },
+      { status: "error", cached: false, message: "AI digest generation failed" } satisfies TldrResponse,
       { status: 502 }
     );
   }

@@ -116,19 +116,19 @@ export default function PrivacyPage() {
           <section>
             <h2 className="mb-3 text-[16px] font-bold text-white">5. AI Features</h2>
             <p>
-              If AI message summaries are enabled (via <code className="rounded bg-[#1a1d21] px-1 py-0.5 text-[#818CF8]">NEXT_PUBLIC_AI_ENABLED</code>),
-              the last 30 messages from the active chat are sent to the Anthropic API to generate
-              a summary. This data is subject to{" "}
+              If AI features are enabled (catch-up digests, action items, and chat summaries),
+              the relevant recent messages are sent to the OpenAI API to generate the result.
+              This data is subject to{" "}
               <a
-                href="https://www.anthropic.com/privacy"
+                href="https://openai.com/policies/privacy-policy"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#818CF8] hover:text-white transition-colors"
               >
-                Anthropic&apos;s privacy policy
+                OpenAI&apos;s privacy policy
               </a>
-              . Anthropic does not use API inputs to train models by default. AI summaries are
-              opt-in and disabled by default.
+              . OpenAI does not use data submitted via its API to train its models by default. AI
+              features are opt-in and disabled unless an API key is configured.
             </p>
           </section>
 

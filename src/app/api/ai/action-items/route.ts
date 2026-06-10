@@ -1,4 +1,5 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { getOpenAI, chatComplete } from "@/lib/ai/openai-client";
+import { consume, refund } from "@/lib/ai/usage-quota";
 import { auth } from "@/lib/auth/config";
 import { getGraphClient } from "@/lib/graph/client";
 import {
@@ -14,12 +15,13 @@ const MAX_CONVERSATIONS = 12;
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
 interface ActionItemsResponse {
-  status: "ok" | "not_configured" | "error";
+  status: "ok" | "not_configured" | "error" | "rate_limited";
   generatedAt?: string;
   since?: string;
   cached: boolean;
   items?: ActionItem[];
   message?: string;
+  resetAt?: number;
 }
 
 interface CacheEntry {
@@ -39,45 +41,33 @@ interface RawItem {
   messageIndex: number | null;
 }
 
-const ACTION_ITEMS_TOOL: Anthropic.Tool = {
-  name: "report_action_items",
-  description:
-    "Report the action items extracted from the conversations. Reference each item's source by the integer indices shown in the transcript.",
-  input_schema: {
-    type: "object",
-    properties: {
+const ACTION_ITEMS_SCHEMA = {
+  type: "object",
+  properties: {
+    items: {
+      type: "array",
       items: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            task: { type: "string", description: "The action, phrased imperatively and concisely." },
-            owner: {
-              type: ["string", "null"],
-              description: "Display name of who owns it, or null if unassigned.",
-            },
-            ownership: {
-              type: "string",
-              enum: ["you", "waiting", "team"],
-              description:
-                "'you' = the current user must do it; 'waiting' = the current user is blocked on / delegated it to someone else; 'team' = a general team task with no clear owner.",
-            },
-            conversationIndex: {
-              type: "integer",
-              description: "Index of the conversation (the [Conversation N] header) the item came from.",
-            },
-            messageIndex: {
-              type: ["integer", "null"],
-              description: "Index of the specific source message within that conversation, or null.",
-            },
+        type: "object",
+        properties: {
+          task: { type: "string", description: "The action, phrased imperatively and concisely." },
+          owner: { type: ["string", "null"], description: "Display name of who owns it, or null." },
+          ownership: {
+            type: "string",
+            enum: ["you", "waiting", "team"],
+            description:
+              "'you' = the current user must do it; 'waiting' = the user is blocked on / delegated it to someone else; 'team' = a general task with no clear owner.",
           },
-          required: ["task", "owner", "ownership", "conversationIndex", "messageIndex"],
+          conversationIndex: { type: "integer", description: "Index of the [Conversation N] header." },
+          messageIndex: { type: ["integer", "null"], description: "Index of the source message [N], or null." },
         },
+        required: ["task", "owner", "ownership", "conversationIndex", "messageIndex"],
+        additionalProperties: false,
       },
     },
-    required: ["items"],
-  } satisfies Anthropic.Tool["input_schema"],
-};
+  },
+  required: ["items"],
+  additionalProperties: false,
+} as const;
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -85,11 +75,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!getOpenAI()) {
     return NextResponse.json({
       status: "not_configured",
       cached: false,
-      message: "Set ANTHROPIC_API_KEY in Vercel env to enable AI action items.",
+      message: "Set OPENAI_API_KEY in Vercel env to enable AI action items.",
     } satisfies ActionItemsResponse);
   }
 
@@ -145,15 +135,25 @@ export async function GET(request: NextRequest) {
     })
     .join("\n\n");
 
+  const quota = await consume(session.userId);
+  if (!quota.allowed) {
+    return NextResponse.json(
+      {
+        status: "rate_limited",
+        cached: false,
+        message: "You've reached today's AI limit.",
+        resetAt: quota.resetAt,
+      } satisfies ActionItemsResponse,
+      { status: 429 }
+    );
+  }
+
   let raw: RawItem[] = [];
   try {
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 2000,
-      tools: [ACTION_ITEMS_TOOL],
-      tool_choice: { type: "tool", name: "report_action_items" },
-      messages: [
+    const openai = getOpenAI()!;
+    const completion = await chatComplete(
+      openai,
+      [
         {
           role: "user",
           content: `You extract concrete action items from Microsoft Teams conversations for ${meName} (user id ${meId}).
@@ -170,15 +170,20 @@ Conversations:
 ${transcript}`,
         },
       ],
-    });
-
-    const toolUse = response.content.find(
-      (b): b is Anthropic.ToolUseBlock => b.type === "tool_use"
+      {
+        maxTokens: 2500,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: { name: "action_items", strict: true, schema: ACTION_ITEMS_SCHEMA as unknown as Record<string, unknown> },
+        },
+      }
     );
-    const input = toolUse?.input as { items?: RawItem[] } | undefined;
-    raw = Array.isArray(input?.items) ? input!.items : [];
+    const content = completion.choices[0]?.message?.content;
+    const parsed = content ? (JSON.parse(content) as { items?: RawItem[] }) : undefined;
+    raw = Array.isArray(parsed?.items) ? parsed!.items : [];
   } catch (err) {
-    console.error("[api/ai/action-items] Anthropic request failed:", err);
+    console.error("[api/ai/action-items] OpenAI request failed:", err);
+    await refund(session.userId);
     return NextResponse.json(
       { status: "error", cached: false, message: "AI extraction failed" } satisfies ActionItemsResponse,
       { status: 502 }
