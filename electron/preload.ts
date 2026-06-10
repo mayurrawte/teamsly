@@ -100,4 +100,11 @@ contextBridge.exposeInMainWorld('electron', {
   },
   /** Whether this platform supports silent auto-install (false on unsigned macOS). */
   isAutoInstallSupported: (): boolean => AUTO_INSTALL_SUPPORTED,
+  /** True when running in the packaged/desktop app (always true here). */
+  isDesktop: (): true => true,
+  /** Which BYO keys are currently set (names→boolean; never the values). */
+  getByoStatus: (): Promise<Record<string, boolean>> => ipcRenderer.invoke('byo:status'),
+  /** Save BYO keys (empty string deletes one). Returns the new status map. */
+  setByoKeys: (partial: Record<string, string>): Promise<Record<string, boolean>> =>
+    ipcRenderer.invoke('byo:set', partial),
 });
