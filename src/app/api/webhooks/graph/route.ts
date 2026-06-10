@@ -3,6 +3,7 @@ import { transport } from "@/lib/realtime/pubsub";
 
 interface GraphNotification {
   subscriptionId: string;
+  clientState?: string;
   resourceData?: { id?: string };
 }
 
@@ -30,6 +31,12 @@ export async function POST(req: NextRequest) {
     const record = await transport.getSub(notification.subscriptionId);
     if (!record) {
       console.warn("[webhooks/graph] unknown subscriptionId", notification.subscriptionId);
+      continue;
+    }
+    // Reject forged notifications: the clientState must match the secret we
+    // generated when creating the subscription. subscriptionIds are not secret.
+    if (!notification.clientState || notification.clientState !== record.clientState) {
+      console.warn("[webhooks/graph] clientState mismatch for", notification.subscriptionId);
       continue;
     }
     const messageId = notification.resourceData?.id;
