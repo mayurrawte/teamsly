@@ -40,6 +40,7 @@ import {
   type Density,
 } from "@/store/preferences";
 import { playNotificationTone } from "@/lib/utils/sound";
+import { DesktopAiKeys } from "@/components/desktop/DesktopAiKeys";
 
 // ─── Nav sections ────────────────────────────────────────────────────────────
 
@@ -982,6 +983,7 @@ function AdvancedPanel() {
           Reset to defaults
         </button>
       </FieldGroup>
+      <DesktopAiKeys />
     </div>
   );
 }

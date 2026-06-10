@@ -12,12 +12,12 @@ The wrapper loads its UI from `TEAMSLY_URL`:
 | Mode | Default | Override |
 |---|---|---|
 | Development | `http://localhost:3000` | `TEAMSLY_URL=...` |
-| Production | `https://teamsly.vercel.app` | `TEAMSLY_URL=...` |
+| Production | `http://127.0.0.1:<dynamic port>` (bundled standalone) | `TEAMSLY_URL=...` |
 
-In production, set `TEAMSLY_URL` to your hosted instance (Vercel, self-hosted,
-etc.). For a single-binary self-hosted build that ships the Next.js server
-inside the app, see *Bundling the server* below — that path is not implemented
-yet.
+In packaged (production) builds the app spawns the bundled `.next/standalone`
+server on a free loopback port (`127.0.0.1`) and the renderer window loads from
+it — no internet connection or hosted instance is required for the UI itself.
+The dynamic port is chosen at launch and is never exposed outside the machine.
 
 ## Desktop features
 
@@ -114,15 +114,46 @@ and need to right-click → Open the first time; Windows users will see a
 SmartScreen warning. For an OSS project this is acceptable until you have a
 real budget for certificates.
 
-## Bundling the server (TODO)
+## Local-first server (packaged builds)
 
-To ship a true single-binary that doesn't require a hosted instance:
+Packaged builds ship the compiled Next.js app as a bundled standalone server
+inside `resources/standalone/`. At launch `electron/server.ts` resolves
+`process.resourcesPath/standalone/server.js`, spawns it as a child process on a
+dynamically chosen loopback port (`127.0.0.1:<port>`), and loads that URL in
+the renderer once the server responds. Nothing is fetched from a remote host for
+the UI.
 
-1. Add `output: 'standalone'` to `next.config.ts`.
-2. Run `next build` and copy `.next/standalone/` into the Electron app
-   resources.
-3. In `main.ts`, spawn the standalone server as a child process on a free port
-   and load `http://127.0.0.1:<port>` once it responds.
+### Auth — PKCE public client
 
-This is the path most desktop apps that wrap a web stack take. It is not
-implemented in this scaffold; it is a separate piece of work.
+Microsoft sign-in uses the Authorization Code + PKCE flow with no client
+secret. Sign-in opens in the system browser and redirects back to the local
+server's loopback callback (`http://localhost:<port>/api/auth/callback/microsoft-entra-id`).
+For this to work you must add an `http://localhost` redirect URI to the Azure
+app registration under **Authentication → Mobile and desktop applications**. The
+exact port does not need to be specified — Azure accepts any port on
+`http://localhost` for public/native clients.
+
+### AI features — BYO keys
+
+AI capabilities (catch-up digests, TL;DR, action-item extraction) and voice
+rooms rely on keys you supply yourself. Enter them in **Preferences → Advanced**
+inside the app:
+
+- **OpenAI / Azure key** (+ optional base URL) — powers the AI features.
+- **LiveKit** API key, secret, and URL — power voice rooms.
+
+Keys are stored via Electron `safeStorage` (OS keychain) and are injected only
+into the local server process; they are never sent anywhere except the
+respective provider APIs.
+
+### Release build process
+
+The CI release workflow (`release.yml`) follows this order:
+
+1. `npm ci` — install dependencies.
+2. `npm run build` — run `next build` (produces `.next/standalone`).
+3. `node scripts/prepare-standalone.mjs` — copies `.next/static` and `public/`
+   into `.next/standalone` so the server can serve static assets.
+4. `npm run electron:compile` — TypeScript-compile the Electron main process.
+5. `electron-builder` — packages everything; `extraResources` maps
+   `.next/standalone` → `resources/standalone` inside the app bundle.

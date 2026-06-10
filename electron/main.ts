@@ -1,14 +1,15 @@
 import { app, BrowserWindow, Menu, Tray, ipcMain, nativeImage, shell } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import path from 'path';
+import { startLocalServer, type LocalServer } from './server';
+import { ensureAuthSecret, loadByoKeys, saveByoKeys, byoKeyStatus } from './secrets';
 
 const isDev = !app.isPackaged;
 
-// Where the renderer loads from. In dev, point at the Next.js dev server.
-// In production, set TEAMSLY_URL to your hosted instance, or bundle a Next.js
-// standalone build and spawn it locally (see electron/README.md).
-const TEAMSLY_URL =
-  process.env.TEAMSLY_URL || (isDev ? 'http://localhost:3000' : 'https://teamsly.vercel.app');
+// Resolved at startup: dev → Next dev server; packaged → the local bundled
+// server we spawn (set in whenReady). An explicit TEAMSLY_URL still overrides.
+let appUrl = process.env.TEAMSLY_URL || 'http://localhost:3000';
+let localServer: LocalServer | null = null;
 
 // In dev the app name defaults to "Electron" (the name of the dev binary), so
 // the macOS menu bar, About panel, and notification source all read "Electron".
@@ -305,11 +306,11 @@ function createWindow(): void {
   mainWindow.webContents.on('did-fail-load', (_event, errorCode, _desc, _url, isMainFrame) => {
     // ERR_ABORTED (-3) fires on ordinary in-app navigations; ignore it + subframes.
     if (!isMainFrame || errorCode === -3) return;
-    void mainWindow?.loadURL(offlineFallbackUrl(TEAMSLY_URL));
+    void mainWindow?.loadURL(offlineFallbackUrl(appUrl));
     mainWindow?.show();
   });
 
-  void mainWindow.loadURL(TEAMSLY_URL);
+  void mainWindow.loadURL(appUrl);
 
   // Native right-click menu: spelling suggestions + Cut/Copy/Paste/Select All,
   // with DevTools only in dev. Packaged builds previously suppressed the menu
@@ -399,15 +400,40 @@ ipcMain.on('window-is-focused', (event) => {
   event.returnValue = mainWindow?.isFocused() ?? false;
 });
 
+// BYO keys: the renderer only ever sees which keys are SET (booleans), never
+// the values. Saved keys take effect on the next app launch (server respawn).
+ipcMain.handle('byo:status', () => byoKeyStatus());
+ipcMain.handle('byo:set', (_event, partial: Record<string, string>) => {
+  saveByoKeys(partial ?? {});
+  return byoKeyStatus();
+});
+
 // ─── App lifecycle ────────────────────────────────────────────────────────────
 
-void app.whenReady().then(() => {
+void app.whenReady().then(async () => {
   buildAppMenu();
   tray = buildTrayIcon();
+
+  // Packaged builds load from a locally-spawned Next server (local-first).
+  // Dev and explicit-TEAMSLY_URL builds keep their remote/dev URL.
+  if (!isDev && !process.env.TEAMSLY_URL) {
+    try {
+      localServer = await startLocalServer({
+        AUTH_SECRET: ensureAuthSecret(),
+        DESKTOP_MODE: '1',
+        AZURE_AD_CLIENT_ID: process.env.AZURE_AD_CLIENT_ID ?? '377aa8a2-24d1-4d6e-8eca-e347864c9880',
+        AZURE_AD_TENANT_ID: process.env.AZURE_AD_TENANT_ID ?? 'common',
+        ...loadByoKeys(),
+      });
+      appUrl = localServer.baseUrl;
+    } catch (err) {
+      console.error('[main] local server failed to start:', (err as Error).message);
+    }
+  }
+
   createWindow();
   setupAutoUpdater();
 
-  // Silent startup check — do not block the window from loading.
   if (!isDev) {
     void autoUpdater.checkForUpdates().catch((err: Error) => {
       console.error('[auto-updater] startup check failed:', err.message);

@@ -12,6 +12,9 @@
     "electron/build-resources/**/*",
     "package.json"
   ],
+  "extraResources": [
+    { "from": ".next/standalone", "to": "standalone" }
+  ],
   "extraMetadata": {
     "main": "electron/dist/main.js"
   },

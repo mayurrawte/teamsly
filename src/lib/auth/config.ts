@@ -1,6 +1,8 @@
 import NextAuth from "next-auth";
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
 
+const DESKTOP = process.env.DESKTOP_MODE === "1";
+
 const SCOPE = [
   "openid",
   "profile",
@@ -25,11 +27,13 @@ async function refreshAccessToken(refreshToken: string) {
   const url = `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`;
   const params = new URLSearchParams({
     client_id: process.env.AZURE_AD_CLIENT_ID!,
-    client_secret: process.env.AZURE_AD_CLIENT_SECRET!,
     grant_type: "refresh_token",
     refresh_token: refreshToken,
     scope: SCOPE,
   });
+  if (!DESKTOP) {
+    params.set("client_secret", process.env.AZURE_AD_CLIENT_SECRET!);
+  }
 
   const response = await fetch(url, {
     method: "POST",
@@ -57,12 +61,25 @@ async function refreshAccessToken(refreshToken: string) {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // The bundled desktop server runs on a loopback host under NODE_ENV=production
+  // with no VERCEL/AUTH_URL, so NextAuth would otherwise default trustHost to
+  // false and reject every /api/auth request (UntrustedHost). Trust the host
+  // only in desktop mode — on web this key is absent, so Vercel's own
+  // env-based detection (VERCEL=1 → true) is preserved unchanged.
+  ...(DESKTOP ? { trustHost: true } : {}),
   providers: [
     MicrosoftEntraID({
       clientId: process.env.AZURE_AD_CLIENT_ID!,
-      clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
+      ...(DESKTOP ? {} : { clientSecret: process.env.AZURE_AD_CLIENT_SECRET! }),
       issuer: `https://login.microsoftonline.com/${process.env.AZURE_AD_TENANT_ID ?? "common"}/v2.0`,
       authorization: { params: { scope: SCOPE } },
+      // Desktop is a public client: no secret; prove possession via PKCE.
+      ...(DESKTOP
+        ? {
+            client: { token_endpoint_auth_method: "none" as const },
+            checks: ["pkce", "state"] as ("pkce" | "state")[],
+          }
+        : {}),
     }),
   ],
   callbacks: {
