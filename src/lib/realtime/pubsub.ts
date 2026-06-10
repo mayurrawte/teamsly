@@ -14,12 +14,16 @@ export type SubscriptionRecord =
       teamId: string;
       channelId: string;
       expiresAt: number;
+      /** Secret echoed by Graph in every notification; validates the webhook caller. */
+      clientState: string;
     }
   | {
       userId: string;
       resourceType: "chat_message";
       chatId: string;
       expiresAt: number;
+      /** Secret echoed by Graph in every notification; validates the webhook caller. */
+      clientState: string;
     };
 
 // Dedup/index key for a subscription target. One source of truth.

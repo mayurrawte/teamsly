@@ -1,3 +1,4 @@
+import { auth } from "@/lib/auth/config";
 import { NextRequest, NextResponse } from "next/server";
 
 // Tenor's officially documented demo key — published in their own API docs for
@@ -6,6 +7,12 @@ import { NextRequest, NextResponse } from "next/server";
 const TENOR_KEY = process.env.TENOR_API_KEY ?? "LIVDSRZULELA096";
 
 export async function GET(req: NextRequest) {
+  // Gate behind a session so anonymous traffic can't burn the Tenor key.
+  const session = await auth();
+  if (!session?.accessToken) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const q = req.nextUrl.searchParams.get("q") ?? "";
   const limit = Math.min(Number(req.nextUrl.searchParams.get("limit") ?? "20"), 50);
   const pos = req.nextUrl.searchParams.get("pos") ?? "";

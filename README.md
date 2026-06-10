@@ -64,7 +64,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
   "mcpServers": {
     "teamsly": {
       "command": "npx",
-      "args": ["tsx", "/path/to/teamsly/mcp-server/index.ts"]
+      "args": ["-y", "@teamsly/mcp"]
     }
   }
 }
@@ -76,7 +76,7 @@ On first run, the server prints a URL and short code to the Claude Desktop logs.
 
 **Claude Code CLI:**
 ```bash
-claude mcp add teamsly -- npx tsx /path/to/teamsly/mcp-server/index.ts
+claude mcp add teamsly -- npx -y @teamsly/mcp
 ```
 
 ### Available tools

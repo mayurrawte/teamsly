@@ -24,6 +24,12 @@ export async function POST(req: Request) {
   const userId = session.user.id;
   const now = Date.now();
 
+  // Per-subscription secret. Graph echoes it in every notification; the webhook
+  // handler rejects any payload whose clientState doesn't match the stored value.
+  const clientState = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
   let rkey: string;
   let resource: string;
   let makeRecord: (expiresAt: number) => SubscriptionRecord;
@@ -39,6 +45,7 @@ export async function POST(req: Request) {
       resourceType: "chat_message",
       chatId,
       expiresAt,
+      clientState,
     });
   } else if (teamId && channelId && URL_SAFE.test(teamId) && URL_SAFE.test(channelId)) {
     rkey = resourceKey({ kind: "channel", teamId, channelId });
@@ -49,6 +56,7 @@ export async function POST(req: Request) {
       teamId,
       channelId,
       expiresAt,
+      clientState,
     });
   } else {
     return NextResponse.json(
@@ -83,9 +91,7 @@ export async function POST(req: Request) {
     // carries the message id; the client re-fetches the message content.
     includeResourceData: false,
     expirationDateTime,
-    clientState: Array.from(crypto.getRandomValues(new Uint8Array(8)))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join(""),
+    clientState,
   };
 
   const res = await fetch("https://graph.microsoft.com/v1.0/subscriptions", {
