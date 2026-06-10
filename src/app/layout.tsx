@@ -81,7 +81,7 @@ export const metadata: Metadata = {
     title: "Teamsly — A modern Microsoft Teams client",
     description:
       "Real-time chat, AI catch-up digests, voice rooms, and a keyboard-first workflow. Sign in with your Microsoft account.",
-    images: [{ url: "/og.svg", width: 1200, height: 630, alt: "Teamsly" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Teamsly" }],
     locale: "en_US",
   },
   twitter: {
@@ -89,7 +89,7 @@ export const metadata: Metadata = {
     title: "Teamsly — A modern Microsoft Teams client",
     description:
       "Real-time chat, AI catch-up digests, voice rooms, and a keyboard-first workflow.",
-    images: ["/og.svg"],
+    images: ["/og.png"],
   },
   robots: {
     index: true,
