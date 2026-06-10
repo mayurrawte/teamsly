@@ -63,7 +63,7 @@ Before requesting review:
 
 - [ ] Tests / lint / type-check pass locally
 - [ ] CLA is signed (the bot will prompt on PR open)
-- [ ] STATUS.md updated if you shipped a tracked feature
+- [ ] Linked the relevant GitHub issue (see Project #2 for the roadmap)
 - [ ] No unrelated changes mixed into the same PR
 
 ## License
