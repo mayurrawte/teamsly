@@ -14,7 +14,7 @@ export function SkeletonCard() {
   );
 }
 
-/** The "AI not enabled — set ANTHROPIC_API_KEY" card, shared by both tabs. */
+/** The "AI not enabled — set OPENAI_API_KEY" card, shared by both tabs. */
 export function NotConfiguredCard({ feature }: { feature: string }) {
   const [copied, setCopied] = useState(false);
   function handleCopy() {
