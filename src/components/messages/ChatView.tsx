@@ -18,7 +18,7 @@ import { openTeamsCall } from "@/lib/utils/teams-deeplink";
 import { getChatLabel } from "@/lib/utils/chat-label";
 import { VoiceTrigger } from "@/components/voice/VoiceTrigger";
 import { isDisappearing, unwrapMessage, wrapMessage, UNDECODABLE_BLOB_GRACE_MS } from "@/lib/utils/disappear";
-import { useRealtimeEvents } from "@/hooks/useRealtimeEvents";
+import { useRealtimeEvents, useRealtimeHealth } from "@/hooks/useRealtimeEvents";
 import { useScheduledStore } from "@/store/scheduled";
 
 export function ChatView({ chatId }: { chatId: string }) {
@@ -45,6 +45,8 @@ export function ChatView({ chatId }: { chatId: string }) {
   const isHydrated = useWorkspaceStore((s) => s.isHydrated);
   // First-load flag for THIS chat only — a cached chat never shows the skeleton.
   const loadingThisChat = useWorkspaceStore((s) => s.loadingContexts[chatId] ?? false);
+  const upsertMessage = useWorkspaceStore((s) => s.upsertMessage);
+  const sseHealthy = useRealtimeHealth();
   const scheduledMessages = useScheduledStore((s) => s.scheduled);
   const addScheduled = useScheduledStore((s) => s.addScheduled);
   const removeScheduled = useScheduledStore((s) => s.removeScheduled);
@@ -252,8 +254,9 @@ export function ChatView({ chatId }: { chatId: string }) {
     loadRef.current = load;
     load();
 
-    // Webhook push is primary; poll kept at 30s as safety net for missed events.
-    const interval = setInterval(load, 30_000);
+    // Webhook push is primary; when SSE is healthy, poll less frequently (2 min)
+    // and fall back to 30 s when SSE is degraded.
+    const interval = setInterval(load, sseHealthy ? 120_000 : 30_000);
 
     // Disappearing-message sweep stays on a fast cadence, decoupled from the
     // message fetch. It's network-free unless one of our own messages has
@@ -292,16 +295,19 @@ export function ChatView({ chatId }: { chatId: string }) {
     };
     // getMessages is a stable selector — intentionally not in deps to avoid re-running on cache updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chatId, isHydrated, setContextLoading, setMessages, showToast, sweepExpired, sweepScheduled]);
+  }, [chatId, isHydrated, sseHealthy, setContextLoading, setMessages, showToast, sweepExpired, sweepScheduled]);
 
   useRealtimeEvents(
     useCallback(
       (event) => {
         if (event.type === "chat_message" && event.chatId === chatId) {
-          void loadRef.current();
+          fetch(`/api/chats/${chatId}/messages/${encodeURIComponent(event.messageId)}`)
+            .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+            .then((msg: MSMessage) => upsertMessage(chatId, msg))
+            .catch(() => void loadRef.current());
         }
       },
-      [chatId]
+      [chatId, upsertMessage]
     )
   );
 
