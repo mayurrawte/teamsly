@@ -92,6 +92,10 @@ interface WorkspaceState {
    */
   setMessages: (contextId: string, messages: MSMessage[]) => void;
   appendMessage: (contextId: string, message: MSMessage) => void;
+  /** Add a single message if new, or replace it in place if it already exists
+   * (by id). Preserves the array slot + every other message's object identity
+   * so memoized rows don't re-render. Used by the realtime push path. */
+  upsertMessage: (contextId: string, message: MSMessage) => void;
   appendPendingMessage: (contextId: string, message: MSMessage) => void;
   replaceMessage: (contextId: string, tempId: string, serverMessage: MSMessage) => void;
   markMessageFailed: (contextId: string, tempId: string) => void;
@@ -203,7 +207,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           const pending = existing.filter((m) => m.__pending || m.__failed);
           const serverIds = new Set(filtered.map((m) => m.id));
           const uniquePending = pending.filter((m) => !serverIds.has(m.id));
-          const merged = trimToMax(sortByCreatedDateTime([...filtered, ...uniquePending]));
+          // Reuse the existing object for any message whose id + lastModified
+          // are unchanged, so React.memo'd rows don't re-render on reconcile.
+          const byId = new Map(existing.map((m) => [m.id, m]));
+          const reused = filtered.map((m) => {
+            const prev = byId.get(m.id);
+            return prev && prev.lastModifiedDateTime === m.lastModifiedDateTime ? prev : m;
+          });
+          const merged = trimToMax(sortByCreatedDateTime([...reused, ...uniquePending]));
           persistContext(contextId, merged);
           return {
             messagesByContext: { ...s.messagesByContext, [contextId]: merged },
@@ -231,6 +242,24 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           return {
             messagesByContext: { ...s.messagesByContext, [contextId]: next },
           };
+        }),
+
+      upsertMessage: (contextId, message) =>
+        set((s) => {
+          if (s.expiredMessageIds.has(message.id)) return s;
+          const existing = s.messagesByContext[contextId] ?? [];
+          const idx = existing.findIndex((m) => m.id === message.id);
+          let next: MSMessage[];
+          if (idx >= 0) {
+            if (existing[idx].lastModifiedDateTime === message.lastModifiedDateTime) return s;
+            next = [...existing];
+            next[idx] = message;
+            next = sortByCreatedDateTime(next);
+          } else {
+            next = trimToMax(sortByCreatedDateTime([...existing, message]));
+          }
+          persistContext(contextId, next);
+          return { messagesByContext: { ...s.messagesByContext, [contextId]: next } };
         }),
 
       appendPendingMessage: (contextId, message) =>
