@@ -76,6 +76,10 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
 
+  const INITIAL_CAP = 100;
+  const CAP_STEP = 100;
+  const [visibleCount, setVisibleCount] = useState(INITIAL_CAP);
+
   useSmartNotifications({ messages, contextName, contextId, contextKind, currentUserId });
 
   // Detect whether the user is near the bottom of the scroll container.
@@ -110,6 +114,7 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
     prevMessageCountRef.current = 0;
     setIsNearBottom(true);
     setNewMessagesCount(0);
+    setVisibleCount(INITIAL_CAP);
   }, [contextId]);
 
   // On initial load or context change: once messages are present and not
@@ -134,7 +139,7 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
     if (curr > prev) {
       const incoming = curr - prev;
       if (isNearBottom) {
-        scrollToBottom("instant");
+        scrollToBottom("smooth");
       } else {
         setNewMessagesCount((n) => n + incoming);
       }
@@ -172,6 +177,13 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
     // array changing under it.
     const scroll = scrollRef.current;
     if (!scroll) return;
+
+    const fullIdx = messages.findIndex((m) => m.id === anchorMessageId);
+    if (fullIdx >= 0 && messages.length - fullIdx > visibleCount) {
+      setVisibleCount(messages.length - fullIdx + 10);
+      return; // re-runs after the slice grows (messages.length / visibleCount dep) and the row mounts
+    }
+
     const node = scroll.querySelector<HTMLElement>(
       `[data-message-id="${cssEscape(anchorMessageId)}"]`
     );
@@ -198,9 +210,14 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
     return () => window.clearTimeout(giveUp);
     // Re-run when the array length changes so we re-try once the target row
     // is added by a polling refetch.
-  }, [anchorMessageId, loading, messages.length, onAnchorConsumed]);
+  }, [anchorMessageId, loading, messages, messages.length, onAnchorConsumed, visibleCount]);
 
-  const meta = useMemo(() => computeMeta(messages), [messages]);
+  const visible = useMemo(
+    () => (messages.length > visibleCount ? messages.slice(-visibleCount) : messages),
+    [messages, visibleCount]
+  );
+  const meta = useMemo(() => computeMeta(visible), [visible]);
+  const hasOlder = messages.length > visible.length;
 
   // Show skeleton only on first load (no messages yet). During background
   // polling refreshes (loading=true but messages already present) keep the
@@ -221,7 +238,24 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
             No messages yet. Say hello!
           </div>
         )}
-        {messages.map((msg, idx) => (
+        {hasOlder && (
+          <button
+            type="button"
+            onClick={() => {
+              const el = scrollRef.current;
+              const before = el?.scrollHeight ?? 0;
+              setVisibleCount((c) => c + CAP_STEP);
+              requestAnimationFrame(() => {
+                const el2 = scrollRef.current;
+                if (el2) el2.scrollTop += el2.scrollHeight - before;
+              });
+            }}
+            className="mx-auto my-2 rounded-full border border-[var(--border)] bg-[var(--surface-raised)] px-3 py-1 text-[12px] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          >
+            Load older messages
+          </button>
+        )}
+        {visible.map((msg, idx) => (
           <Fragment key={msg.id}>
             {meta[idx].showDivider && <DateDivider date={msg.createdDateTime} />}
             <MessageItem
