@@ -300,6 +300,12 @@ function createWindow(): void {
   // Reveal once the first frame is painted — the no-flash launch.
   mainWindow.once('ready-to-show', () => mainWindow?.show());
 
+  // Desktop apps don't pinch-zoom the whole UI like a web page — clamp the
+  // visual (trackpad/ctrl-scroll) zoom to 1 so the chrome stays put.
+  mainWindow.webContents.on('did-finish-load', () => {
+    void mainWindow?.webContents.setVisualZoomLevelLimits(1, 1);
+  });
+
   // If the app URL can't be reached (offline / host down), show a branded retry
   // page instead of a raw Chromium error, and make sure the window is visible
   // (ready-to-show may never fire when the very first load fails).

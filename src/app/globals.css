@@ -18,6 +18,14 @@ button:disabled,
   cursor: not-allowed;
 }
 
+/* ─── Native-app feel ───────────────────────────────────────────────────
+   No rubber-band overscroll / pull-to-refresh, and the document itself never
+   scrolls (panes scroll internally) — chat panes feel like an app, not a page. */
+html,
+body {
+  overscroll-behavior: none;
+}
+
 /* ─── Base design tokens (dark — app ships dark-first) ──────────────────── */
 :root {
   /* Backgrounds */
