@@ -17,7 +17,7 @@ import { useMemberPanelStore } from "@/store/memberPanel";
 import { openTeamsChannelMeeting } from "@/lib/utils/teams-deeplink";
 import { markdownToHtml } from "@/lib/utils/markdown-to-html";
 import { VoiceTrigger } from "@/components/voice/VoiceTrigger";
-import { useRealtimeEvents } from "@/hooks/useRealtimeEvents";
+import { useRealtimeEvents, useRealtimeHealth } from "@/hooks/useRealtimeEvents";
 import { isDisappearing, unwrapMessage, wrapMessage, UNDECODABLE_BLOB_GRACE_MS } from "@/lib/utils/disappear";
 
 export function ChannelView({ teamId, channelId }: { teamId: string; channelId: string }) {
@@ -41,6 +41,8 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
   const loadingThisChannel = useWorkspaceStore(
     (s) => s.loadingContexts[`${teamId}:${channelId}`] ?? false,
   );
+  const upsertMessage = useWorkspaceStore((s) => s.upsertMessage);
+  const sseHealthy = useRealtimeHealth();
   const [threadMessage, setThreadMessage] = useState<MSMessage | null>(null);
   const [forwardMessage, setForwardMessage] = useState<MSMessage | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("messages");
@@ -132,8 +134,9 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
     loadRef.current = load;
     load();
 
-    // Webhook push is primary; poll kept at 30s as safety net for missed events.
-    const interval = setInterval(load, 30_000);
+    // Webhook push is primary; when SSE is healthy, poll less frequently (2 min)
+    // and fall back to 30 s when SSE is degraded.
+    const interval = setInterval(load, sseHealthy ? 120_000 : 30_000);
 
     // Disappearing-message sweep on a fast cadence (network-free unless one of
     // our own messages has actually expired) — matches the DM view's behavior.
@@ -164,7 +167,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
     };
     // getMessages is a stable selector — intentionally not in deps to avoid re-running on cache updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teamId, channelId, contextId, isHydrated, setContextLoading, setMessages, showToast, sweepExpired]);
+  }, [teamId, channelId, contextId, isHydrated, sseHealthy, setContextLoading, setMessages, showToast, sweepExpired]);
 
   useRealtimeEvents(
     useCallback(
@@ -174,10 +177,13 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
           event.teamId === teamId &&
           event.channelId === channelId
         ) {
-          void loadRef.current();
+          fetch(`/api/teams/${teamId}/channels/${channelId}/messages/${event.messageId}`)
+            .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+            .then((msg: MSMessage) => upsertMessage(contextId, msg))
+            .catch(() => void loadRef.current());
         }
       },
-      [teamId, channelId]
+      [teamId, channelId, contextId, upsertMessage]
     )
   );
 
