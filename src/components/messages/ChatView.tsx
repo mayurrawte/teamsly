@@ -301,7 +301,7 @@ export function ChatView({ chatId }: { chatId: string }) {
     useCallback(
       (event) => {
         if (event.type === "chat_message" && event.chatId === chatId) {
-          fetch(`/api/chats/${chatId}/messages/${event.messageId}`)
+          fetch(`/api/chats/${chatId}/messages/${encodeURIComponent(event.messageId)}`)
             .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
             .then((msg: MSMessage) => upsertMessage(chatId, msg))
             .catch(() => void loadRef.current());

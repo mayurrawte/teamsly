@@ -349,6 +349,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             );
             return {
               ...message,
+              // Bump so the memoized MessageItem (compares lastModifiedDateTime)
+              // re-renders this optimistic change; reconciled by the next poll.
+              lastModifiedDateTime: new Date().toISOString(),
               reactions: reaction
                 ? reactions.filter((r) => r !== reaction)
                 : [
@@ -411,7 +414,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             index,
           };
           const next = [...existing];
-          next[index] = { ...msg, body: { contentType: "html", content: newContent } };
+          next[index] = {
+            ...msg,
+            lastModifiedDateTime: new Date().toISOString(),
+            body: { contentType: "html", content: newContent },
+          };
           persistContext(contextId, next);
           return {
             messagesByContext: { ...s.messagesByContext, [contextId]: next },
@@ -428,6 +435,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           const next = [...existing];
           next[index] = {
             ...next[index],
+            lastModifiedDateTime: new Date().toISOString(),
             body: { contentType: previousContentType, content: previousContent },
           };
           persistContext(contextId, next);

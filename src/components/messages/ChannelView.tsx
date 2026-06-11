@@ -177,7 +177,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
           event.teamId === teamId &&
           event.channelId === channelId
         ) {
-          fetch(`/api/teams/${teamId}/channels/${channelId}/messages/${event.messageId}`)
+          fetch(`/api/teams/${teamId}/channels/${channelId}/messages/${encodeURIComponent(event.messageId)}`)
             .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
             .then((msg: MSMessage) => upsertMessage(contextId, msg))
             .catch(() => void loadRef.current());
