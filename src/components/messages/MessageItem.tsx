@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { useState, useEffect, useRef, type KeyboardEvent } from "react";
+import { memo, useState, useEffect, useRef, useMemo, type KeyboardEvent } from "react";
 import { Clock, CheckCheck } from "lucide-react";
 import TextareaAutosize from "react-textarea-autosize";
 import { Avatar } from "@/components/ui/Avatar";
@@ -75,7 +75,7 @@ function DisappearBadge({ disappearAt }: { disappearAt: number }) {
   );
 }
 
-export function MessageItem({
+function MessageItemImpl({
   message,
   isGroupHead = true,
   contextId,
@@ -227,6 +227,17 @@ export function MessageItem({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expired, message.id]);
 
+  // Hoist content + detection above early returns so hooks are always called
+  // unconditionally (React rules of hooks).
+  const content = messagePlainText(message.body.content, message.body.contentType);
+  const detection = useMemo(
+    () => ({
+      github: detectGitHubLinks(content),
+      richLinks: detectRichLinks(content),
+    }),
+    [content, message.id]
+  );
+
   if (message.deletedDateTime) return null;
   if (expired) return null;
 
@@ -238,7 +249,6 @@ export function MessageItem({
   // Pending/failed messages suppress the full toolbar — retry/discard shown instead.
   const deleteHandler = isOwn && !message.__pending && !message.__failed ? onDelete : undefined;
   const editHandler = isOwn && !message.__pending && !message.__failed ? onEdit : undefined;
-  const content = messagePlainText(message.body.content, message.body.contentType);
 
   const pollVotingDisabled = Boolean(message.__pending || message.__failed) || !onToggleReaction;
   // Single-choice voting: toggling an option you've already picked clears it;
@@ -442,8 +452,8 @@ export function MessageItem({
                     <DisappearBadge disappearAt={decoded.disappearAt} />
                   )}
                 </div>
-                <GitHubCards text={content} />
-                <RichLinkCards text={content} />
+                <GitHubCards links={detection.github} />
+                <RichLinkCards links={detection.richLinks} />
               </>
             )
           )}
@@ -534,7 +544,7 @@ export function MessageItem({
               {disappearing && decoded && decoded.disappearAt > Date.now() && (
                 <DisappearBadge disappearAt={decoded.disappearAt} />
               )}
-              <GitHubCards text={content} />
+              <GitHubCards links={detection.github} />
             </>
           )
         )}
@@ -552,8 +562,7 @@ export function MessageItem({
   );
 }
 
-function GitHubCards({ text }: { text: string }) {
-  const links = detectGitHubLinks(text);
+function GitHubCards({ links }: { links: ReturnType<typeof detectGitHubLinks> }) {
   if (links.length === 0) return null;
   return (
     <div className="mt-1 flex flex-col gap-2">
@@ -562,8 +571,7 @@ function GitHubCards({ text }: { text: string }) {
   );
 }
 
-function RichLinkCards({ text }: { text: string }) {
-  const links = detectRichLinks(text);
+function RichLinkCards({ links }: { links: ReturnType<typeof detectRichLinks> }) {
   if (links.length === 0) return null;
   return (
     <div className="mt-1 flex flex-col gap-2">
@@ -638,3 +646,19 @@ function ReactionsRow({
     </div>
   );
 }
+
+function propsEqual(a: Props, b: Props): boolean {
+  // Callback props are intentionally ignored: their behavior is row-independent,
+  // so a new closure identity from the parent must not force a re-render.
+  return (
+    a.message.id === b.message.id &&
+    a.message.lastModifiedDateTime === b.message.lastModifiedDateTime &&
+    a.message.__pending === b.message.__pending &&
+    a.message.__failed === b.message.__failed &&
+    a.isGroupHead === b.isGroupHead &&
+    a.contextId === b.contextId &&
+    a.contextLabel === b.contextLabel
+  );
+}
+
+export const MessageItem = memo(MessageItemImpl, propsEqual);
