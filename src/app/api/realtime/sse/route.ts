@@ -7,11 +7,11 @@ export const maxDuration = 300;
 
 export async function GET(req: Request) {
   const session = await auth();
-  if (!session?.user?.id) {
+  if (!session?.userId) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const userId = session.user.id;
+  const userId = session.userId;
 
   const stream = new ReadableStream({
     async start(controller) {

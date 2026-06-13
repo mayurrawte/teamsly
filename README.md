@@ -90,8 +90,10 @@ claude mcp add teamsly -- npx -y @teamsly/mcp
 | `list_channels` | List channels in a team |
 | `get_channel_messages` | Read messages from a channel |
 | `send_channel_message` | Post to a channel |
+| `find_people` | Search your organization's directory for a person |
+| `send_dm` | Send a direct message to someone by name or user ID |
 
-For self-hosted deployments, replace `TEAMSLY_BASE_URL` with your own URL and set `TEAMSLY_MCP_SECRET` to the value of your `TEAMSLY_MCP_SECRET` environment variable.
+To point the server at your own Azure app instead of the public Teamsly one, set `TEAMSLY_CLIENT_ID` and `TEAMSLY_TENANT_ID` (they default to Teamsly's app on the `common` tenant). Tokens are cached in `~/.config/teamsly-mcp/`; override the location with `TEAMSLY_TOKEN_DIR`.
 
 ## Architecture
 
