@@ -2,7 +2,7 @@
 
 import { useWorkspaceStore } from "@/store/workspace";
 import { useRouter, useParams } from "next/navigation";
-import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search, Settings, UserPlus, Moon, LogOut, Inbox, GitBranch, Star, Check, Circle, CircleDot, BellOff, Clock, CircleOff, Smile, MessageCircleQuestion, MoreHorizontal, MailOpen, Mail, CheckCheck } from "lucide-react";
+import { Hash, Lock, MessageSquare, ChevronDown, ChevronRight, Plus, Search, Settings, Moon, LogOut, Inbox, GitBranch, Star, Check, Circle, CircleDot, BellOff, Clock, CircleOff, Smile, MessageCircleQuestion, MoreHorizontal, MailOpen, Mail, CheckCheck } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { signOut } from "next-auth/react";
@@ -524,16 +524,6 @@ export function Sidebar() {
             >
               <Settings className="h-4 w-4 flex-shrink-0" />
               Preferences
-            </DropdownMenu.Item>
-
-            <DropdownMenu.Item
-              onSelect={() => {
-                // TODO: open invite people flow
-              }}
-              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-75 data-[highlighted]:bg-[var(--accent)] data-[highlighted]:text-white"
-            >
-              <UserPlus className="h-4 w-4 flex-shrink-0" />
-              Invite people
             </DropdownMenu.Item>
 
             <DropdownMenu.Sub>
