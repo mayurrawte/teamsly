@@ -8,7 +8,7 @@
     <a href="SELF_HOSTING.md">Self-hosting guide</a>
   </p>
   <img src="https://img.shields.io/badge/license-AGPL--3.0-818CF8?style=flat-square" alt="License: AGPL-3.0" />
-  <img src="https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js" alt="Next.js 15" />
+  <img src="https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js" alt="Next.js 16" />
   <img src="https://img.shields.io/badge/Graph_API-official-0078d4?style=flat-square&logo=microsoft" alt="Microsoft Graph API" />
 </div>
 
@@ -23,7 +23,7 @@ Teamsly is an open-source, third-party web client for Microsoft Teams. It reads 
 | **Clean message feed** | Threaded replies, reactions, file attachments, inline images |
 | **Full DM & channel support** | All chats and channels from your Microsoft 365 account |
 | **Fast keyboard navigation** | `Cmd/Ctrl+K` jump-to, search, keyboard-first message input |
-| **AI message summaries** | Catch up on long threads in seconds (opt-in, uses Anthropic API) |
+| **AI catch-up** | Summaries, TL;DR, and extracted action items for long threads (opt-in, uses OpenAI) |
 | **GIF search** | Tenor-powered GIF picker in the message composer |
 | **File preview** | Open and preview shared files without leaving the app |
 | **Smart notifications** | Browser notifications with mentions-only and keyword filtering |
@@ -131,12 +131,12 @@ Nothing is stored in Teamsly. The API routes act as a thin authenticated proxy.
 
 ## Tech stack
 
-- **Next.js 15** (App Router) + **TypeScript**
+- **Next.js 16** (App Router) + **TypeScript**
 - **Tailwind CSS v4** + **Radix UI** primitives
 - **Auth.js v5** with Microsoft Entra ID provider (OAuth 2.0)
 - **Microsoft Graph API** via `@microsoft/microsoft-graph-client`
 - **Zustand** for client-side state
-- **Anthropic SDK** for optional AI summaries
+- **OpenAI SDK** for optional AI catch-up (summaries + action items)
 
 ## Legal
 
