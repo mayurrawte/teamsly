@@ -5,7 +5,7 @@ import * as Popover from "@radix-ui/react-popover";
 import { Search, Loader2 } from "lucide-react";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 
-interface TenorGif {
+interface GifResult {
   id: string;
   title: string;
   media: Array<{
@@ -23,7 +23,7 @@ interface Props {
 export function GifPicker({ children, onSelect }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [gifs, setGifs] = useState<TenorGif[]>([]);
+  const [gifs, setGifs] = useState<GifResult[]>([]);
   const [loading, setLoading] = useState(false);
   const debouncedQuery = useDebounce(query, 400);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -117,7 +117,7 @@ export function GifPicker({ children, onSelect }: Props) {
           </div>
 
           <div className="border-t border-[var(--border)] px-3 py-1.5 text-[10px] text-[var(--text-muted)]">
-            Powered by Tenor
+            Powered by Klipy
           </div>
         </Popover.Content>
       </Popover.Portal>
