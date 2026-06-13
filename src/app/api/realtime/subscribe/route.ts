@@ -11,7 +11,7 @@ const REUSE_IF_REMAINING_MS = 15 * 60 * 1000;
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.accessToken || !session.user?.id) {
+  if (!session?.accessToken || !session.userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     chatId?: string;
   };
   const { teamId, channelId, chatId } = body;
-  const userId = session.user.id;
+  const userId = session.userId;
   const now = Date.now();
 
   // Per-subscription secret. Graph echoes it in every notification; the webhook
