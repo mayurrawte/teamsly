@@ -131,6 +131,8 @@ export interface Preferences {
   lastNudgeDay: string | null;
   /** Last day (YYYY-MM-DD) the morning brief fired, so it shows at most once per local day. */
   lastMorningBriefDay: string | null;
+  /** Whether the first-run welcome card on the workspace home has been dismissed. */
+  hasSeenWelcome: boolean;
 }
 
 interface PreferencesState extends Preferences {
@@ -174,6 +176,7 @@ interface PreferencesState extends Preferences {
   setMorningBriefTime: (t: string) => void;
   setLastNudgeDay: (day: string | null) => void;
   setLastMorningBriefDay: (day: string | null) => void;
+  setHasSeenWelcome: (v: boolean) => void;
   reset: () => void;
 }
 
@@ -217,6 +220,7 @@ const DEFAULTS: Preferences = {
   morningBriefTime: "09:00",
   lastNudgeDay: null,
   lastMorningBriefDay: null,
+  hasSeenWelcome: false,
 };
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -285,6 +289,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       setMorningBriefTime: (morningBriefTime) => set({ morningBriefTime }),
       setLastNudgeDay: (lastNudgeDay) => set({ lastNudgeDay }),
       setLastMorningBriefDay: (lastMorningBriefDay) => set({ lastMorningBriefDay }),
+      setHasSeenWelcome: (hasSeenWelcome) => set({ hasSeenWelcome }),
       reset: () => set(DEFAULTS),
     }),
     {
