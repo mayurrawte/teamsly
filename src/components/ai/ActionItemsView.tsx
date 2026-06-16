@@ -52,6 +52,33 @@ function remindPresets(): { label: string; fireAt: number }[] {
   return out;
 }
 
+/** Humanize a YYYY-MM-DD deadline relative to the viewer's local today. */
+function formatDue(dueDate: string): { label: string; tone: "overdue" | "soon" | "normal" } | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dueDate);
+  if (!m) return null;
+  const due = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diff = Math.round((due.getTime() - today.getTime()) / 86400000);
+  if (diff < 0) return { label: "Overdue", tone: "overdue" };
+  if (diff === 0) return { label: "Due today", tone: "soon" };
+  if (diff === 1) return { label: "Due tomorrow", tone: "soon" };
+  if (diff < 7) return { label: `Due ${due.toLocaleDateString([], { weekday: "short" })}`, tone: "normal" };
+  return { label: `Due ${due.toLocaleDateString([], { month: "short", day: "numeric" })}`, tone: "normal" };
+}
+
+function DueChip({ dueDate }: { dueDate: string }) {
+  const due = formatDue(dueDate);
+  if (!due) return null;
+  const tone =
+    due.tone === "overdue"
+      ? "bg-red-500/15 text-red-400"
+      : due.tone === "soon"
+        ? "bg-[var(--message-bg)] text-[var(--accent)]"
+        : "bg-[var(--message-bg)] text-[var(--text-secondary)]";
+  return <span className={`rounded-full px-1.5 py-0.5 font-medium ${tone}`}>{due.label}</span>;
+}
+
 export function ActionItemsView({
   window: catchUpWindow,
   refreshNonce,
@@ -76,7 +103,9 @@ export function ActionItemsView({
       setData(null);
       onMeta(null);
       try {
-        const res = await fetch(`/api/ai/action-items?window=${win}`);
+        const d = new Date();
+        const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        const res = await fetch(`/api/ai/action-items?window=${win}&today=${today}`);
         const json = (await res.json()) as ActionItemsResponse;
         setData(json);
         onMeta(json.status === "ok" ? { generatedAt: json.generatedAt, cached: json.cached } : null);
@@ -141,7 +170,14 @@ export function ActionItemsView({
   return (
     <div className="flex flex-col gap-5">
       {GROUPS.map((group) => {
-        const groupItems = items.filter((i) => i.ownership === group.key);
+        const groupItems = items
+          .filter((i) => i.ownership === group.key)
+          .sort((a, b) => {
+            if (a.dueDate && b.dueDate) return a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : 0;
+            if (a.dueDate) return -1; // dated items first
+            if (b.dueDate) return 1;
+            return 0;
+          });
         if (groupItems.length === 0) return null;
         return (
           <section key={group.key}>
@@ -197,6 +233,7 @@ function ActionItemRow({
       <div className="min-w-0 flex-1">
         <p className="text-[13px] leading-snug text-[var(--text-primary)]">{item.task}</p>
         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-[var(--text-muted)]">
+          {item.dueDate && <DueChip dueDate={item.dueDate} />}
           {item.owner && (
             <span className="rounded-full bg-[var(--message-bg)] px-1.5 py-0.5 text-[var(--text-secondary)]">
               @{item.owner}
