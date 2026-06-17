@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth/config";
-import { getChats, getMe, getOrCreateOneOnOneChat } from "@/lib/graph/client";
+import { getChats, getMe, getOrCreateOneOnOneChat, createGroupChat } from "@/lib/graph/client";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -23,18 +23,24 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Find-or-create a 1:1 chat with a user, so search results for people the user
-// hasn't messaged yet can open a DM. Returns the chat (existing or new).
+// Create a chat: 1 user id -> find-or-create 1:1; 2+ -> group (optional topic).
+// Accepts the legacy `{ userId }` shape (search-result "open DM") too.
 export async function POST(request: NextRequest) {
   const session = await auth();
   if (!session?.accessToken) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { userId } = (await request.json()) as { userId?: string };
-  if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+  const body = (await request.json()) as { userId?: string; userIds?: string[]; topic?: string };
+  const ids = (body.userIds ?? (body.userId ? [body.userId] : [])).filter(
+    (id): id is string => typeof id === "string" && id.length > 0
+  );
+  if (ids.length === 0) return NextResponse.json({ error: "Missing userIds" }, { status: 400 });
 
   try {
     const me = await getMe(session.accessToken);
-    const chat = await getOrCreateOneOnOneChat(session.accessToken, me.id, userId);
+    const chat =
+      ids.length === 1
+        ? await getOrCreateOneOnOneChat(session.accessToken, me.id, ids[0])
+        : await createGroupChat(session.accessToken, me.id, ids, body.topic);
     return NextResponse.json(chat);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

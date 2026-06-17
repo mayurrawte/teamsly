@@ -10,6 +10,7 @@ import { MemberPanel } from "@/components/layout/MemberPanel";
 import { FilePreviewPanel } from "@/components/files/FilePreviewPanel";
 import { JumpToSwitcher, type JumpToItem } from "@/components/modals/JumpToSwitcher";
 import { SearchModal, type SearchMessageOrigin, type SearchPerson } from "@/components/modals/SearchModal";
+import { NewChatModal } from "@/components/modals/NewChatModal";
 import { Logo } from "@/components/ui/Logo";
 import { EMPTY_MESSAGES, useWorkspaceStore } from "@/store/workspace";
 import { useDraftsStore } from "@/store/drafts";
@@ -441,6 +442,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         onSelectMessage={handleSelectMessage}
         onSelectPerson={handleSelectPerson}
       />
+      <NewChatModal />
       <ToastViewport />
       <RealtimeEventsMount />
       <CatchUpPanel />
