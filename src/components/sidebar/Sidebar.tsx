@@ -107,6 +107,7 @@ import { getChatLabel } from "@/lib/utils/chat-label";
 import { isChatUnread } from "@/lib/utils/chat-unread";
 import { useSearchStore } from "@/store/search";
 import { usePreferencesStore } from "@/store/preferences";
+import { useNewChatStore } from "@/store/newChat";
 
 // --- Snooze expiry helpers (plain Date math, local time) ---
 
@@ -857,7 +858,15 @@ export function Sidebar() {
                   <CheckCheck className="h-3.5 w-3.5" />
                 </button>
               )}
-              <Plus className="h-3 w-3 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
+              <button
+                type="button"
+                aria-label="New chat"
+                title="New chat"
+                onClick={() => useNewChatStore.getState().open()}
+                className="text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)] focus:outline-none focus-visible:text-[var(--text-primary)]"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
             </div>
           </div>
 
