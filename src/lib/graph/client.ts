@@ -335,6 +335,24 @@ export async function getOrCreateOneOnOneChat(
   }) as Promise<MSChat>;
 }
 
+export async function createGroupChat(
+  accessToken: string,
+  myId: string,
+  userIds: string[],
+  topic?: string
+): Promise<MSChat> {
+  const client = getGraphClient(accessToken);
+  const members = [myId, ...userIds].map((id) => ({
+    "@odata.type": "#microsoft.graph.aadUserConversationMember",
+    roles: ["owner"],
+    "user@odata.bind": `https://graph.microsoft.com/v1.0/users('${id}')`,
+  }));
+  const body: Record<string, unknown> = { chatType: "group", members };
+  const trimmed = topic?.trim();
+  if (trimmed) body.topic = trimmed;
+  return client.api("/chats").post(body) as Promise<MSChat>;
+}
+
 // ---------------------------------------------------------------------------
 // Large-file upload via Graph createUploadSession (resumable, chunked).
 //
