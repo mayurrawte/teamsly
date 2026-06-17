@@ -25,6 +25,8 @@ export interface ActionItem {
   contextId: string;
   contextKind: "chat" | "channel";
   messageId: string | null;
+  /** ISO date (YYYY-MM-DD) of an explicit deadline stated in chat, or null. */
+  dueDate: string | null;
 }
 
 export function stripHtml(html: string): string {

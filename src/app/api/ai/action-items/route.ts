@@ -39,6 +39,12 @@ interface RawItem {
   ownership: Ownership;
   conversationIndex: number;
   messageIndex: number | null;
+  dueDate: string | null;
+}
+
+/** True for a strict YYYY-MM-DD calendar date. */
+function isIsoDate(value: unknown): value is string {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
 const ACTION_ITEMS_SCHEMA = {
@@ -59,8 +65,12 @@ const ACTION_ITEMS_SCHEMA = {
           },
           conversationIndex: { type: "integer", description: "Index of the [Conversation N] header." },
           messageIndex: { type: ["integer", "null"], description: "Index of the source message [N], or null." },
+          dueDate: {
+            type: ["string", "null"],
+            description: "Explicit deadline as an ISO date YYYY-MM-DD, or null if none is stated.",
+          },
         },
-        required: ["task", "owner", "ownership", "conversationIndex", "messageIndex"],
+        required: ["task", "owner", "ownership", "conversationIndex", "messageIndex", "dueDate"],
         additionalProperties: false,
       },
     },
@@ -84,6 +94,8 @@ export async function GET(request: NextRequest) {
   }
 
   const windowParam = request.nextUrl.searchParams.get("window") ?? "24h";
+  const todayParam = request.nextUrl.searchParams.get("today");
+  const today = isIsoDate(todayParam) ? todayParam : new Date().toISOString().slice(0, 10);
   const sinceDate = sinceWindow(windowParam);
   const sinceIso = sinceDate.toISOString();
 
@@ -103,7 +115,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const cacheKey = `${meId}::${windowParam}::${sinceIso.slice(0, 13)}`;
+  const cacheKey = `${meId}::${windowParam}::${today}::${sinceIso.slice(0, 13)}`;
   const now = Date.now();
   const hit = cache.get(cacheKey);
   if (hit && hit.expiresAt > now) {
@@ -163,6 +175,7 @@ Rules:
 - Set ownership relative to ${meName}: "you" if ${meName} must do it; "waiting" if ${meName} is waiting on or delegated it to someone else; "team" if it's a general task with no clear single owner.
 - Set owner to the responsible person's display name when clear, else null.
 - Reference the source with conversationIndex (the [Conversation N] header) and messageIndex (the [N] within that conversation). Use the message that best represents the task; null messageIndex if none fits.
+- Today is ${today}. Set dueDate to a concrete ISO date (YYYY-MM-DD) ONLY when the message states an explicit deadline, resolved against today: "tomorrow" = today + 1 day; a weekday name (e.g. "by Friday") = its next occurrence; "end of week" = the coming Friday; "next week" = the coming Monday. If no explicit, resolvable deadline is stated, set dueDate to null. Never invent a deadline.
 - If there are no action items, return an empty items array.
 
 Conversations:
@@ -212,6 +225,7 @@ ${transcript}`,
         contextId: conv.contextId,
         contextKind: conv.contextKind,
         messageId: msg?.id ?? null,
+        dueDate: isIsoDate(r.dueDate) ? r.dueDate : null,
       } satisfies ActionItem;
     })
     .filter((x): x is ActionItem => x !== null);
