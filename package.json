@@ -1,6 +1,6 @@
 {
   "name": "teamsly",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": false,
   "description": "Open-source modern client for Microsoft Teams",
   "license": "AGPL-3.0",
