@@ -20,6 +20,8 @@ export function NewChatModal() {
   const close = useNewChatStore((s) => s.close);
   const router = useRouter();
   const patchChat = useWorkspaceStore((s) => s.patchChat);
+  const setActiveChat = useWorkspaceStore((s) => s.setActiveChat);
+  const markRead = useWorkspaceStore((s) => s.markRead);
   const currentUserId = useWorkspaceStore((s) => s.currentUserId);
 
   const [query, setQuery] = useState("");
@@ -101,6 +103,8 @@ export function NewChatModal() {
       const chat = (await res.json()) as MSChat;
       if (!chat?.id) throw new Error("no chat id");
       patchChat(chat);
+      markRead(chat.id);
+      setActiveChat(chat.id);
       close();
       router.push(`/workspace/dm/${chat.id}`);
     } catch {
