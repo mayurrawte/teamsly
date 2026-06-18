@@ -1,4 +1,5 @@
 import { app, BrowserWindow, Menu, Tray, ipcMain, nativeImage, shell } from 'electron';
+import { mkdirSync } from 'node:fs';
 import { autoUpdater } from 'electron-updater';
 import path from 'path';
 import { startLocalServer, type LocalServer } from './server';
@@ -176,9 +177,8 @@ function buildAppMenu(): void {
       },
     },
   ];
-  if (isDev) {
-    viewSubmenu.push({ role: 'toggleDevTools', accelerator: 'CmdOrCtrl+Alt+I' });
-  }
+  // Available in packaged builds too — useful for diagnosing issues in the field.
+  viewSubmenu.push({ role: 'toggleDevTools', accelerator: 'CmdOrCtrl+Alt+I' });
 
   const template: Electron.MenuItemConstructorOptions[] = [
     {
@@ -424,11 +424,14 @@ void app.whenReady().then(async () => {
   // Dev and explicit-TEAMSLY_URL builds keep their remote/dev URL.
   if (!isDev && !process.env.TEAMSLY_URL) {
     try {
+      const logDir = app.getPath('logs');
+      try { mkdirSync(logDir, { recursive: true }); } catch { /* best-effort */ }
       localServer = await startLocalServer({
         AUTH_SECRET: ensureAuthSecret(),
         DESKTOP_MODE: '1',
         AZURE_AD_CLIENT_ID: process.env.AZURE_AD_CLIENT_ID ?? '377aa8a2-24d1-4d6e-8eca-e347864c9880',
         AZURE_AD_TENANT_ID: process.env.AZURE_AD_TENANT_ID ?? 'common',
+        TEAMSLY_LOG_FILE: path.join(logDir, 'auth.log'),
         ...loadByoKeys(),
       });
       appUrl = localServer.baseUrl;

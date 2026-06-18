@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
+import { appendFileSync } from "node:fs";
 
 const DESKTOP = process.env.DESKTOP_MODE === "1";
 
@@ -67,6 +68,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   // only in desktop mode — on web this key is absent, so Vercel's own
   // env-based detection (VERCEL=1 → true) is preserved unchanged.
   ...(DESKTOP ? { trustHost: true } : {}),
+  ...(DESKTOP
+    ? {
+        // Desktop serves over plain http://localhost. In production NextAuth can
+        // emit Secure/__Secure- cookies, which the browser refuses to store over
+        // HTTP — dropping the PKCE/state cookie and breaking the OAuth callback.
+        // Force non-secure cookies for the loopback server.
+        useSecureCookies: false,
+        // Land auth errors on the app's own /login page so the code is visible.
+        pages: { signIn: "/login", error: "/login" },
+        // Mirror auth errors to a file the user can open (no devtools/terminal).
+        logger: {
+          error(error: Error) {
+            try {
+              const f = process.env.TEAMSLY_LOG_FILE;
+              if (f) {
+                appendFileSync(
+                  f,
+                  `[${new Date().toISOString()}] ${error?.name ?? "Error"}: ${error?.message ?? ""}\n${error?.stack ?? ""}\n\n`
+                );
+              }
+            } catch {
+              /* best-effort logging */
+            }
+          },
+        },
+      }
+    : {}),
   providers: [
     MicrosoftEntraID({
       clientId: process.env.AZURE_AD_CLIENT_ID!,

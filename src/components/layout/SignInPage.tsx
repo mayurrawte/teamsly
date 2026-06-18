@@ -1,6 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ShieldCheck, GitFork, Database } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
@@ -24,6 +25,10 @@ const features = [
 ];
 
 export function SignInPage() {
+  const [authError, setAuthError] = useState<string | null>(null);
+  useEffect(() => {
+    setAuthError(new URLSearchParams(window.location.search).get("error"));
+  }, []);
   return (
     <div className="flex min-h-screen bg-[#0d1117] text-white">
       {/* Left panel — hero */}
@@ -121,6 +126,12 @@ export function SignInPage() {
           <p className="mb-8 text-center text-[13px] text-[#8b9ab0]">
             Use your Microsoft 365 account to continue.
           </p>
+
+          {authError && (
+            <div className="mb-4 w-full rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-center text-[13px] text-red-300">
+              Sign-in failed: <span className="font-mono font-semibold">{authError}</span>
+            </div>
+          )}
 
           <button
             onClick={() => signIn("microsoft-entra-id", { callbackUrl: "/workspace" })}
