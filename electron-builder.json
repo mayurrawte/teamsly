@@ -12,6 +12,7 @@
     "electron/build-resources/**/*",
     "package.json"
   ],
+  "afterPack": "scripts/after-pack.js",
   "extraResources": [
     { "from": ".next/standalone", "to": "standalone" }
   ],
