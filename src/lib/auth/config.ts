@@ -61,6 +61,22 @@ async function refreshAccessToken(refreshToken: string) {
   };
 }
 
+// Concurrent requests can enter the jwt callback at the same time right after the
+// access token expires; each would call refreshAccessToken with the SAME
+// (single-use) refresh token, and Entra invalidates it on first use — so all but
+// one get invalid_grant and force a spurious re-login. Coalesce concurrent
+// refreshes for a given refresh token into one in-flight request per instance.
+const inflightRefreshes = new Map<string, ReturnType<typeof refreshAccessToken>>();
+function refreshAccessTokenDeduped(refreshToken: string) {
+  const existing = inflightRefreshes.get(refreshToken);
+  if (existing) return existing;
+  const p = refreshAccessToken(refreshToken).finally(() => {
+    inflightRefreshes.delete(refreshToken);
+  });
+  inflightRefreshes.set(refreshToken, p);
+  return p;
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   // The bundled desktop server runs on a loopback host under NODE_ENV=production
   // with no VERCEL/AUTH_URL, so NextAuth would otherwise default trustHost to
@@ -133,7 +149,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
 
       try {
-        const refreshed = await refreshAccessToken(token.refreshToken);
+        const refreshed = await refreshAccessTokenDeduped(token.refreshToken);
         return {
           ...token,
           accessToken: refreshed.accessToken,
