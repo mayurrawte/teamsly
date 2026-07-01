@@ -9,6 +9,20 @@ const TTL_MS = 55 * 60 * 1000;
 const TTL_SEC = TTL_MS / 1000;
 const REUSE_IF_REMAINING_MS = 15 * 60 * 1000;
 
+// Subscription creation is a raw fetch (not the SDK, which already retries via
+// its default middleware), so honor Graph throttling here: retry 429/503 a
+// couple of times, respecting Retry-After, before surfacing the failure.
+async function graphPostWithRetry(url: string, init: RequestInit, attempts = 3): Promise<Response> {
+  let res = await fetch(url, init);
+  for (let i = 1; i < attempts && (res.status === 429 || res.status === 503); i++) {
+    const retryAfter = Number(res.headers.get("retry-after"));
+    const delayMs = (Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 2 ** i) * 1000;
+    await new Promise((r) => setTimeout(r, delayMs));
+    res = await fetch(url, init);
+  }
+  return res;
+}
+
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.accessToken || !session.userId) {
@@ -94,7 +108,7 @@ export async function POST(req: Request) {
     clientState,
   };
 
-  const res = await fetch("https://graph.microsoft.com/v1.0/subscriptions", {
+  const res = await graphPostWithRetry("https://graph.microsoft.com/v1.0/subscriptions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${session.accessToken}`,
@@ -106,7 +120,7 @@ export async function POST(req: Request) {
   if (!res.ok) {
     const text = await res.text();
     console.error("[realtime/subscribe] Graph subscription failed:", text);
-    return NextResponse.json({ error: text }, { status: 502 });
+    return NextResponse.json({ error: "Graph subscription failed" }, { status: 502 });
   }
 
   const sub = (await res.json()) as { id: string };

@@ -9,6 +9,12 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const encodedNextLink = searchParams.get("next");
   const nextLink = encodedNextLink ? decodeURIComponent(encodedNextLink) : undefined;
+  // The nextLink is forwarded to the Graph SDK, which fetches whatever host it
+  // names — reject anything that isn't an actual Graph paging URL to prevent a
+  // caller from turning this into a server-side request to an arbitrary host.
+  if (nextLink && !nextLink.startsWith("https://graph.microsoft.com/")) {
+    return NextResponse.json({ error: "Invalid next link" }, { status: 400 });
+  }
 
   try {
     const page = await getChats(session.accessToken, { nextLink });
@@ -19,7 +25,7 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[graph] chats failed:", msg);
-    return NextResponse.json({ error: "Graph chats failed", detail: msg }, { status: 502 });
+    return NextResponse.json({ error: "Graph chats failed" }, { status: 502 });
   }
 }
 
@@ -45,6 +51,6 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[graph] create chat failed:", msg);
-    return NextResponse.json({ error: "Create chat failed", detail: msg }, { status: 502 });
+    return NextResponse.json({ error: "Create chat failed" }, { status: 502 });
   }
 }

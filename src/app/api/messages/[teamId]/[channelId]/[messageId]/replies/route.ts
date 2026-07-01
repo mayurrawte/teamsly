@@ -9,8 +9,15 @@ export async function POST(req: Request, { params }: { params: Params }) {
   if (!session?.accessToken) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { teamId, channelId, messageId } = await params;
-  const { content } = await req.json();
-  if (!content?.trim()) return NextResponse.json({ error: "Empty reply" }, { status: 400 });
+  let content: unknown;
+  try {
+    ({ content } = (await req.json()) as { content?: unknown });
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  if (typeof content !== "string" || !content.trim()) {
+    return NextResponse.json({ error: "Empty reply" }, { status: 400 });
+  }
 
   try {
     const reply = await sendChannelReply(session.accessToken, teamId, channelId, messageId, content);
