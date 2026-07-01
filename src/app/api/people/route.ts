@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[graph] people search failed:", msg);
-    return NextResponse.json({ error: "People search failed", detail: msg }, { status: 502 });
+    // Log the upstream detail server-side only; don't leak Graph internals.
+    return NextResponse.json({ error: "People search failed" }, { status: 502 });
   }
 }

@@ -48,11 +48,11 @@ export function GifPicker({ children, onSelect }: Props) {
 
   useEffect(() => {
     if (open) {
-      setTimeout(() => inputRef.current?.focus(), 50);
-    } else {
-      setQuery("");
-      setGifs([]);
+      const t = setTimeout(() => inputRef.current?.focus(), 50);
+      return () => clearTimeout(t);
     }
+    setQuery("");
+    setGifs([]);
   }, [open]);
 
   return (

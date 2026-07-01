@@ -23,7 +23,7 @@ export async function PATCH(req: Request, { params }: { params: Params }) {
   const { chatId, messageId } = await params;
   try {
     const res = await fetch(
-      `https://graph.microsoft.com/v1.0/chats/${chatId}/messages/${messageId}`,
+      `https://graph.microsoft.com/v1.0/chats/${encodeURIComponent(chatId)}/messages/${encodeURIComponent(messageId)}`,
       {
         method: "PATCH",
         headers: {
@@ -52,7 +52,7 @@ export async function GET(_req: Request, { params }: { params: Params }) {
   const { chatId, messageId } = await params;
   try {
     const res = await fetch(
-      `https://graph.microsoft.com/v1.0/chats/${chatId}/messages/${messageId}`,
+      `https://graph.microsoft.com/v1.0/chats/${encodeURIComponent(chatId)}/messages/${encodeURIComponent(messageId)}`,
       { headers: { Authorization: `Bearer ${session.accessToken}` } }
     );
     if (!res.ok) {
@@ -80,7 +80,7 @@ export async function DELETE(_req: Request, { params }: { params: Params }) {
     // which is why expired disappearing messages were vanishing locally but
     // surviving in native Teams.
     const res = await fetch(
-      `https://graph.microsoft.com/v1.0/me/chats/${chatId}/messages/${messageId}/softDelete`,
+      `https://graph.microsoft.com/v1.0/me/chats/${encodeURIComponent(chatId)}/messages/${encodeURIComponent(messageId)}/softDelete`,
       {
         method: "POST",
         headers: {

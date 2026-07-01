@@ -14,3 +14,8 @@ export const REACTION_TYPES = Object.keys(REACTION_EMOJI) as ReactionType[];
 export function reactionEmoji(type: string): string {
   return REACTION_EMOJI[type as ReactionType] ?? type;
 }
+
+/** True only for one of the six supported Teams reaction types. */
+export function isReactionType(type: string): type is ReactionType {
+  return Object.prototype.hasOwnProperty.call(REACTION_EMOJI, type);
+}

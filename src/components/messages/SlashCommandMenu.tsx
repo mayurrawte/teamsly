@@ -47,7 +47,7 @@ export function SlashCommandMenu({ filtered, selectedIdx, onHover, onPick, open 
       role="listbox"
       aria-label="Slash command suggestions"
       className={cn(
-        "absolute bottom-full left-0 z-30 mb-1 w-80 overflow-hidden rounded-md border border-[var(--border)] bg-[var(--surface)] shadow-lg",
+        "absolute bottom-full left-0 z-[120] mb-1 w-80 overflow-hidden rounded-md border border-[var(--border)] bg-[var(--surface)] shadow-lg",
         entering && "slash-menu-enter"
       )}
     >

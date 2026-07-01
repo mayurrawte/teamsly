@@ -296,6 +296,8 @@ export function MessageInput({
   const [showScheduleMenu, setShowScheduleMenu] = useState(false);
   const emojiAnchorRef = useRef<HTMLButtonElement>(null);
   const emojiContainerRef = useRef<HTMLDivElement>(null);
+  const disappearMenuRef = useRef<HTMLDivElement>(null);
+  const scheduleMenuRef = useRef<HTMLDivElement>(null);
   // Mentions the user has accepted via the autocomplete (or `@everyone`).
   // Reset on send. Kept parallel to the plain `@Display Name` text in the
   // textarea so the parent can build a structured Graph `mentions[]`.
@@ -492,8 +494,9 @@ export function MessageInput({
         setSlashError(`No GIFs found for "${query}"`);
         return;
       }
+      const alt = (gif.title ?? "GIF").replace(/"/g, "&quot;");
       await onSend(
-        `<img src="${url}" alt="${gif.title.replace(/"/g, "&quot;")}" style="max-width:300px;border-radius:4px" />`
+        `<img src="${url}" alt="${alt}" style="max-width:300px;border-radius:4px" />`
       );
     } catch {
       setSlashError(`Couldn't fetch a GIF for "${query}"`);
@@ -572,6 +575,33 @@ export function MessageInput({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [emojiOpen]);
+
+  // Close the disappearing-timer / send-later menus on outside click or Escape
+  // (the emoji picker above already does this; these two were the outliers).
+  useEffect(() => {
+    if (!showDisappearMenu && !showScheduleMenu) return;
+    function onDown(e: MouseEvent) {
+      const t = e.target as Node;
+      if (showDisappearMenu && disappearMenuRef.current && !disappearMenuRef.current.contains(t)) {
+        setShowDisappearMenu(false);
+      }
+      if (showScheduleMenu && scheduleMenuRef.current && !scheduleMenuRef.current.contains(t)) {
+        setShowScheduleMenu(false);
+      }
+    }
+    function onKey(e: globalThis.KeyboardEvent) {
+      if (e.key === "Escape") {
+        setShowDisappearMenu(false);
+        setShowScheduleMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [showDisappearMenu, showScheduleMenu]);
 
   function insertEmoji(emoji: { native: string }) {
     const ta = textareaRef.current;
@@ -1132,7 +1162,7 @@ export function MessageInput({
             ref={mentionPopoverRef}
             role="listbox"
             aria-label="Mention suggestions"
-            className="absolute bottom-full left-0 z-20 mb-1 w-72 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-lg"
+            className="absolute bottom-full left-0 z-[120] mb-1 w-72 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-lg"
           >
             {filteredCandidates.map((c, idx) => (
               <button
@@ -1309,7 +1339,7 @@ export function MessageInput({
 
               {/* Disappearing message duration picker */}
               {allowDisappearing && (
-              <div className="relative">
+              <div className="relative" ref={disappearMenuRef}>
                 <button
                   type="button"
                   aria-label="Disappearing message"
@@ -1372,7 +1402,7 @@ export function MessageInput({
 
               {/* Send-later (scheduled message) picker */}
               {allowSchedule && (
-              <div className="relative">
+              <div className="relative" ref={scheduleMenuRef}>
                 <button
                   type="button"
                   aria-label="Schedule message"

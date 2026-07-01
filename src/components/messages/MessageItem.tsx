@@ -647,6 +647,10 @@ function ReactionsRow({
   );
 }
 
+function attachmentSig(m: Props["message"]): string {
+  return (m.attachments ?? []).map((x) => x.id).join(",");
+}
+
 function propsEqual(a: Props, b: Props): boolean {
   // Callback props are intentionally ignored: their behavior is row-independent,
   // so a new closure identity from the parent must not force a re-render.
@@ -655,6 +659,8 @@ function propsEqual(a: Props, b: Props): boolean {
     a.message.lastModifiedDateTime === b.message.lastModifiedDateTime &&
     a.message.__pending === b.message.__pending &&
     a.message.__failed === b.message.__failed &&
+    // A late-arriving attachment/card can change without bumping lastModified.
+    attachmentSig(a.message) === attachmentSig(b.message) &&
     a.isGroupHead === b.isGroupHead &&
     a.contextId === b.contextId &&
     a.contextLabel === b.contextLabel
