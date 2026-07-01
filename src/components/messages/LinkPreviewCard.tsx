@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, PlayCircle, Video, Figma, Phone, MessageSquareMore, Users } from "lucide-react";
+import { ExternalLink, PlayCircle, Video, Frame, Phone, MessageSquareMore, Users } from "lucide-react";
 import type { DetectedLink } from "@/lib/integrations/link-detect";
 
 /**
@@ -79,7 +79,7 @@ function FigmaCard({ fileName, url }: { fileName: string; url: string }) {
     <CardShell url={url} accentClass="border-l-[#F24E1E]">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded bg-[#F24E1E]/15 text-[#F24E1E]">
-          <Figma className="h-5 w-5" />
+          <Frame className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="text-[10px] font-bold uppercase tracking-wide text-[#F24E1E]">Figma</div>
