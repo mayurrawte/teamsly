@@ -210,9 +210,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           // Reuse the existing object for any message whose id + lastModified
           // are unchanged, so React.memo'd rows don't re-render on reconcile.
           const byId = new Map(existing.map((m) => [m.id, m]));
+          const now = Date.now();
           const reused = filtered.map((m) => {
             const prev = byId.get(m.id);
-            return prev && prev.lastModifiedDateTime === m.lastModifiedDateTime ? prev : m;
+            if (!prev) return m;
+            // Hold a just-made optimistic reaction/edit until Graph reflects it,
+            // otherwise a poll landing before read-after-write reverts the change.
+            if (prev.__optimisticUntil && prev.__optimisticUntil > now) return prev;
+            return prev.lastModifiedDateTime === m.lastModifiedDateTime ? prev : m;
           });
           const merged = trimToMax(sortByCreatedDateTime([...reused, ...uniquePending]));
           persistContext(contextId, merged);
@@ -352,6 +357,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               // Bump so the memoized MessageItem (compares lastModifiedDateTime)
               // re-renders this optimistic change; reconciled by the next poll.
               lastModifiedDateTime: new Date().toISOString(),
+              // Survive reconcile briefly so a poll landing before Graph's
+              // read-after-write doesn't revert the reaction (see setMessages).
+              __optimisticUntil: Date.now() + 10_000,
               reactions: reaction
                 ? reactions.filter((r) => r !== reaction)
                 : [
@@ -417,6 +425,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           next[index] = {
             ...msg,
             lastModifiedDateTime: new Date().toISOString(),
+            __optimisticUntil: Date.now() + 10_000,
             body: { contentType: "html", content: newContent },
           };
           persistContext(contextId, next);
@@ -436,6 +445,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           next[index] = {
             ...next[index],
             lastModifiedDateTime: new Date().toISOString(),
+            __optimisticUntil: Date.now() + 10_000,
             body: { contentType: previousContentType, content: previousContent },
           };
           persistContext(contextId, next);
