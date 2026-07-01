@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useWorkspaceStore } from "@/store/workspace";
+import { useShallow } from "zustand/react/shallow";
 import { usePreferencesStore } from "@/store/preferences";
 import { MessageFeed } from "./MessageFeed";
 import { MessageInput } from "./MessageInput";
@@ -22,7 +23,14 @@ import { isDisappearing, unwrapMessage, wrapMessage, UNDECODABLE_BLOB_GRACE_MS }
 import { useRealtimeEvents, useRealtimeHealth } from "@/hooks/useRealtimeEvents";
 import { useScheduledStore } from "@/store/scheduled";
 
+// Stable empty reference so the reactive messages selector doesn't churn.
+const EMPTY_MESSAGES: MSMessage[] = [];
+
 export function ChatView({ chatId }: { chatId: string }) {
+  // Select only what this view uses (state we read + stable actions) via a
+  // shallow compare, so unrelated store churn (presence, other contexts'
+  // messages, unread counts) doesn't re-render the whole chat view. Messages
+  // are read through a dedicated reactive selector below.
   const {
     chats,
     getMessages,
@@ -42,7 +50,28 @@ export function ChatView({ chatId }: { chatId: string }) {
     revertMessageEdit,
     patchChat,
     patchChatMembers,
-  } = useWorkspaceStore();
+  } = useWorkspaceStore(
+    useShallow((s) => ({
+      chats: s.chats,
+      getMessages: s.getMessages,
+      currentUserId: s.currentUserId,
+      currentUserName: s.currentUserName,
+      setMessages: s.setMessages,
+      appendPendingMessage: s.appendPendingMessage,
+      replaceMessage: s.replaceMessage,
+      markMessageFailed: s.markMessageFailed,
+      removeMessage: s.removeMessage,
+      expireMessage: s.expireMessage,
+      setContextLoading: s.setContextLoading,
+      toggleReaction: s.toggleReaction,
+      deleteMessage: s.deleteMessage,
+      restoreMessage: s.restoreMessage,
+      editMessage: s.editMessage,
+      revertMessageEdit: s.revertMessageEdit,
+      patchChat: s.patchChat,
+      patchChatMembers: s.patchChatMembers,
+    }))
+  );
   const isHydrated = useWorkspaceStore((s) => s.isHydrated);
   // First-load flag for THIS chat only — a cached chat never shows the skeleton.
   const loadingThisChat = useWorkspaceStore((s) => s.loadingContexts[chatId] ?? false);
@@ -80,7 +109,9 @@ export function ChatView({ chatId }: { chatId: string }) {
     router.replace(pathname);
   }, [anchorMessageId, pathname, router]);
 
-  const messages = getMessages(chatId);
+  // Reactive read for rendering — re-renders when THIS chat's messages change.
+  // (getMessages remains for imperative reads in effects/handlers.)
+  const messages = useWorkspaceStore((s) => s.messagesByContext[chatId]) ?? EMPTY_MESSAGES;
   const chat = chats.find((c) => c.id === chatId);
 
   // Pending scheduled ("send later") messages for this chat, soonest-first.
