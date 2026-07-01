@@ -18,6 +18,7 @@ export function MarketingNav({ stars }: { stars: number | null }) {
         </Link>
         <div className="hidden items-center gap-7 md:flex">
           <Link href="/features" className="text-[13px] text-[#8b9ab0] transition-colors hover:text-white">Features</Link>
+          <Link href="/compare" className="text-[13px] text-[#8b9ab0] transition-colors hover:text-white">Compare</Link>
           <Link href="/#mcp" className="text-[13px] text-[#8b9ab0] transition-colors hover:text-white">MCP</Link>
           <Link href="/#self-host" className="text-[13px] text-[#8b9ab0] transition-colors hover:text-white">Self-host</Link>
           <Link href="/#faq" className="text-[13px] text-[#8b9ab0] transition-colors hover:text-white">FAQ</Link>
@@ -47,6 +48,7 @@ export function MarketingFooter() {
         </div>
         <div className="flex flex-wrap items-center gap-6 text-[12px] text-[#3d4a5c]">
           <Link href="/features" className="transition-colors hover:text-white">Features</Link>
+          <Link href="/compare" className="transition-colors hover:text-white">Compare</Link>
           <a href={REPO} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white">GitHub</a>
           <a href={RELEASES} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white">Releases</a>
           <a href={`${REPO}/issues`} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white">Issues</a>
