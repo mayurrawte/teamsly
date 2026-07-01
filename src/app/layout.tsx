@@ -66,6 +66,13 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Teamsly" }],
   manifest: "/manifest.json",
+  // Standalone install on iOS (Add to Home Screen) — iOS ignores the web manifest's
+  // display mode, so these apple-web-app hints are what make it open chrome-less.
+  appleWebApp: {
+    capable: true,
+    title: "Teamsly",
+    statusBarStyle: "black-translucent",
+  },
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml" },
