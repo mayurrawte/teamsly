@@ -46,8 +46,6 @@ export function useActivityNotifications(scanData: ActivityScanResult | undefine
 
   useEffect(() => {
     if (!scanData) return;
-    if (!desktopNotifications) return;
-    if (quietHoursEnabled && inQuietHours(new Date(), quietHoursStart, quietHoursEnd)) return;
 
     const allItems: ActivityItem[] = [
       ...(scanData.mentions ?? []),
@@ -55,15 +53,23 @@ export function useActivityNotifications(scanData: ActivityScanResult | undefine
       ...(scanData.reactions ?? []),
     ];
 
+    // Always establish the baseline on the first scan — even when notifications
+    // are off or we're in quiet hours — so items already present at load aren't
+    // later mistaken for "new" once the gate lifts.
     if (isFirstScan.current) {
       for (const item of allItems) seenIds.current.add(item.id);
       isFirstScan.current = false;
       return;
     }
 
+    const suppressed =
+      !desktopNotifications ||
+      (quietHoursEnabled && inQuietHours(new Date(), quietHoursStart, quietHoursEnd));
+
     for (const item of allItems) {
       if (seenIds.current.has(item.id)) continue;
       seenIds.current.add(item.id);
+      if (suppressed) continue; // record as seen but don't notify while gated
 
       const href = item.href;
       fireDesktopNotification(notificationTitle(item), item.summary, {

@@ -19,6 +19,7 @@ export function ReactionPill({ reactionType, count, active, onClick }: ReactionP
   const prevActiveRef = useRef(active);
   const burstTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const plusOneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     const countIncreased = count > prevCountRef.current;
@@ -27,7 +28,7 @@ export function ReactionPill({ reactionType, count, active, onClick }: ReactionP
     if (countIncreased || justActivated) {
       setBursting(false);
       // Force a re-render cycle so re-adding the class re-triggers the animation
-      requestAnimationFrame(() => {
+      rafRef.current = requestAnimationFrame(() => {
         setBursting(true);
         if (burstTimerRef.current) clearTimeout(burstTimerRef.current);
         burstTimerRef.current = setTimeout(() => setBursting(false), 360);
@@ -48,6 +49,7 @@ export function ReactionPill({ reactionType, count, active, onClick }: ReactionP
     return () => {
       if (burstTimerRef.current) clearTimeout(burstTimerRef.current);
       if (plusOneTimerRef.current) clearTimeout(plusOneTimerRef.current);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, []);
 

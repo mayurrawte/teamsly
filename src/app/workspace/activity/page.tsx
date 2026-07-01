@@ -256,15 +256,15 @@ function ScanSkeleton() {
  * Pull the underlying chat or channel id out of an activity item so we can
  * cross-reference `unreadCounts` for the Unread-only filter.
  *
- *   /app/dm/{chatId}             → { kind: "chat",    id: chatId }
- *   /app/t/{teamId}/{channelId}  → { kind: "channel", id: channelId }
+ *   /workspace/dm/{chatId}             → { kind: "chat",    id: chatId }
+ *   /workspace/t/{teamId}/{channelId}  → { kind: "channel", id: channelId }
  *
  * Returns null for malformed hrefs so the filter falls back to "include".
  */
 function unreadKeyFromHref(href: string): { kind: "chat" | "channel"; id: string } | null {
-  const dmMatch = /^\/app\/dm\/([^/]+)$/.exec(href);
+  const dmMatch = /^\/(?:workspace|app)\/dm\/([^/]+)$/.exec(href);
   if (dmMatch) return { kind: "chat", id: dmMatch[1] };
-  const chMatch = /^\/app\/t\/[^/]+\/([^/]+)$/.exec(href);
+  const chMatch = /^\/(?:workspace|app)\/t\/[^/]+\/([^/]+)$/.exec(href);
   if (chMatch) return { kind: "channel", id: chMatch[1] };
   return null;
 }

@@ -76,10 +76,14 @@ export function LeftRail() {
   // On macOS the window uses titleBarStyle:'hiddenInset' which removes the
   // native title bar. We need a CSS drag region at the top and extra clearance
   // so the Search button doesn't sit behind the traffic light buttons.
-  const isMacDesktop =
-    typeof window !== "undefined" &&
-    window.electron?.isElectron?.() === true &&
-    window.electron?.platform === "darwin";
+  // Computed after mount (not during render) so SSR/first-paint HTML matches
+  // and there's no hydration mismatch in the packaged Electron app.
+  const [isMacDesktop, setIsMacDesktop] = useState(false);
+  useEffect(() => {
+    setIsMacDesktop(
+      window.electron?.isElectron?.() === true && window.electron?.platform === "darwin"
+    );
+  }, []);
 
   // Cmd+K global shortcut for search
   useEffect(() => {
