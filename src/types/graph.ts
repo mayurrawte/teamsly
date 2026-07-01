@@ -65,6 +65,14 @@ interface MSMessage {
   __pending?: boolean;
   __failed?: boolean;
   __originalText?: string;
+  /**
+   * Epoch ms until which a just-made optimistic reaction/edit on an ALREADY-sent
+   * message should survive reconcile. A reconcile poll can return the server copy
+   * before Graph reflects the change; without this window the optimistic edit
+   * visibly reverts and then reappears. Local-only; harmless if persisted (a past
+   * value is simply ignored).
+   */
+  __optimisticUntil?: number;
 }
 
 interface MSChat {

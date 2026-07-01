@@ -5,6 +5,9 @@ import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
+// Cap per-message content so a single request can't send an unbounded transcript
+// to the model (message count is already capped at 30). ~2k chars ≈ a long message.
+const MAX_MSG_CHARS = 2000;
 
 interface CacheEntry {
   summary: string;
@@ -32,7 +35,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ summary: "No unread messages to summarize." });
   }
 
-  const transcript = messages.map((m) => `${m.author}: ${m.content}`).join("\n");
+  const transcript = messages
+    .map((m) => `${m.author}: ${(m.content ?? "").slice(0, MAX_MSG_CHARS)}`)
+    .join("\n");
   const cacheKey = createHash("sha256").update(transcript).digest("hex");
 
   const now = Date.now();

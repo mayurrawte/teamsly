@@ -17,6 +17,7 @@ import { useMemberPanelStore } from "@/store/memberPanel";
 import { openTeamsChannelMeeting } from "@/lib/utils/teams-deeplink";
 import { markdownToHtml } from "@/lib/utils/markdown-to-html";
 import { VoiceTrigger } from "@/components/voice/VoiceTrigger";
+import { voiceRoomNameFor } from "@/lib/voice/types";
 import { useRealtimeEvents, useRealtimeHealth } from "@/hooks/useRealtimeEvents";
 import { isDisappearing, unwrapMessage, wrapMessage, UNDECODABLE_BLOB_GRACE_MS } from "@/lib/utils/disappear";
 
@@ -440,8 +441,10 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
         }
         voiceTrigger={
           <VoiceTrigger
-            roomName={`channel-${teamId}-${channelId}`}
+            roomName={voiceRoomNameFor({ teamId, channelId })}
             displayName={channel?.displayName ? `#${channel.displayName}` : "Channel voice"}
+            teamId={teamId}
+            channelId={channelId}
           />
         }
       />

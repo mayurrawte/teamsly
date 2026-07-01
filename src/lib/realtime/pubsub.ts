@@ -134,7 +134,10 @@ class RedisTransport implements RealtimeTransport {
         ),
       ]);
     } catch (err) {
+      // Do NOT swallow: a lost record means the webhook handler can't match
+      // notifications for this subscription. The caller must fail closed.
       console.error("[redis] saveSub failed:", err);
+      throw err;
     }
   }
 

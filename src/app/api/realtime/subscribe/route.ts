@@ -110,7 +110,20 @@ export async function POST(req: Request) {
   }
 
   const sub = (await res.json()) as { id: string };
-  await transport.saveSub(sub.id, makeRecord(expiresAt), rkey, TTL_SEC);
+  try {
+    await transport.saveSub(sub.id, makeRecord(expiresAt), rkey, TTL_SEC);
+  } catch (err) {
+    // Persisting the record failed — without it the webhook handler can't match
+    // notifications, so realtime would be silently dead while the Graph
+    // subscription still burns quota. Fail closed: tear down the just-created
+    // subscription and tell the client to keep polling (don't report success).
+    console.error("[realtime/subscribe] saveSub failed; removing Graph subscription:", err);
+    await fetch(`https://graph.microsoft.com/v1.0/subscriptions/${sub.id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${session.accessToken}` },
+    }).catch(() => {});
+    return NextResponse.json({ error: "Subscription store unavailable" }, { status: 503 });
+  }
 
   return NextResponse.json({ subscriptionId: sub.id, expiresAt });
 }

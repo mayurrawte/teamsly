@@ -152,7 +152,9 @@ function renderDigestMarkdown(input: string): string {
 }
 
 function inlineMd(text: string): string {
-  return text
+  // Escape HTML FIRST so any markup in the (message-derived) digest text is inert
+  // before we introduce our own tags — this output is fed to dangerouslySetInnerHTML.
+  return escMd(text)
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
     .replace(/`([^`]+)`/g, "<code>$1</code>");

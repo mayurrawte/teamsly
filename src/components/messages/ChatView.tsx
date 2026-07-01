@@ -17,6 +17,7 @@ import { useToastStore } from "@/store/toasts";
 import { openTeamsCall } from "@/lib/utils/teams-deeplink";
 import { getChatLabel } from "@/lib/utils/chat-label";
 import { VoiceTrigger } from "@/components/voice/VoiceTrigger";
+import { voiceRoomNameFor } from "@/lib/voice/types";
 import { isDisappearing, unwrapMessage, wrapMessage, UNDECODABLE_BLOB_GRACE_MS } from "@/lib/utils/disappear";
 import { useRealtimeEvents, useRealtimeHealth } from "@/hooks/useRealtimeEvents";
 import { useScheduledStore } from "@/store/scheduled";
@@ -219,7 +220,7 @@ export function ChatView({ chatId }: { chatId: string }) {
   }, [chatId, storeMembers.length]);
 
   const label = getChatLabel(chat ? { ...chat, members } : undefined, currentUserId);
-  const voiceRoomName = `chat-${chatId.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const voiceRoomName = voiceRoomNameFor({ chatId });
 
   // Reset tab when chat changes
   useEffect(() => {
@@ -709,6 +710,7 @@ export function ChatView({ chatId }: { chatId: string }) {
           <VoiceTrigger
             roomName={voiceRoomName}
             displayName={label}
+            chatId={chatId}
           />
         }
       />

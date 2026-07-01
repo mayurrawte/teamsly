@@ -161,11 +161,13 @@ function applyInline(text: string): string {
   // Strikethrough ~~text~~
   processed = processed.replace(/~~(.+?)~~/g, "<s>$1</s>");
 
-  // Links [label](url)
+  // Links [label](url) — only emit an <a> for safe schemes; otherwise render the
+  // label as plain text. `encodeURI` does NOT strip dangerous schemes, so without
+  // this a `javascript:`/`data:`/`vbscript:` URL would survive into the stored body.
   processed = processed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, url) => {
     const safeLabel = escapeHtml(label);
-    const safeUrl = encodeURI(url);
-    return `<a href="${safeUrl}">${safeLabel}</a>`;
+    const safe = safeHref(url);
+    return safe ? `<a href="${safe}">${safeLabel}</a>` : safeLabel;
   });
 
   // Restore inline code
@@ -182,4 +184,18 @@ function escapeHtml(s: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+/**
+ * Returns an encoded href for links with a safe scheme (http/https/mailto) or a
+ * relative target (starting with `/` or `#`); null for anything else so callers
+ * drop the link. Blocks `javascript:`/`data:`/`vbscript:` etc. at emit time.
+ */
+function safeHref(url: string): string | null {
+  const trimmed = url.trim();
+  if (/^(https?:|mailto:)/i.test(trimmed) || /^[/#]/.test(trimmed)) {
+    // encodeURI also neutralizes `"` (→ %22) so it can't break out of href="...".
+    return encodeURI(trimmed);
+  }
+  return null;
 }

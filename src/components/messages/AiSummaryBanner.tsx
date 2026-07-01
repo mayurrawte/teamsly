@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { messagePlainText } from "@/lib/utils/render-message";
 
@@ -13,24 +13,26 @@ export function AiSummaryBanner({ messages }: AiSummaryBannerProps) {
   const [summary, setSummary] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const summaryInput = useMemo(
-    () =>
-      messages.slice(-30).map((message) => ({
-        author: message.from?.user?.displayName ?? "Unknown",
-        content: messagePlainText(message.body.content, message.body.contentType),
-      })),
-    [messages]
-  );
+  // Only re-summarize when the conversation actually changes (count, or the last
+  // message's id/edit time) — NOT on every poll, which rebuilds the `messages`
+  // array by reference and would otherwise re-fire this paid endpoint each cycle.
+  const lastMessage = messages[messages.length - 1];
+  const summaryKey = `${messages.length}|${lastMessage?.id ?? ""}|${lastMessage?.lastModifiedDateTime ?? ""}`;
 
   useEffect(() => {
     if (!enabled || messages.length < 10) return;
+
+    const input = messages.slice(-30).map((message) => ({
+      author: message.from?.user?.displayName ?? "Unknown",
+      content: messagePlainText(message.body.content, message.body.contentType),
+    }));
 
     let cancelled = false;
     setLoading(true);
     fetch("/api/ai/summary", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: summaryInput }),
+      body: JSON.stringify({ messages: input }),
     })
       .then((response) => (response.ok ? response.json() : null))
       .then((data: { summary?: string } | null) => {
@@ -43,7 +45,10 @@ export function AiSummaryBanner({ messages }: AiSummaryBannerProps) {
     return () => {
       cancelled = true;
     };
-  }, [enabled, messages.length, summaryInput]);
+    // `messages` is intentionally omitted — summaryKey captures the content that
+    // matters, so we don't re-POST on every poll's fresh array reference.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, summaryKey]);
 
   if (!enabled || messages.length < 10) return null;
 

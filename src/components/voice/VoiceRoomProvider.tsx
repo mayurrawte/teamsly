@@ -35,7 +35,12 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch("/api/voice/token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomName: target.name }),
+        body: JSON.stringify({
+          roomName: target.name,
+          chatId: target.chatId,
+          teamId: target.teamId,
+          channelId: target.channelId,
+        }),
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
