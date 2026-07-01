@@ -8,9 +8,13 @@ interface VoiceTriggerProps {
   roomName: string;
   displayName: string;
   className?: string;
+  /** Resource this room belongs to — forwarded so the server can verify membership. */
+  chatId?: string;
+  teamId?: string;
+  channelId?: string;
 }
 
-export function VoiceTrigger({ roomName, displayName, className }: VoiceTriggerProps) {
+export function VoiceTrigger({ roomName, displayName, className, chatId, teamId, channelId }: VoiceTriggerProps) {
   const { active, join } = useVoiceRoom();
   const [count, setCount] = useState(0);
 
@@ -42,7 +46,7 @@ export function VoiceTrigger({ roomName, displayName, className }: VoiceTriggerP
     <button
       type="button"
       disabled={isInThisRoom}
-      onClick={() => { void join({ name: roomName, displayName }); }}
+      onClick={() => { void join({ name: roomName, displayName, chatId, teamId, channelId }); }}
       title={isInThisRoom ? "Already in voice room" : count > 0 ? `Join voice (${count} in room)` : "Start voice room"}
       className={`flex items-center gap-1 rounded p-1.5 text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-raised)] hover:text-[var(--text-primary)] focus-ring disabled:cursor-default disabled:opacity-60 ${className ?? ""}`}
     >
