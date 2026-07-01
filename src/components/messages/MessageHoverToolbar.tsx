@@ -1,5 +1,6 @@
 "use client";
 
+import { forwardRef, type ComponentPropsWithoutRef } from "react";
 import { Bookmark, Smile, MessageSquare, Forward, Pin, MoreHorizontal, Trash2, Pencil, type LucideIcon } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { EmojiPicker } from "./EmojiPicker";
@@ -92,28 +93,36 @@ export function MessageHoverToolbar({
   );
 }
 
-interface ToolbarButtonProps {
+interface ToolbarButtonProps extends ComponentPropsWithoutRef<"button"> {
   icon: LucideIcon;
   label: string;
-  onClick?: () => void;
   /** Visual press-state; used by Save-for-later to indicate the message is bookmarked. */
   active?: boolean;
 }
 
-function ToolbarButton({ icon: Icon, label, onClick, active }: ToolbarButtonProps) {
+// forwardRef + prop spread so this works as a Radix `asChild` trigger: the
+// dropdown/popover injects onPointerDown/onKeyDown/ref onto its child, and a
+// plain component that only re-wired onClick silently dropped them (which left
+// the "More actions" DropdownMenu unopenable — it opens on pointerdown, not click).
+const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(function ToolbarButton(
+  { icon: Icon, label, active, className, ...rest },
+  ref
+) {
   return (
     <button
+      ref={ref}
       type="button"
-      onClick={onClick}
       aria-label={label}
       aria-pressed={active ?? undefined}
       title={label}
       className={cn(
         "flex h-7 w-7 items-center justify-center rounded transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-white focus-ring",
-        active ? "text-[var(--accent)]" : "text-[var(--text-secondary)]"
+        active ? "text-[var(--accent)]" : "text-[var(--text-secondary)]",
+        className
       )}
+      {...rest}
     >
       <Icon size={16} strokeWidth={2} fill={active ? "currentColor" : "none"} />
     </button>
   );
-}
+});

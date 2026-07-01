@@ -1321,7 +1321,7 @@ export function MessageInput({
                   ⏱{disappearMs ? <span className="ml-[2px] text-[10px]">on</span> : null}
                 </button>
                 {showDisappearMenu && (
-                  <div className="absolute bottom-full z-50 mb-2 min-w-[160px] rounded-md border border-[var(--border)] bg-[var(--modal-bg)] py-1 shadow-lg">
+                  <div className="absolute bottom-full right-0 z-[120] mb-2 min-w-[160px] rounded-md border border-[var(--border)] bg-[var(--modal-bg)] py-1 shadow-lg">
                     <button
                       type="button"
                       onClick={() => { setDisappearMs(null); setShowDisappearMenu(false); }}
@@ -1384,7 +1384,7 @@ export function MessageInput({
                   📅{scheduleTime ? <span className="ml-[2px] text-[10px]">{formatScheduleLabel(scheduleTime)}</span> : null}
                 </button>
                 {showScheduleMenu && (
-                  <div className="absolute bottom-full right-0 z-50 mb-2 min-w-[200px] rounded-md border border-[var(--border)] bg-[var(--modal-bg)] py-1 shadow-lg">
+                  <div className="absolute bottom-full right-0 z-[120] mb-2 min-w-[200px] rounded-md border border-[var(--border)] bg-[var(--modal-bg)] py-1 shadow-lg">
                     {whenFreeTarget && (
                       <>
                         <button
