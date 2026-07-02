@@ -5,6 +5,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useShallow } from "zustand/react/shallow";
 import { usePreferencesStore } from "@/store/preferences";
+import { useRemindersStore } from "@/store/reminders";
+import { buildMessageReminder } from "@/lib/utils/message-reminder";
 import { MessageFeed } from "./MessageFeed";
 import { MessageInput } from "./MessageInput";
 import { ThreadPanel } from "./ThreadPanel";
@@ -822,6 +824,11 @@ export function ChatView({ chatId }: { chatId: string }) {
             onAnchorConsumed={handleAnchorConsumed}
             onReplyInThread={setThreadMessage}
             onForward={setForwardMessage}
+            onRemind={(message, fireAt) =>
+              useRemindersStore
+                .getState()
+                .add(buildMessageReminder(message, { contextId: chatId, kind: "chat", contextLabel: label }, fireAt))
+            }
             onToggleReaction={handleToggleReaction}
             onDelete={handleDelete}
             onEdit={handleEdit}
