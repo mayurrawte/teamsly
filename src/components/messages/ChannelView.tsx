@@ -18,6 +18,8 @@ import { openTeamsChannelMeeting } from "@/lib/utils/teams-deeplink";
 import { markdownToHtml } from "@/lib/utils/markdown-to-html";
 import { VoiceTrigger } from "@/components/voice/VoiceTrigger";
 import { voiceRoomNameFor } from "@/lib/voice/types";
+import { useRemindersStore } from "@/store/reminders";
+import { buildMessageReminder } from "@/lib/utils/message-reminder";
 import { useRealtimeEvents, useRealtimeHealth } from "@/hooks/useRealtimeEvents";
 import { isDisappearing, unwrapMessage, wrapMessage, UNDECODABLE_BLOB_GRACE_MS } from "@/lib/utils/disappear";
 
@@ -466,6 +468,15 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
             onAnchorConsumed={handleAnchorConsumed}
             onReplyInThread={setThreadMessage}
             onForward={setForwardMessage}
+            onRemind={(message, fireAt) =>
+              useRemindersStore.getState().add(
+                buildMessageReminder(
+                  message,
+                  { contextId, kind: "channel", contextLabel: channel?.displayName ? `#${channel.displayName}` : "Channel" },
+                  fireAt
+                )
+              )
+            }
             onToggleReaction={handleToggleReaction}
             onRetry={handleRetry}
             onDiscard={handleDiscard}
