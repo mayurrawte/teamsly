@@ -20,6 +20,11 @@ import { openTeamslyDb } from "./drafts";
 
 const STORE_NAME = "messages-by-context";
 
+// Cap the number of cached conversations so the cache (and the in-memory map
+// hydrated from it on boot) can't grow without bound over a long-lived install.
+// Excess contexts, least-recently-updated first, are evicted on cold-start load.
+const MAX_CONTEXTS = 50;
+
 interface ContextRecord {
   contextId: string;
   messages: MSMessage[];
@@ -48,13 +53,18 @@ export async function loadAllContexts(): Promise<Record<string, MSMessage[]>> {
       const store = tx.objectStore(STORE_NAME);
       const request = store.getAll();
       request.onsuccess = () => {
-        const records = (request.result ?? []) as ContextRecord[];
-        const out: Record<string, MSMessage[]> = {};
-        for (const r of records) {
-          if (r && r.contextId && Array.isArray(r.messages)) {
-            out[r.contextId] = r.messages;
-          }
+        let records = ((request.result ?? []) as ContextRecord[]).filter(
+          (r) => r && r.contextId && Array.isArray(r.messages)
+        );
+        // Bound growth: keep the most-recently-updated contexts, evict the rest.
+        if (records.length > MAX_CONTEXTS) {
+          records.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+          const evicted = records.slice(MAX_CONTEXTS).map((r) => r.contextId);
+          records = records.slice(0, MAX_CONTEXTS);
+          evictContexts(db, evicted);
         }
+        const out: Record<string, MSMessage[]> = {};
+        for (const r of records) out[r.contextId] = r.messages;
         resolve(out);
       };
       request.onerror = () => {
@@ -66,6 +76,18 @@ export async function loadAllContexts(): Promise<Record<string, MSMessage[]>> {
       resolve({});
     }
   });
+}
+
+/** Best-effort delete of evicted contexts; never throws. */
+function evictContexts(db: IDBDatabase, contextIds: string[]): void {
+  if (contextIds.length === 0) return;
+  try {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const store = tx.objectStore(STORE_NAME);
+    for (const id of contextIds) store.delete(id);
+  } catch (err) {
+    console.warn("[message-cache] evict threw", err);
+  }
 }
 
 /**
