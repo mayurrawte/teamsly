@@ -51,6 +51,7 @@ interface Props {
   onAnchorConsumed?: () => void;
   onReplyInThread?: (message: MSMessage) => void;
   onForward?: (message: MSMessage) => void;
+  onRemind?: (message: MSMessage, fireAt: number) => void;
   onToggleReaction?: (messageId: string, reactionType: ReactionType) => void;
   onDelete?: (messageId: string) => void;
   onEdit?: (messageId: string, newContent: string) => Promise<void> | void;
@@ -67,7 +68,7 @@ const ANCHOR_FLASH_MS = 1500;
 // the URL doesn't keep stale state.
 const ANCHOR_GIVE_UP_MS = 4000;
 
-export function MessageFeed({ messages, loading, contextName, bookmarkContextId, contextLabel, contextId, contextKind, currentUserId, introCard, anchorMessageId, onAnchorConsumed, onReplyInThread, onForward, onToggleReaction, onDelete, onEdit, onRetry, onDiscard, onExpire }: Props) {
+export function MessageFeed({ messages, loading, contextName, bookmarkContextId, contextLabel, contextId, contextKind, currentUserId, introCard, anchorMessageId, onAnchorConsumed, onReplyInThread, onForward, onRemind, onToggleReaction, onDelete, onEdit, onRetry, onDiscard, onExpire }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -313,6 +314,7 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
               contextLabel={contextLabel}
               onReplyInThread={onReplyInThread}
               onForward={onForward}
+              onRemind={onRemind}
               onToggleReaction={onToggleReaction}
               onDelete={onDelete}
               onEdit={onEdit}
