@@ -187,7 +187,7 @@ function NotificationsPanel() {
         value={mentionsOnly}
         onChange={setMentionsOnly}
       />
-      <FieldGroup label="Keyword alerts" hint="Comma-separated words that can trigger smart notifications.">
+      <FieldGroup label="Keyword alerts" hint="Comma-separated words. Notifies you when they appear across your DMs or the active team's channels — not just the open chat.">
         <input
           value={keywords}
           onChange={(event) => setKeywords(event.target.value)}
