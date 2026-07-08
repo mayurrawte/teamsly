@@ -35,8 +35,18 @@ export async function GET(
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    // Room doesn't exist yet — return empty list rather than erroring
-    if (msg.includes("not found") || msg.includes("404") || msg.includes("room_not_found")) {
+    // Room doesn't exist yet (nobody has joined the call) — the normal case
+    // for this poll, not an error. LiveKit's TwirpError reports it as
+    // status 404 / code "not_found" with message "requested room does not
+    // exist", so check the structured fields, not just the message text.
+    const status = (err as { status?: number }).status;
+    const code = (err as { code?: string }).code;
+    if (
+      status === 404 ||
+      code === "not_found" ||
+      msg.includes("not found") ||
+      msg.includes("does not exist")
+    ) {
       return NextResponse.json({ participants: [] });
     }
     console.error("[voice] listParticipants failed:", msg);
