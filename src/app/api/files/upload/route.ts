@@ -125,7 +125,7 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     console.error("[graph] chunked drive upload failed:", err);
-    const status = err instanceof GraphUploadError ? 502 : 502;
+    const status = err instanceof GraphUploadError ? err.status : 502;
     return NextResponse.json({ error: "Upload to OneDrive failed" }, { status });
   }
 }

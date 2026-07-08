@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "OPENAI_API_KEY is not configured" }, { status: 503 });
   }
 
-  const body = (await req.json()) as { messages?: Array<{ author: string; content: string }> };
+  const body = (await req.json().catch(() => ({}))) as { messages?: Array<{ author: string; content: string }> };
   const messages = body.messages?.slice(-30) ?? [];
   if (messages.length === 0) {
     return NextResponse.json({ summary: "No unread messages to summarize." });

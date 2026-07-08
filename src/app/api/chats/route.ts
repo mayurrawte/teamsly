@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   const session = await auth();
   if (!session?.accessToken) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = (await request.json()) as { userId?: string; userIds?: string[]; topic?: string };
+  const body = (await request.json().catch(() => ({}))) as { userId?: string; userIds?: string[]; topic?: string };
   const ids = (body.userIds ?? (body.userId ? [body.userId] : [])).filter(
     (id): id is string => typeof id === "string" && id.length > 0
   );

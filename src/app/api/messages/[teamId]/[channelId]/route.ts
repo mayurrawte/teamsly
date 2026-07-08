@@ -25,7 +25,7 @@ export async function POST(req: Request, { params }: { params: Params }) {
   const session = await auth();
   if (!session?.accessToken) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { teamId, channelId } = await params;
-  const body = (await req.json()) as {
+  const body = (await req.json().catch(() => ({}))) as {
     content?: string;
     mentions?: ClientMention[];
     contentType?: "html" | "text";

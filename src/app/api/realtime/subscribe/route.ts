@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = (await req.json()) as {
+  const body = (await req.json().catch(() => ({}))) as {
     teamId?: string;
     channelId?: string;
     chatId?: string;

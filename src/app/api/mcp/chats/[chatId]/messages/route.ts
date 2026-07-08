@@ -10,8 +10,13 @@ export async function GET(
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { chatId } = await params;
-  const messages = await getChatMessages(token, chatId);
-  return NextResponse.json(messages);
+  try {
+    const messages = await getChatMessages(token, chatId);
+    return NextResponse.json(messages);
+  } catch (err) {
+    console.error("[mcp] getChatMessages failed:", err);
+    return NextResponse.json({ error: "Graph request failed" }, { status: 502 });
+  }
 }
 
 export async function POST(
@@ -22,9 +27,14 @@ export async function POST(
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { chatId } = await params;
-  const body = (await req.json()) as { message?: string };
+  const body = (await req.json().catch(() => ({}))) as { message?: string };
   if (!body.message) return NextResponse.json({ error: "message required" }, { status: 400 });
 
-  await sendChatMessage(token, chatId, body.message);
-  return NextResponse.json({ ok: true });
+  try {
+    await sendChatMessage(token, chatId, body.message);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error("[mcp] sendChatMessage failed:", err);
+    return NextResponse.json({ error: "Graph request failed" }, { status: 502 });
+  }
 }

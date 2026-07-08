@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = (await req.json()) as SetStatusMessageBody;
+  const body = (await req.json().catch(() => ({}))) as SetStatusMessageBody;
 
   const headers = {
     Authorization: `Bearer ${session.accessToken}`,
