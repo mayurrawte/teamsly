@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useWorkspaceStore } from "@/store/workspace";
+import { useShallow } from "zustand/react/shallow";
 import { MessageFeed } from "./MessageFeed";
 import { MessageInput } from "./MessageInput";
 import { ThreadPanel } from "./ThreadPanel";
@@ -22,7 +23,14 @@ import { useRealtimeEvents, useRealtimeHealth } from "@/hooks/useRealtimeEvents"
 import { decodeGraphId } from "@/lib/realtime/ids";
 import { isDisappearing, unwrapMessage, wrapMessage, UNDECODABLE_BLOB_GRACE_MS } from "@/lib/utils/disappear";
 
+// Stable empty reference so the reactive messages selector doesn't churn.
+const EMPTY_MESSAGES: MSMessage[] = [];
+
 export function ChannelView({ teamId, channelId }: { teamId: string; channelId: string }) {
+  // Select only what this view uses (state we read + stable actions) via a
+  // shallow compare, so unrelated store churn (presence, other contexts'
+  // messages, unread counts) doesn't re-render the whole channel view.
+  // Messages are read through a dedicated reactive selector below.
   const {
     teams,
     channels,
@@ -37,7 +45,23 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
     expireMessage,
     setContextLoading,
     toggleReaction,
-  } = useWorkspaceStore();
+  } = useWorkspaceStore(
+    useShallow((s) => ({
+      teams: s.teams,
+      channels: s.channels,
+      getMessages: s.getMessages,
+      currentUserId: s.currentUserId,
+      currentUserName: s.currentUserName,
+      setMessages: s.setMessages,
+      appendPendingMessage: s.appendPendingMessage,
+      replaceMessage: s.replaceMessage,
+      markMessageFailed: s.markMessageFailed,
+      removeMessage: s.removeMessage,
+      expireMessage: s.expireMessage,
+      setContextLoading: s.setContextLoading,
+      toggleReaction: s.toggleReaction,
+    }))
+  );
   const isHydrated = useWorkspaceStore((s) => s.isHydrated);
   // First-load flag for THIS channel only — a cached channel never shows the skeleton.
   const loadingThisChannel = useWorkspaceStore(
@@ -67,7 +91,9 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
 
   // Stable context key for this channel's message cache
   const contextId = `${teamId}:${channelId}`;
-  const messages = getMessages(contextId);
+  // Reactive read for rendering — re-renders when THIS channel's messages
+  // change. (getMessages remains for imperative reads in effects/handlers.)
+  const messages = useWorkspaceStore((s) => s.messagesByContext[contextId]) ?? EMPTY_MESSAGES;
 
   const team = teams.find((t) => t.id === teamId);
   const channel = channels[teamId]?.find((c) => c.id === channelId);
