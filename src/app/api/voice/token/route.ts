@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth/config";
 import { voiceRoomNameFor } from "@/lib/voice/types";
+import { decodeGraphId } from "@/lib/realtime/ids";
 import { AccessToken } from "livekit-server-sdk";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -29,14 +30,21 @@ export async function POST(request: NextRequest) {
   // Verify the caller is a member of the target chat/channel BEFORE issuing a
   // token, then derive the room name from the (verified) ids — the client never
   // picks the room directly, so it can't join a call it isn't a party to.
+  // Ids arrive percent-encoded (the client passes route params through as-is),
+  // so decode before re-encoding for the Graph path — encoding them twice made
+  // the membership check 404 and 403 every legitimate member. Room names keep
+  // deriving from the as-sent ids so they match the client's own derivation.
   let roomName: string;
   if (typeof chatId === "string" && chatId) {
-    if (!(await graphOk(`/me/chats/${encodeURIComponent(chatId)}`, session.accessToken))) {
+    const rawChatId = decodeGraphId(chatId) ?? chatId;
+    if (!(await graphOk(`/me/chats/${encodeURIComponent(rawChatId)}`, session.accessToken))) {
       return NextResponse.json({ error: "Not a member of this chat" }, { status: 403 });
     }
     roomName = voiceRoomNameFor({ chatId });
   } else if (typeof teamId === "string" && teamId && typeof channelId === "string" && channelId) {
-    if (!(await graphOk(`/teams/${encodeURIComponent(teamId)}/channels/${encodeURIComponent(channelId)}`, session.accessToken))) {
+    const rawTeamId = decodeGraphId(teamId) ?? teamId;
+    const rawChannelId = decodeGraphId(channelId) ?? channelId;
+    if (!(await graphOk(`/teams/${encodeURIComponent(rawTeamId)}/channels/${encodeURIComponent(rawChannelId)}`, session.accessToken))) {
       return NextResponse.json({ error: "Not a member of this channel" }, { status: 403 });
     }
     roomName = voiceRoomNameFor({ teamId, channelId });

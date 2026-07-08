@@ -1,7 +1,14 @@
 import { auth } from "@/lib/auth/config";
+import { decodeGraphId } from "@/lib/realtime/ids";
 import { NextResponse } from "next/server";
 
 type Params = Promise<{ chatId: string; messageId: string }>;
+
+// Route params arrive still percent-encoded (Next.js doesn't decode them), so
+// decode before re-encoding for the Graph URL — encoding twice 404s the chat.
+function graphEncode(id: string): string {
+  return encodeURIComponent(decodeGraphId(id) ?? id);
+}
 
 // Client sends plain text; we convert to HTML because Graph requires contentType:"html".
 function textToHtml(text: string): string {
@@ -23,7 +30,7 @@ export async function PATCH(req: Request, { params }: { params: Params }) {
   const { chatId, messageId } = await params;
   try {
     const res = await fetch(
-      `https://graph.microsoft.com/v1.0/chats/${encodeURIComponent(chatId)}/messages/${encodeURIComponent(messageId)}`,
+      `https://graph.microsoft.com/v1.0/chats/${graphEncode(chatId)}/messages/${graphEncode(messageId)}`,
       {
         method: "PATCH",
         headers: {
@@ -52,7 +59,7 @@ export async function GET(_req: Request, { params }: { params: Params }) {
   const { chatId, messageId } = await params;
   try {
     const res = await fetch(
-      `https://graph.microsoft.com/v1.0/chats/${encodeURIComponent(chatId)}/messages/${encodeURIComponent(messageId)}`,
+      `https://graph.microsoft.com/v1.0/chats/${graphEncode(chatId)}/messages/${graphEncode(messageId)}`,
       { headers: { Authorization: `Bearer ${session.accessToken}` } }
     );
     if (!res.ok) {
@@ -80,7 +87,7 @@ export async function DELETE(_req: Request, { params }: { params: Params }) {
     // which is why expired disappearing messages were vanishing locally but
     // surviving in native Teams.
     const res = await fetch(
-      `https://graph.microsoft.com/v1.0/me/chats/${encodeURIComponent(chatId)}/messages/${encodeURIComponent(messageId)}/softDelete`,
+      `https://graph.microsoft.com/v1.0/me/chats/${graphEncode(chatId)}/messages/${graphEncode(messageId)}/softDelete`,
       {
         method: "POST",
         headers: {
