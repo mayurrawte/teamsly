@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = (await req.json()) as SetPresenceBody;
+  const body = (await req.json().catch(() => ({}))) as SetPresenceBody;
 
   const graphBase = "https://graph.microsoft.com/v1.0/me/presence";
   const headers = {

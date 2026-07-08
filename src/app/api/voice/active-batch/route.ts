@@ -48,8 +48,20 @@ export async function POST(request: NextRequest) {
     if (result.status === "fulfilled") {
       counts[roomNames[i]] = result.value.count;
     } else {
+      // Room doesn't exist (nobody in the call) is the normal case — report 0
+      // silently. Anything else (auth failure, LiveKit outage) also degrades
+      // to 0 to keep the response shape, but gets logged so real failures
+      // aren't invisible. LiveKit's TwirpError signals not-found via the
+      // structured status/code fields, not the message text.
+      const status = (result.reason as { status?: number })?.status;
+      const code = (result.reason as { code?: string })?.code;
       const msg = result.reason instanceof Error ? result.reason.message : String(result.reason);
-      counts[roomNames[i]] = msg.includes("not found") || msg.includes("404") || msg.includes("room_not_found") ? 0 : 0;
+      const roomMissing =
+        status === 404 || code === "not_found" || msg.includes("not found") || msg.includes("does not exist");
+      if (!roomMissing) {
+        console.error("[voice] batch listParticipants failed for", roomNames[i], msg);
+      }
+      counts[roomNames[i]] = 0;
     }
   }
 

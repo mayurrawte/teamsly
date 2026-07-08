@@ -30,7 +30,7 @@ export async function POST(req: Request, { params }: { params: Params }) {
   if (!session?.accessToken) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { chatId } = await params;
 
-  const body = (await req.json()) as {
+  const body = (await req.json().catch(() => ({}))) as {
     content?: string;
     attachments?: unknown[];
     mentions?: ClientMention[];

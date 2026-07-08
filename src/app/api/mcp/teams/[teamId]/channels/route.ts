@@ -10,6 +10,11 @@ export async function GET(
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { teamId } = await params;
-  const channels = await getChannels(token, teamId);
-  return NextResponse.json(channels);
+  try {
+    const channels = await getChannels(token, teamId);
+    return NextResponse.json(channels);
+  } catch (err) {
+    console.error("[mcp] getChannels failed:", err);
+    return NextResponse.json({ error: "Graph request failed" }, { status: 502 });
+  }
 }

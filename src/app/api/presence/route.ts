@@ -6,7 +6,7 @@ export async function POST(req: Request) {
   const session = await auth();
   if (!session?.accessToken) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { userIds } = (await req.json()) as { userIds?: string[] };
+  const { userIds } = (await req.json().catch(() => ({}))) as { userIds?: string[] };
   const ids = [...new Set((userIds ?? []).filter(Boolean))].slice(0, 650);
   if (ids.length === 0) return NextResponse.json([]);
 
