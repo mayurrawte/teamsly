@@ -21,6 +21,7 @@ import { VoiceTrigger } from "@/components/voice/VoiceTrigger";
 import { voiceRoomNameFor } from "@/lib/voice/types";
 import { isDisappearing, unwrapMessage, wrapMessage, UNDECODABLE_BLOB_GRACE_MS } from "@/lib/utils/disappear";
 import { useRealtimeEvents, useRealtimeHealth } from "@/hooks/useRealtimeEvents";
+import { decodeGraphId } from "@/lib/realtime/ids";
 import { useScheduledStore } from "@/store/scheduled";
 
 // Stable empty reference so the reactive messages selector doesn't churn.
@@ -332,7 +333,9 @@ export function ChatView({ chatId }: { chatId: string }) {
   useRealtimeEvents(
     useCallback(
       (event) => {
-        if (event.type === "chat_message" && event.chatId === chatId) {
+        // Events carry the raw Graph id; the chatId prop is the (still
+        // percent-encoded) route param.
+        if (event.type === "chat_message" && event.chatId === decodeGraphId(chatId)) {
           fetch(`/api/chats/${chatId}/messages/${encodeURIComponent(event.messageId)}`)
             .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
             .then((msg: MSMessage) => upsertMessage(chatId, msg))

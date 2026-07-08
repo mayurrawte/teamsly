@@ -1,9 +1,11 @@
 import { auth } from "@/lib/auth/config";
 import { NextResponse } from "next/server";
 import { transport, resourceKey, type SubscriptionRecord } from "@/lib/realtime/pubsub";
+import { decodeGraphId } from "@/lib/realtime/ids";
 
 const URL_SAFE = /^[A-Za-z0-9_-]+$/;
-// Teams chat IDs look like 19:xxx_yyy@unq.gbl.spaces — allow :, @, . in addition.
+// Teams chat ids (19:xxx_yyy@unq.gbl.spaces) and channel ids
+// (19:xxx@thread.tacv2) share this shape — allow :, @, . in addition.
 const CHAT_ID_SAFE = /^[A-Za-z0-9_@.:-]+$/;
 const TTL_MS = 55 * 60 * 1000;
 const TTL_SEC = TTL_MS / 1000;
@@ -48,27 +50,43 @@ export async function POST(req: Request) {
   let resource: string;
   let makeRecord: (expiresAt: number) => SubscriptionRecord;
 
+  // Clients send ids as they appear in route params, which Next.js leaves
+  // percent-encoded. Normalize to the raw Graph form: it's what the Graph
+  // subscription resource needs, and storing it in the record means realtime
+  // events carry the canonical id.
   if (chatId) {
-    if (!CHAT_ID_SAFE.test(chatId)) {
+    const rawChatId = decodeGraphId(chatId);
+    if (!rawChatId || !CHAT_ID_SAFE.test(rawChatId)) {
       return NextResponse.json({ error: "Invalid chatId" }, { status: 400 });
     }
-    rkey = resourceKey({ kind: "chat", chatId });
-    resource = `/chats/${chatId}/messages`;
+    rkey = resourceKey({ kind: "chat", chatId: rawChatId });
+    resource = `/chats/${rawChatId}/messages`;
     makeRecord = (expiresAt) => ({
       userId,
       resourceType: "chat_message",
-      chatId,
+      chatId: rawChatId,
       expiresAt,
       clientState,
     });
-  } else if (teamId && channelId && URL_SAFE.test(teamId) && URL_SAFE.test(channelId)) {
-    rkey = resourceKey({ kind: "channel", teamId, channelId });
-    resource = `/teams/${teamId}/channels/${channelId}/messages`;
+  } else if (teamId && channelId) {
+    const rawTeamId = decodeGraphId(teamId);
+    const rawChannelId = decodeGraphId(channelId);
+    // Team ids are GUIDs; channel ids share the chat-id shape.
+    if (
+      !rawTeamId ||
+      !rawChannelId ||
+      !URL_SAFE.test(rawTeamId) ||
+      !CHAT_ID_SAFE.test(rawChannelId)
+    ) {
+      return NextResponse.json({ error: "Invalid teamId or channelId" }, { status: 400 });
+    }
+    rkey = resourceKey({ kind: "channel", teamId: rawTeamId, channelId: rawChannelId });
+    resource = `/teams/${rawTeamId}/channels/${rawChannelId}/messages`;
     makeRecord = (expiresAt) => ({
       userId,
       resourceType: "channel_message",
-      teamId,
-      channelId,
+      teamId: rawTeamId,
+      channelId: rawChannelId,
       expiresAt,
       clientState,
     });
