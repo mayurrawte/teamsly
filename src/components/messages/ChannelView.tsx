@@ -19,6 +19,7 @@ import { markdownToHtml } from "@/lib/utils/markdown-to-html";
 import { VoiceTrigger } from "@/components/voice/VoiceTrigger";
 import { voiceRoomNameFor } from "@/lib/voice/types";
 import { useRealtimeEvents, useRealtimeHealth } from "@/hooks/useRealtimeEvents";
+import { decodeGraphId } from "@/lib/realtime/ids";
 import { isDisappearing, unwrapMessage, wrapMessage, UNDECODABLE_BLOB_GRACE_MS } from "@/lib/utils/disappear";
 
 export function ChannelView({ teamId, channelId }: { teamId: string; channelId: string }) {
@@ -173,10 +174,12 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
   useRealtimeEvents(
     useCallback(
       (event) => {
+        // Events carry raw Graph ids; the props are (still percent-encoded)
+        // route params.
         if (
           event.type === "channel_message" &&
-          event.teamId === teamId &&
-          event.channelId === channelId
+          event.teamId === decodeGraphId(teamId) &&
+          event.channelId === decodeGraphId(channelId)
         ) {
           fetch(`/api/teams/${teamId}/channels/${channelId}/messages/${encodeURIComponent(event.messageId)}`)
             .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
