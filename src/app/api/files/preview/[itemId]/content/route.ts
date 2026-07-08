@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth/config";
+import { decodeGraphId } from "@/lib/realtime/ids";
 import { NextResponse } from "next/server";
 
 type Params = Promise<{ itemId: string }>;
@@ -27,7 +28,9 @@ export async function GET(_req: Request, { params }: { params: Params }) {
     // client) because the SDK insists on parsing the body as JSON for /content
     // endpoints and binary/text passthrough is easier with raw fetch.
     const upstream = await fetch(
-      `https://graph.microsoft.com/v1.0/me/drive/items/${encodeURIComponent(itemId)}/content`,
+      // Route params arrive percent-encoded; decode before re-encoding so the
+      // Graph URL isn't double-encoded.
+      `https://graph.microsoft.com/v1.0/me/drive/items/${encodeURIComponent(decodeGraphId(itemId) ?? itemId)}/content`,
       {
         headers: { Authorization: `Bearer ${session.accessToken}` },
         // Graph 302-redirects to a pre-signed URL; fetch follows redirects by
