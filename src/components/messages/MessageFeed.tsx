@@ -69,9 +69,15 @@ const ANCHOR_GIVE_UP_MS = 4000;
 
 export function MessageFeed({ messages, loading, contextName, bookmarkContextId, contextLabel, contextId, contextKind, currentUserId, introCard, anchorMessageId, onAnchorConsumed, onReplyInThread, onForward, onToggleReaction, onDelete, onEdit, onRetry, onDiscard, onExpire }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
+  const prevLastIdRef = useRef<string | null>(null);
   const isInitialLoad = useRef<boolean>(true);
+  // The user's *intent* to stay glued to the newest message. Kept in a ref
+  // (updated synchronously on scroll) so the ResizeObserver below reads it
+  // without re-subscribing; mirrored in isNearBottom state for rendering.
+  const pinnedRef = useRef(true);
 
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
@@ -88,6 +94,7 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
     if (!el) return;
     const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
     const nearBottom = distanceFromBottom <= NEAR_BOTTOM_THRESHOLD;
+    pinnedRef.current = nearBottom; // sync, so the ResizeObserver never acts on stale intent
     setIsNearBottom(nearBottom);
     if (nearBottom) {
       setNewMessagesCount(0);
@@ -99,9 +106,31 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior });
+    pinnedRef.current = true;
     setIsNearBottom(true);
     setNewMessagesCount(0);
   }, []);
+
+  // Stay glued to the newest message while the user is pinned to the bottom.
+  // Scroll effects alone aren't enough: images, GIFs, link previews and cards
+  // load after the effect ran and grow the feed, leaving the view stranded
+  // short of the latest message. Any content growth while pinned re-snaps.
+  // Re-runs when the skeleton gives way to the real feed — on first render the
+  // early return below means the refs aren't attached yet.
+  const showSkeleton = loading && messages.length === 0;
+  useEffect(() => {
+    if (showSkeleton) return;
+    const content = contentRef.current;
+    const el = scrollRef.current;
+    if (!content || !el) return;
+    const ro = new ResizeObserver(() => {
+      if (pinnedRef.current) {
+        el.scrollTop = el.scrollHeight;
+      }
+    });
+    ro.observe(content);
+    return () => ro.disconnect();
+  }, [showSkeleton]);
 
   // Reset scroll state whenever the open context changes (channel/DM switch).
   // We key on contextId rather than the `loading` flag because a *cached*
@@ -112,6 +141,8 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
   useEffect(() => {
     isInitialLoad.current = true;
     prevMessageCountRef.current = 0;
+    prevLastIdRef.current = null;
+    pinnedRef.current = true;
     setIsNearBottom(true);
     setNewMessagesCount(0);
     setVisibleCount(INITIAL_CAP);
@@ -124,29 +155,43 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
     if (isInitialLoad.current && messages.length > 0) {
       isInitialLoad.current = false;
       prevMessageCountRef.current = messages.length;
+      prevLastIdRef.current = messages[messages.length - 1]?.id ?? null;
       scrollToBottom("instant");
     }
-  }, [loading, messages.length, scrollToBottom, contextId]);
+  }, [loading, messages, scrollToBottom, contextId]);
 
-  // React to new messages arriving after initial load.
+  // React to new messages arriving after initial load. A new tail is detected
+  // by the last message id changing, not just count growth — the store caps
+  // each context (old entries evicted as new ones arrive), so count alone
+  // misses arrivals once a conversation is at the cap.
   useEffect(() => {
     if (loading) return;
     if (isInitialLoad.current) return;
 
     const prev = prevMessageCountRef.current;
     const curr = messages.length;
+    const last = messages[curr - 1];
+    const lastId = last?.id ?? null;
+    const newTail = lastId !== null && lastId !== prevLastIdRef.current;
 
-    if (curr > prev) {
-      const incoming = curr - prev;
-      if (isNearBottom) {
-        scrollToBottom("smooth");
+    if (curr > prev || newTail) {
+      const ownMessage = !!currentUserId && last?.from?.user?.id === currentUserId;
+      if (ownMessage) {
+        // Sending always returns you to the bottom, even if you were scrolled
+        // up reading history — never show a "new message" badge for yourself.
+        scrollToBottom("instant");
+      } else if (isNearBottom) {
+        // Instant, not smooth: the ResizeObserver re-snaps as async content
+        // grows, and a smooth animation would fight it (and rapid arrivals).
+        scrollToBottom("instant");
       } else {
-        setNewMessagesCount((n) => n + incoming);
+        setNewMessagesCount((n) => n + Math.max(curr - prev, 1));
       }
     }
 
     prevMessageCountRef.current = curr;
-  }, [messages, loading, isNearBottom, scrollToBottom]);
+    prevLastIdRef.current = lastId;
+  }, [messages, loading, isNearBottom, scrollToBottom, currentUserId]);
 
   // Track which anchor request we've already handled so polling refetches
   // don't re-flash the row every 5s. We tag each request with the current
@@ -222,7 +267,7 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
   // Show skeleton only on first load (no messages yet). During background
   // polling refreshes (loading=true but messages already present) keep the
   // existing message list visible so the UI doesn't flash.
-  if (loading && messages.length === 0) return <LoadingSkeleton />;
+  if (showSkeleton) return <LoadingSkeleton />;
 
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden">
@@ -231,6 +276,9 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
         onScroll={checkNearBottom}
         className="flex flex-1 flex-col overflow-y-auto py-2"
       >
+        {/* Single wrapper so the stick-to-bottom ResizeObserver sees every
+            content change; min-h-full keeps the empty state centered. */}
+        <div ref={contentRef} className="flex min-h-full flex-col">
         {introCard}
         <AiSummaryBanner messages={messages} />
         {messages.length === 0 && (
@@ -275,6 +323,7 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
           </Fragment>
         ))}
         <div ref={bottomRef} />
+        </div>
       </div>
 
       {newMessagesCount > 0 && (
@@ -295,14 +344,9 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
   );
 }
 
-// Expose a way for ChannelView/ChatView to notify MessageFeed that the
-// current user just sent a message so we can force-scroll regardless of
-// position. We wire this via the scrollToBottom imperative handle pattern
-// by accepting an optional ref from the parent — but since the current
-// callers use appendMessage (which adds to the messages array), the
-// messages.length change will naturally trigger scrollToBottom through
-// the new-message effect above because the user just acted intentionally.
-// No extra plumbing needed for the current architecture.
+// Own sends are force-scrolled by the new-message effect above (the last
+// message's author is the current user), so no imperative handle from
+// ChannelView/ChatView is needed.
 
 // CSS.escape is supported in every browser we ship to (Electron 28+, modern
 // evergreens). Tiny wrapper so the call site is readable.
