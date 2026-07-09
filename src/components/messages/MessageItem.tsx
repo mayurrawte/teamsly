@@ -14,7 +14,7 @@ import { messagePlainText, renderMessageBody } from "@/lib/utils/render-message"
 import { isDisappearing, unwrapMessage } from "@/lib/utils/disappear";
 import { isPoll, parsePoll } from "@/lib/polls";
 import { PollCard } from "./PollCard";
-import type { ReactionType } from "@/lib/utils/reactions";
+import { reactionsSignature, type ReactionType } from "@/lib/utils/reactions";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useBookmarksStore } from "@/store/bookmarks";
 import { cn } from "@/lib/utils";
@@ -661,6 +661,8 @@ function propsEqual(a: Props, b: Props): boolean {
     a.message.__failed === b.message.__failed &&
     // A late-arriving attachment/card can change without bumping lastModified.
     attachmentSig(a.message) === attachmentSig(b.message) &&
+    // Reactions can also change without a lastModifiedDateTime bump.
+    reactionsSignature(a.message.reactions) === reactionsSignature(b.message.reactions) &&
     a.isGroupHead === b.isGroupHead &&
     a.contextId === b.contextId &&
     a.contextLabel === b.contextLabel

@@ -287,10 +287,6 @@ export function ChatView({ chatId }: { chatId: string }) {
     loadRef.current = load;
     load();
 
-    // Webhook push is primary; when SSE is healthy, poll less frequently (2 min)
-    // and fall back to 30 s when SSE is degraded.
-    const interval = setInterval(load, sseHealthy ? 120_000 : 30_000);
-
     // Disappearing-message sweep stays on a fast cadence, decoupled from the
     // message fetch. It's network-free unless one of our own messages has
     // actually expired, so running it every 4s is cheap and preserves the
@@ -321,14 +317,23 @@ export function ChatView({ chatId }: { chatId: string }) {
 
     return () => {
       cancelled = true;
-      clearInterval(interval);
       clearInterval(sweep);
       clearInterval(scheduleSweep);
       clearInterval(resubscribe);
     };
     // getMessages is a stable selector — intentionally not in deps to avoid re-running on cache updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chatId, isHydrated, sseHealthy, setContextLoading, setMessages, showToast, sweepExpired, sweepScheduled]);
+  }, [chatId, isHydrated, setContextLoading, setMessages, showToast, sweepExpired, sweepScheduled]);
+
+  // Reconcile poll in its own effect: SSE health flaps (EventSource reconnects
+  // flip healthy false→true) must only retime the interval — keeping sseHealthy
+  // out of the load/subscribe effect above avoids a redundant refetch +
+  // re-subscribe burst on every flap. Webhook push is primary; poll every 2 min
+  // while SSE is healthy, 30 s when degraded.
+  useEffect(() => {
+    const interval = setInterval(() => void loadRef.current(), sseHealthy ? 120_000 : 30_000);
+    return () => clearInterval(interval);
+  }, [chatId, sseHealthy]);
 
   useRealtimeEvents(
     useCallback(
