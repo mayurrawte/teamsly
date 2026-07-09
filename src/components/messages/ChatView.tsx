@@ -220,7 +220,10 @@ export function ChatView({ chatId }: { chatId: string }) {
   useEffect(() => {
     if (chat) return;
     let cancelled = false;
-    fetch(`/api/chats/${encodeURIComponent(chatId)}`)
+    // chatId is the route param and already percent-encoded — wrapping it in
+    // encodeURIComponent again double-encodes and 404s (same as the messages
+    // fetch below, which uses it directly).
+    fetch(`/api/chats/${chatId}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data: MSChat | null) => { if (!cancelled && data) patchChat(data); })
       .catch(() => {});
@@ -238,7 +241,7 @@ export function ChatView({ chatId }: { chatId: string }) {
   useEffect(() => {
     if (storeMembers.length > 0) return;
     let cancelled = false;
-    fetch(`/api/chats/${encodeURIComponent(chatId)}/members`)
+    fetch(`/api/chats/${chatId}/members`)
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then((data: MSChatMember[]) => {
         if (!cancelled) {

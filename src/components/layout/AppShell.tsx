@@ -76,11 +76,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const unreadCounts = useWorkspaceStore((s) => s.unreadCounts);
   // Pull the active context's messages so SearchModal can find matches in the
   // currently open chat/channel. Empty array when nothing is open.
+  // The views key messagesByContext by their route params, which arrive
+  // percent-encoded — while active*Id holds the raw Graph id. Check the
+  // encoded form first, then raw, so the lookup works whichever form the
+  // router delivered.
   const activeContextId = activeChannelId && activeTeamId
     ? `${activeTeamId}:${activeChannelId}`
     : activeChatId ?? null;
+  const activeContextIdEncoded = activeChannelId && activeTeamId
+    ? `${activeTeamId}:${encodeURIComponent(activeChannelId)}`
+    : activeChatId ? encodeURIComponent(activeChatId) : null;
   const activeMessages = useWorkspaceStore((s) =>
-    activeContextId ? (s.messagesByContext[activeContextId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES
+    activeContextId
+      ? (activeContextIdEncoded ? s.messagesByContext[activeContextIdEncoded] : undefined) ??
+        s.messagesByContext[activeContextId] ??
+        EMPTY_MESSAGES
+      : EMPTY_MESSAGES
   );
   const openCatchUp = useCatchUpStore((s) => s.setOpen);
   const showToast = useToastStore((state) => state.showToast);

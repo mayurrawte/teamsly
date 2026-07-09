@@ -67,13 +67,22 @@ export function useSmartNotifications({
     // 3. Quiet hours window — skip both sound and OS notifications.
     if (quietHoursEnabled && inQuietHours(new Date(), quietHoursStart, quietHoursEnd)) return;
 
-    // 3a. Snooze: skip if this context has an active snooze. The contextId
-    // shape that arrives here is "teamId/channelId" for channels but our
-    // snooze store keys with "teamId:channelId" (same shape used elsewhere) —
-    // check both so either spelling matches.
+    // 3a. Snooze: skip if this context has an active snooze. The sidebar
+    // snoozes with raw Graph ids while this hook receives the views'
+    // (percent-encoded) route params, and channels arrive as
+    // "teamId/channelId" while the store keys "teamId:channelId" — check
+    // every spelling so a snooze set anywhere actually silences here.
     if (contextId) {
-      const colonForm = contextId.replace("/", ":");
-      const expiresAt = snoozedContexts[contextId] ?? snoozedContexts[colonForm];
+      const decoded = safeDecode(contextId);
+      const candidates = [
+        contextId,
+        contextId.replace("/", ":"),
+        decoded,
+        decoded.replace("/", ":"),
+      ];
+      const expiresAt = candidates
+        .map((key) => snoozedContexts[key])
+        .find((v) => v !== undefined);
       if (expiresAt && expiresAt > Date.now()) return;
     }
 
@@ -183,10 +192,23 @@ function isMuted(text: string, mutedKeywords: string[]): boolean {
 function isViewingContext(contextId?: string, contextKind?: "chat" | "channel"): boolean {
   if (!contextId || !contextKind) return false;
   if (typeof window === "undefined") return false;
-  const path = window.location.pathname;
-  if (contextKind === "chat") return path === `/workspace/dm/${contextId}`;
+  // Decode both sides: the browser may keep : and @ raw in location.pathname
+  // while contextId is the (percent-encoded) route param — comparing mixed
+  // forms made this always false, so notifications fired for the very
+  // conversation the user was reading.
+  const path = safeDecode(window.location.pathname);
+  if (contextKind === "chat") return path === `/workspace/dm/${safeDecode(contextId)}`;
   // channel contextId is "{teamId}/{channelId}"
-  return path === `/workspace/t/${contextId}`;
+  return path === `/workspace/t/${safeDecode(contextId)}`;
+}
+
+/** decodeURIComponent that returns the input untouched on malformed escapes. */
+function safeDecode(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }
 
 /**
