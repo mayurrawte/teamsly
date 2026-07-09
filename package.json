@@ -19,7 +19,8 @@
     "electron:dev": "npm run electron:compile && electron electron/dist/main.js",
     "electron:dev:all": "concurrently -k -n next,electron -c blue,magenta \"npm run dev\" \"wait-on http://localhost:3000 && npm run electron:dev\"",
     "electron:build": "npm run electron:compile && electron-builder --publish never",
-    "electron:release": "electron-builder --publish always"
+    "electron:release": "electron-builder --publish always",
+    "test": "vitest run"
   },
   "dependencies": {
     "@azure/msal-browser": "^5.15.0",
@@ -66,9 +67,11 @@
     "electron-builder": "^26.15.3",
     "eslint": "^10",
     "eslint-config-next": "16.2.10",
+    "jsdom": "^29.1.1",
     "postcss": "8.5.16",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
+    "vitest": "^4.1.10",
     "wait-on": "^9.0.10"
   },
   "overrides": {
