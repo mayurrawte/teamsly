@@ -162,10 +162,6 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
     loadRef.current = load;
     load();
 
-    // Webhook push is primary; when SSE is healthy, poll less frequently (2 min)
-    // and fall back to 30 s when SSE is degraded.
-    const interval = setInterval(load, sseHealthy ? 120_000 : 30_000);
-
     // Disappearing-message sweep on a fast cadence (network-free unless one of
     // our own messages has actually expired) — matches the DM view's behavior.
     const sweep = setInterval(() => void sweepExpired(getMessages(contextId)), 4000);
@@ -189,13 +185,19 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
 
     return () => {
       cancelled = true;
-      clearInterval(interval);
       clearInterval(sweep);
       clearInterval(resubscribe);
     };
     // getMessages is a stable selector — intentionally not in deps to avoid re-running on cache updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teamId, channelId, contextId, isHydrated, sseHealthy, setContextLoading, setMessages, showToast, sweepExpired]);
+  }, [teamId, channelId, contextId, isHydrated, setContextLoading, setMessages, showToast, sweepExpired]);
+
+  // Reconcile poll in its own effect: SSE health flaps must only retime the
+  // interval, not re-run the load/subscribe effect above (see ChatView).
+  useEffect(() => {
+    const interval = setInterval(() => void loadRef.current(), sseHealthy ? 120_000 : 30_000);
+    return () => clearInterval(interval);
+  }, [contextId, sseHealthy]);
 
   useRealtimeEvents(
     useCallback(

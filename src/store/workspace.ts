@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { loadAllContexts, saveContext } from "@/lib/storage/message-cache";
+import { reactionsSignature } from "@/lib/utils/reactions";
 
 // Cap each context's persisted+in-memory array. Graph pages are 50; 200
 // covers a couple of "Load more" jumps without unbounded growth.
@@ -204,20 +205,30 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             : incoming;
           // Preserve optimistic (pending/failed) messages that the server response
           // won't contain — they live only in local state until confirmed or failed.
-          const pending = existing.filter((m) => m.__pending || m.__failed);
+          // Also keep messages still inside their optimistic window even when the
+          // server array lacks them: a reconcile whose GET started before a send
+          // resolves without the just-confirmed message and would drop it.
+          const now = Date.now();
+          const pending = existing.filter(
+            (m) => m.__pending || m.__failed || (m.__optimisticUntil ?? 0) > now
+          );
           const serverIds = new Set(filtered.map((m) => m.id));
           const uniquePending = pending.filter((m) => !serverIds.has(m.id));
           // Reuse the existing object for any message whose id + lastModified
           // are unchanged, so React.memo'd rows don't re-render on reconcile.
           const byId = new Map(existing.map((m) => [m.id, m]));
-          const now = Date.now();
           const reused = filtered.map((m) => {
             const prev = byId.get(m.id);
             if (!prev) return m;
             // Hold a just-made optimistic reaction/edit until Graph reflects it,
             // otherwise a poll landing before read-after-write reverts the change.
             if (prev.__optimisticUntil && prev.__optimisticUntil > now) return prev;
-            return prev.lastModifiedDateTime === m.lastModifiedDateTime ? prev : m;
+            // Reactions can change without a lastModifiedDateTime bump, so
+            // compare them explicitly or other people's reactions never land.
+            return prev.lastModifiedDateTime === m.lastModifiedDateTime &&
+              reactionsSignature(prev.reactions) === reactionsSignature(m.reactions)
+              ? prev
+              : m;
           });
           const merged = trimToMax(sortByCreatedDateTime([...reused, ...uniquePending]));
           persistContext(contextId, merged);
@@ -256,7 +267,15 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           const idx = existing.findIndex((m) => m.id === message.id);
           let next: MSMessage[];
           if (idx >= 0) {
-            if (existing[idx].lastModifiedDateTime === message.lastModifiedDateTime) return s;
+            const prev = existing[idx];
+            // The SSE echo of our own action can carry a stale pre-write version
+            // just like a reconcile poll — honor the optimistic window here too.
+            if (prev.__optimisticUntil && prev.__optimisticUntil > Date.now()) return s;
+            if (
+              prev.lastModifiedDateTime === message.lastModifiedDateTime &&
+              reactionsSignature(prev.reactions) === reactionsSignature(message.reactions)
+            )
+              return s;
             next = [...existing];
             next[idx] = message;
             next = sortByCreatedDateTime(next);
@@ -287,7 +306,15 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           const existing = s.messagesByContext[contextId] ?? [];
           const next = existing.map((m) =>
             m.id === tempId
-              ? { ...serverMessage, __pending: undefined, __failed: undefined }
+              ? {
+                  ...serverMessage,
+                  __pending: undefined,
+                  __failed: undefined,
+                  // Survive a reconcile whose GET predates this send — without
+                  // a window, setMessages would drop the just-confirmed message
+                  // until a fresher poll includes it.
+                  __optimisticUntil: Date.now() + 10_000,
+                }
               : m
           );
           persistContext(contextId, next);
@@ -387,7 +414,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           const next = [...existing];
           next.splice(index, 1);
           persistContext(contextId, next);
+          // Tombstone so a reconcile poll / SSE echo racing Graph's softDelete
+          // replication can't resurrect the message (mirrors expireMessage).
+          // restoreMessage (undo) lifts the tombstone.
+          const expiredMessageIds = new Set(s.expiredMessageIds);
+          expiredMessageIds.add(messageId);
           return {
+            expiredMessageIds,
             messagesByContext: { ...s.messagesByContext, [contextId]: next },
           };
         });
@@ -400,7 +433,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           const next = [...existing];
           next.splice(index, 0, message);
           persistContext(contextId, next);
+          // Undo of a delete — lift the delete tombstone again.
+          const expiredMessageIds = new Set(s.expiredMessageIds);
+          expiredMessageIds.delete(message.id);
           return {
+            expiredMessageIds,
             messagesByContext: { ...s.messagesByContext, [contextId]: next },
           };
         }),
