@@ -13,13 +13,20 @@ import { getTopVisited, type VisitTarget } from "./visit-counter";
 import { useWorkspaceStore } from "@/store/workspace";
 
 function urlFor(target: VisitTarget): string {
+  // Visit targets hold raw Graph ids; encode for the URL exactly like the
+  // router does so the API route receives the same param form the views send.
   return target.kind === "channel"
-    ? `/api/messages/${target.teamId}/${target.channelId}`
-    : `/api/chats/${target.chatId}/messages`;
+    ? `/api/messages/${target.teamId}/${encodeURIComponent(target.channelId)}`
+    : `/api/chats/${encodeURIComponent(target.chatId)}/messages`;
 }
 
 function contextIdFor(target: VisitTarget): string {
-  return target.kind === "channel" ? `${target.teamId}:${target.channelId}` : target.chatId;
+  // Match the views' keyspace: they key messagesByContext by their route
+  // params, which arrive percent-encoded. Writing the raw id here warmed a
+  // key nothing ever read.
+  return target.kind === "channel"
+    ? `${target.teamId}:${encodeURIComponent(target.channelId)}`
+    : encodeURIComponent(target.chatId);
 }
 
 /**

@@ -1,4 +1,5 @@
 import { Client } from "@microsoft/microsoft-graph-client";
+import { decodeGraphId } from "@/lib/realtime/ids";
 
 export function getGraphClient(accessToken: string) {
   return Client.init({
@@ -127,6 +128,14 @@ export async function getChats(
   };
 }
 
+// Callers pass chat ids in whichever form they hold — raw Graph ids or the
+// still-percent-encoded route param. Normalize before encoding for the Graph
+// path (the SDK transmits it verbatim); encoding an already-encoded id twice
+// makes Graph 404 the chat.
+function encodeChatId(chatId: string): string {
+  return encodeURIComponent(decodeGraphId(chatId) ?? chatId);
+}
+
 export async function getChat(accessToken: string, chatId: string): Promise<MSChat> {
   const client = getGraphClient(accessToken);
   // Chat IDs containing '@' (e.g. @unq.gbl.spaces) must be percent-encoded.
@@ -134,7 +143,7 @@ export async function getChat(accessToken: string, chatId: string): Promise<MSCh
   // a property on the base conversationMember type), so we skip the expand here
   // and let the sidebar fetch members separately via /members.
   return client
-    .api(`/me/chats/${encodeURIComponent(chatId)}`)
+    .api(`/me/chats/${encodeChatId(chatId)}`)
     .select("id,chatType,topic,lastUpdatedDateTime,lastMessagePreview")
     .get() as Promise<MSChat>;
 }
@@ -142,7 +151,7 @@ export async function getChat(accessToken: string, chatId: string): Promise<MSCh
 export async function getChatMessages(accessToken: string, chatId: string) {
   const client = getGraphClient(accessToken);
   const res = await client
-    .api(`/me/chats/${encodeURIComponent(chatId)}/messages`)
+    .api(`/me/chats/${encodeChatId(chatId)}/messages`)
     .top(50)
     .get();
   return res.value as MSMessage[];
@@ -153,7 +162,7 @@ export async function getChatMembers(accessToken: string, chatId: string) {
   // Don't use $select — userId/email are on the derived aadUserConversationMember
   // type, not the base conversationMember, so selecting them causes a 400.
   const res = await client
-    .api(`/me/chats/${encodeURIComponent(chatId)}/members`)
+    .api(`/me/chats/${encodeChatId(chatId)}/members`)
     .get();
   return res.value as MSChatMember[];
 }
