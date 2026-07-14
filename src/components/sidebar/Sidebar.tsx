@@ -642,7 +642,7 @@ export function Sidebar() {
           />
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
+              "grid transition-[grid-template-rows] duration-[var(--motion-base)] [transition-timing-function:var(--ease-spring)]",
               unreadsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >
@@ -699,7 +699,7 @@ export function Sidebar() {
           />
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
+              "grid transition-[grid-template-rows] duration-[var(--motion-base)] [transition-timing-function:var(--ease-spring)]",
               threadsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >
@@ -720,7 +720,7 @@ export function Sidebar() {
           />
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
+              "grid transition-[grid-template-rows] duration-[var(--motion-base)] [transition-timing-function:var(--ease-spring)]",
               starredOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >
@@ -778,7 +778,7 @@ export function Sidebar() {
             >
               <ChevronRight
                 className={cn(
-                  "h-2.5 w-2.5 transition-transform duration-200 ease-out",
+                  "h-2.5 w-2.5 transition-transform duration-[var(--motion-base)] ease-out",
                   channelsOpen && "rotate-90"
                 )}
               />
@@ -802,7 +802,7 @@ export function Sidebar() {
 
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
+              "grid transition-[grid-template-rows] duration-[var(--motion-base)] [transition-timing-function:var(--ease-spring)]",
               channelsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >
@@ -841,7 +841,7 @@ export function Sidebar() {
             >
               <ChevronRight
                 className={cn(
-                  "h-2.5 w-2.5 transition-transform duration-200 ease-out",
+                  "h-2.5 w-2.5 transition-transform duration-[var(--motion-base)] ease-out",
                   dmsOpen && "rotate-90"
                 )}
               />
@@ -873,7 +873,7 @@ export function Sidebar() {
 
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
+              "grid transition-[grid-template-rows] duration-[var(--motion-base)] [transition-timing-function:var(--ease-spring)]",
               dmsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >
@@ -937,7 +937,7 @@ function SectionHeader({
     >
       <ChevronRight
         className={cn(
-          "h-2.5 w-2.5 flex-shrink-0 transition-transform duration-200 ease-out",
+          "h-2.5 w-2.5 flex-shrink-0 transition-transform duration-[var(--motion-base)] ease-out",
           open && "rotate-90"
         )}
       />
