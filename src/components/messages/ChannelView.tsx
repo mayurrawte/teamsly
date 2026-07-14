@@ -7,6 +7,7 @@ import { useShallow } from "zustand/react/shallow";
 import { MessageFeed } from "./MessageFeed";
 import { MessageInput } from "./MessageInput";
 import { ThreadPanel } from "./ThreadPanel";
+import { selectThreadParent } from "@/lib/utils/threads";
 import { ChannelMessageHeader, type Tab } from "./MessageHeader";
 import { ChannelIntroCard } from "./IntroCard";
 import { ContextFilesTab } from "./ContextFilesTab";
@@ -519,7 +520,7 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
       )}
       <ThreadPanel
         open={Boolean(threadMessage)}
-        message={threadMessage}
+        message={selectThreadParent(messages, threadMessage)}
         onClose={() => setThreadMessage(null)}
         onSendReply={handleThreadReply}
         onForward={setForwardMessage}
