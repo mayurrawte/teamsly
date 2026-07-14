@@ -497,7 +497,7 @@ export default function ActivityPage() {
   const showSkeleton = isScanTab && scanLoading && !scanLoadedRef.current;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="context-fade-in flex h-full flex-col overflow-hidden">
       {/* Header */}
       <div className="flex-shrink-0 border-b border-[#3f4144] px-4 pb-0 pt-4">
         <h1 className="mb-3 text-[18px] font-bold text-white">Activity</h1>

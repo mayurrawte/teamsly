@@ -654,6 +654,15 @@ body.focus-mode .focus-mode-hide {
   100% { transform: scale(1); }
 }
 
+/* Odometer-lite digit roll for RollingNumber — fires only when the numeric
+   value actually changes (component re-keys the inner span), never on
+   first mount. Token-driven duration/easing so reduced-motion zeroes it. */
+@keyframes roll-in {
+  from { transform: translateY(0.7em); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.roll-in { animation: roll-in var(--motion-base) var(--ease-spring) both; }
+
 @keyframes context-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
