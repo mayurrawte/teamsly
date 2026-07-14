@@ -68,13 +68,13 @@
     "eslint": "^10",
     "eslint-config-next": "16.2.10",
     "jsdom": "^29.1.1",
-    "postcss": "8.5.16",
+    "postcss": "8.5.19",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.10",
     "wait-on": "^9.0.10"
   },
   "overrides": {
-    "postcss": "8.5.16"
+    "postcss": "8.5.19"
   }
 }
