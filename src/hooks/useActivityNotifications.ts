@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { usePreferencesStore } from "@/store/preferences";
 import { inQuietHours } from "@/hooks/useSmartNotifications";
 import { fireDesktopNotification } from "@/lib/utils/desktop-notification";
+import { sameDecodedPath } from "@/lib/realtime/ids";
 
 interface ActivityItem {
   id: string;
@@ -11,6 +12,7 @@ interface ActivityItem {
   senderName: string;
   summary: string;
   href: string;
+  matchedKeyword?: string;
 }
 
 interface ActivityScanResult {
@@ -38,19 +40,29 @@ function notificationTitle(item: ActivityItem): string {
   }
 }
 
-/** True if `href` is the conversation the user is currently viewing. */
+/**
+ * True if `href` is the conversation the user is currently viewing. Compared
+ * with percent-encoding normalized away: scan hrefs embed raw Graph ids while
+ * location.pathname carries the encoded route param.
+ */
 function isViewingHref(href: string): boolean {
   if (typeof window === "undefined") return false;
-  return window.location.pathname === href;
+  return sameDecodedPath(window.location.pathname, href);
 }
 
-/** Case-insensitive substring match against the muted-keyword list. */
-function isMutedSummary(summary: string, mutedKeywords: string[]): boolean {
+/**
+ * Mute wins when the matched keyword itself is muted (exact, case-insensitive)
+ * or a muted term appears in the summary. The keyword check runs against the
+ * server-side match on the full message body — the summary alone is truncated
+ * and `#channel:`-prefixed, so it can both miss and over-match.
+ */
+function isMutedKeywordItem(item: { matchedKeyword?: string; summary: string }, mutedKeywords: string[]): boolean {
   if (!mutedKeywords || mutedKeywords.length === 0) return false;
-  const s = summary.toLowerCase();
+  const matched = item.matchedKeyword?.toLowerCase();
+  const s = item.summary.toLowerCase();
   return mutedKeywords.some((raw) => {
     const k = raw.trim().toLowerCase();
-    return k ? s.includes(k) : false;
+    return k ? k === matched || s.includes(k) : false;
   });
 }
 
@@ -96,7 +108,7 @@ export function useActivityNotifications(scanData: ActivityScanResult | undefine
       // conversation (skip to avoid a double ding), and muted keywords win.
       if (
         item.type === "keyword" &&
-        (isViewingHref(item.href) || isMutedSummary(item.summary, mutedKeywords))
+        (isViewingHref(item.href) || isMutedKeywordItem(item, mutedKeywords))
       ) {
         continue;
       }

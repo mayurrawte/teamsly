@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decodeGraphId } from "./ids";
+import { decodeGraphId, sameDecodedPath } from "./ids";
 
 // Guards the root cause of the realtime outage: Next.js leaves route params
 // percent-encoded, so every id must normalize to the raw Graph form whether
@@ -34,5 +34,21 @@ describe("decodeGraphId", () => {
     const decoded = decodeGraphId("..%2F..%2Fme%2Fmessages");
     expect(decoded).toBe("../../me/messages");
     expect(CHAT_ID_SAFE.test(decoded!)).toBe(false);
+  });
+});
+
+describe("sameDecodedPath", () => {
+  it("matches raw and percent-encoded spellings of the same conversation path", () => {
+    expect(
+      sameDecodedPath("/workspace/dm/19:xyz@unq.gbl.spaces", "/workspace/dm/19%3Axyz%40unq.gbl.spaces")
+    ).toBe(true);
+    expect(
+      sameDecodedPath("/workspace/t/team-guid/19%3Aabc%40thread.tacv2", "/workspace/t/team-guid/19:abc@thread.tacv2")
+    ).toBe(true);
+  });
+
+  it("rejects different conversations and survives malformed escapes", () => {
+    expect(sameDecodedPath("/workspace/dm/a", "/workspace/dm/b")).toBe(false);
+    expect(sameDecodedPath("/workspace/dm/19%ZZ", "/workspace/dm/19%ZZ")).toBe(true);
   });
 });

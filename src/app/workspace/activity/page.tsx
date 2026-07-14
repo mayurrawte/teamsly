@@ -30,6 +30,7 @@ type ActivityTab = "all" | "mentions" | "threads" | "reactions" | "keywords" | "
 interface ActivityItem {
   id: string;
   type: "dm" | "channel_unread" | "mention" | "thread" | "reaction" | "keyword";
+  matchedKeyword?: string;
   senderId: string;
   senderName: string;
   summary: string;
@@ -313,7 +314,17 @@ export default function ActivityPage() {
 
   // Watched keywords — passed to the scan so it matches across DMs + the active
   // team's channels; a change re-fires the scan (fetchScan depends on it).
+  // Debounced: the settings modals write the pref on every keystroke, and each
+  // distinct keyword string is a server-cache miss (kw is in the cache key), so
+  // an undebounced dep would fire a full Graph walk per character typed.
   const notificationKeywords = usePreferencesStore((s) => s.notificationKeywords);
+  const [scanKeywords, setScanKeywords] = useState(notificationKeywords);
+  useEffect(() => {
+    if (notificationKeywords === scanKeywords) return;
+    const timer = setTimeout(() => setScanKeywords(notificationKeywords), 800);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notificationKeywords]);
 
   // Reset cached state when the active team changes so the next visit
   // refetches against the new scope.
@@ -329,7 +340,7 @@ export default function ActivityPage() {
       try {
         const params = new URLSearchParams();
         if (activeTeamId) params.set("teamId", activeTeamId);
-        if (notificationKeywords.trim()) params.set("kw", notificationKeywords);
+        if (scanKeywords.trim()) params.set("kw", scanKeywords);
         const qsStr = params.toString();
         const qs = qsStr ? `?${qsStr}` : "";
         const res = await fetch(`/api/activity/scan${qs}`, { signal });
@@ -358,7 +369,7 @@ export default function ActivityPage() {
         if (isFirstLoad) setScanLoading(false);
       }
     },
-    [activeTeamId, notificationKeywords, showToast]
+    [activeTeamId, scanKeywords, showToast]
   );
 
   const isScanTab = SCAN_TABS.includes(activeTab);

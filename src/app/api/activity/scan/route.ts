@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth/config";
 import { getGraphClient } from "@/lib/graph/client";
+import { firstKeywordMatch, parseKeywords } from "@/lib/utils/keyword-match";
 import { NextRequest, NextResponse } from "next/server";
 
 // ---------------------------------------------------------------------------
@@ -30,6 +31,8 @@ export interface ActivityItem {
   summary: string;
   timestamp: string;
   href: string;
+  /** Keyword-bucket items only: the watched keyword that matched (lowercased). */
+  matchedKeyword?: string;
 }
 
 interface ScanResult {
@@ -81,22 +84,6 @@ function truncate(s: string, n: number): string {
 function bodyText(message: MSMessage): string {
   const raw = message.body?.content ?? "";
   return message.body?.contentType === "html" ? stripHtml(raw) : raw;
-}
-
-/** Parse the `kw` query param into a lowercased, de-blanked keyword list. */
-function parseKeywords(raw: string | null): string[] {
-  if (!raw) return [];
-  return raw
-    .split(",")
-    .map((k) => k.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-/** Case-insensitive substring match — same semantics as useSmartNotifications. */
-function matchesKeyword(text: string, keywords: string[]): boolean {
-  if (keywords.length === 0) return false;
-  const t = text.toLowerCase();
-  return keywords.some((k) => t.includes(k));
 }
 
 function isMentionOfUser(
@@ -283,16 +270,20 @@ export async function GET(request: NextRequest) {
       }
 
       // keyword — someone else's message contains a watched keyword
-      if (sender && sender.id !== meId && matchesKeyword(bodyText(msg), keywordList)) {
-        keywords.push({
-          id: `keyword-chat-${chat.id}-${msg.id}`,
-          type: "keyword",
-          senderId: sender.id,
-          senderName: sender.displayName,
-          summary,
-          timestamp: msg.createdDateTime,
-          href: chatHref,
-        });
+      if (sender && sender.id !== meId) {
+        const matched = firstKeywordMatch(bodyText(msg), keywordList);
+        if (matched) {
+          keywords.push({
+            id: `keyword-chat-${chat.id}-${msg.id}`,
+            type: "keyword",
+            senderId: sender.id,
+            senderName: sender.displayName,
+            summary,
+            timestamp: msg.createdDateTime,
+            href: chatHref,
+            matchedKeyword: matched,
+          });
+        }
       }
     }
   }
@@ -388,16 +379,20 @@ export async function GET(request: NextRequest) {
         }
 
         // keyword — someone else's message contains a watched keyword
-        if (sender && sender.id !== meId && matchesKeyword(bodyText(msg), keywordList)) {
-          keywords.push({
-            id: `keyword-ch-${channel.id}-${msg.id}`,
-            type: "keyword",
-            senderId: sender.id,
-            senderName: sender.displayName,
-            summary: `#${channel.displayName}: ${summary}`,
-            timestamp: msg.createdDateTime,
-            href: channelHref,
-          });
+        if (sender && sender.id !== meId) {
+          const matched = firstKeywordMatch(bodyText(msg), keywordList);
+          if (matched) {
+            keywords.push({
+              id: `keyword-ch-${channel.id}-${msg.id}`,
+              type: "keyword",
+              senderId: sender.id,
+              senderName: sender.displayName,
+              summary: `#${channel.displayName}: ${summary}`,
+              timestamp: msg.createdDateTime,
+              href: channelHref,
+              matchedKeyword: matched,
+            });
+          }
         }
 
         // Track my own recent channel messages for the thread-reply pass.
