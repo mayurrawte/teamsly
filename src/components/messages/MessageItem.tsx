@@ -122,9 +122,12 @@ function MessageItemImpl({
     disabled: isEditing || Boolean(message.__pending || message.__failed),
   });
 
-  // Animate messages that just arrived (within the last 3s) or are optimistic
-  // sends. This covers real-time inbound messages and the user's own pending
-  // messages without needing an extra prop from the feed.
+  // Recency window used only by the slash-result pop (below) — deliberately
+  // NOT used to drive the `message-in` row animation, which must fire only
+  // for the sender's own optimistic send (see `message.__pending` at the
+  // className below). Keying the entrance animation off recency instead
+  // would replay it for polled/history rows and other people's real-time
+  // messages, which is exactly what it must never do.
   const isNew =
     message.__pending ||
     Date.now() - new Date(message.createdDateTime).getTime() < 3000;
@@ -141,12 +144,6 @@ function MessageItemImpl({
         paddingTop: "var(--density-row-py)",
         paddingBottom: "var(--density-row-py)",
       };
-  const animationStyle: React.CSSProperties = {
-    ...densityRowStyle,
-    ...(isNew
-      ? { animation: "message-in var(--motion-base) var(--ease-out-soft) both" }
-      : {}),
-  };
   // Density-driven body typography for the message-body div. Kept separate
   // so the row chrome stays themable independently from text rendering.
   const bodyDensityStyle: React.CSSProperties = {
@@ -387,12 +384,12 @@ function MessageItemImpl({
     return (
       <div
         data-message-id={message.id}
-        style={animationStyle}
+        style={densityRowStyle}
         onMouseEnter={quickReact.onMouseEnter}
         onMouseLeave={quickReact.onMouseLeave}
         className={cn(
-          "group relative flex px-4 transition-colors duration-[80ms] ease-out hover:bg-[var(--message-hover-bg)]",
-          message.__pending && "opacity-60",
+          "group relative flex px-4 transition-colors duration-[var(--motion-fast)] ease-out hover:bg-[var(--message-hover-bg)]",
+          message.__pending && "opacity-60 message-in",
           message.__failed && "border-l-2 border-red-500/60"
         )}
       >
@@ -474,12 +471,12 @@ function MessageItemImpl({
   return (
     <div
       data-message-id={message.id}
-      style={animationStyle}
+      style={densityRowStyle}
       onMouseEnter={quickReact.onMouseEnter}
       onMouseLeave={quickReact.onMouseLeave}
       className={cn(
-        "group relative flex gap-2 px-4 transition-colors duration-[80ms] ease-out hover:bg-[var(--message-hover-bg)]",
-        message.__pending && "opacity-60",
+        "group relative flex gap-2 px-4 transition-colors duration-[var(--motion-fast)] ease-out hover:bg-[var(--message-hover-bg)]",
+        message.__pending && "opacity-60 message-in",
         message.__failed && "border-l-2 border-red-500/60 pl-2"
       )}
     >

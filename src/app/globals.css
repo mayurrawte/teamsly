@@ -631,11 +631,17 @@ body.focus-mode .focus-mode-hide {
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  @keyframes message-in {
-    from { transform: translateY(8px); opacity: 0; }
-    to   { transform: translateY(0); opacity: 1; }
-  }
+/* Own optimistic sends only — gated on `message.__pending` in MessageItem,
+ * never on recency, so polled/history rows and other people's real-time
+ * messages never trigger it. Reconciling to the Graph id remounts the row
+ * (keyed by message.id) with `__pending` already false, so it does not
+ * replay on reconcile. */
+@keyframes message-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.message-in {
+  animation: message-in var(--motion-base) var(--ease-spring) both;
 }
 
 @keyframes send-ripple {

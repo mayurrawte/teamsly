@@ -42,8 +42,8 @@ export function EmojiPicker({ children, onSelect }: EmojiPickerProps) {
           <section className="mb-4">
             <h3 className="mb-2 text-[12px] font-bold uppercase tracking-wide text-[var(--text-muted)]">Frequently used</h3>
             <div className="grid grid-cols-9 gap-1">
-              {REACTION_TYPES.map((type) => (
-                <EmojiButton key={type} type={type} onSelect={onSelect} />
+              {REACTION_TYPES.map((type, index) => (
+                <EmojiButton key={type} type={type} index={index} onSelect={onSelect} />
               ))}
             </div>
           </section>
@@ -62,8 +62,8 @@ export function EmojiPicker({ children, onSelect }: EmojiPickerProps) {
           <section>
             <h3 className="mb-2 text-[12px] font-bold uppercase tracking-wide text-[var(--text-muted)]">Teams reactions</h3>
             <div className="grid grid-cols-9 gap-1">
-              {filtered.map((type) => (
-                <EmojiButton key={type} type={type} onSelect={onSelect} />
+              {filtered.map((type, index) => (
+                <EmojiButton key={type} type={type} index={index} onSelect={onSelect} />
               ))}
             </div>
             {filtered.length === 0 && (
@@ -76,7 +76,15 @@ export function EmojiPicker({ children, onSelect }: EmojiPickerProps) {
   );
 }
 
-function EmojiButton({ type, onSelect }: { type: ReactionType; onSelect: (reaction: ReactionType) => void }) {
+function EmojiButton({
+  type,
+  index,
+  onSelect,
+}: {
+  type: ReactionType;
+  index: number;
+  onSelect: (reaction: ReactionType) => void;
+}) {
   return (
     <Popover.Close asChild>
       <button
@@ -84,7 +92,14 @@ function EmojiButton({ type, onSelect }: { type: ReactionType; onSelect: (reacti
         aria-label={type}
         title={type}
         onClick={() => onSelect(type)}
-        className="flex h-9 w-9 items-center justify-center rounded-md text-[22px] transition-colors duration-150 hover:bg-[var(--surface-hover)]"
+        // motion-fade-up staggers the picker's open entrance (capped at index 20
+        // so a long filtered list doesn't trail on forever); the hover/focus pop
+        // is a separate transform-only affordance for picking an emoji. Combined
+        // into one arbitrary `transition` property — two separate Tailwind
+        // transition-property utilities (transition-colors + transition-transform)
+        // would collide via tailwind-merge and silently drop the color fade.
+        className="motion-fade-up flex h-9 w-9 items-center justify-center rounded-md text-[22px] [transition:background-color_150ms_ease,transform_var(--motion-fast)_var(--ease-snap)] hover:scale-125 hover:bg-[var(--surface-hover)] focus-visible:scale-125"
+        style={{ animationDelay: `${Math.min(index, 20) * 12}ms` }}
       >
         {REACTION_EMOJI[type]}
       </button>
