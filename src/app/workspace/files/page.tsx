@@ -133,7 +133,7 @@ function FileRow({ file }: { file: NormalisedFile }) {
     <RowEl
       type={previewable ? "button" : undefined}
       onClick={previewable ? onRowClick : undefined}
-      className="group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors duration-[80ms] hover:bg-[#27292d]"
+      className="group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors duration-[var(--motion-fast)] hover:bg-[#27292d]"
     >
       {/* Icon */}
       <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[#2c2d30] text-[#ababad]">
@@ -156,7 +156,7 @@ function FileRow({ file }: { file: NormalisedFile }) {
           target="_blank"
           rel="noopener noreferrer"
           title={`Open ${file.name} in browser`}
-          className="flex-shrink-0 text-[#ababad] opacity-0 transition-opacity duration-[80ms] group-hover:opacity-100 focus:opacity-100"
+          className="flex-shrink-0 text-[#ababad] opacity-0 transition-opacity duration-[var(--motion-fast)] group-hover:opacity-100 focus:opacity-100"
           onClick={(e) => e.stopPropagation()}
         >
           <ExternalLink size={15} />
@@ -233,7 +233,7 @@ export default function FilesPage() {
                 aria-selected={active}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "relative px-3 pb-2.5 pt-1 text-[13px] font-medium transition-colors duration-[80ms] ease-out focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]",
+                  "relative px-3 pb-2.5 pt-1 text-[13px] font-medium transition-colors duration-[var(--motion-fast)] ease-out focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]",
                   active ? "text-white" : "text-[#ababad] hover:text-[#d1d2d3]"
                 )}
               >
@@ -274,7 +274,7 @@ export default function FilesPage() {
             <p className="text-[13px] text-[#ababad]">Couldn&apos;t load files</p>
             <button
               onClick={fetchFiles}
-              className="flex items-center gap-1.5 rounded-md border border-[#3f4144] px-3 py-1.5 text-[13px] text-[#d1d2d3] transition-colors duration-[80ms] hover:bg-[#27292d]"
+              className="flex items-center gap-1.5 rounded-md border border-[#3f4144] px-3 py-1.5 text-[13px] text-[#d1d2d3] transition-colors duration-[var(--motion-fast)] hover:bg-[#27292d]"
             >
               <RefreshCw size={13} />
               Retry

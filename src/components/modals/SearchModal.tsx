@@ -208,7 +208,7 @@ export function SearchModal({
             </kbd>
             <Dialog.Close
               aria-label="Close search"
-              className="mr-3 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
+              className="mr-3 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-[var(--text-secondary)] transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
             >
               <X size={16} />
             </Dialog.Close>
@@ -309,7 +309,7 @@ function MessageResult({ message, query, teamName, onSelect }: { message: MSMess
     <button
       type="button"
       onClick={onSelect}
-      className="flex w-full gap-2 rounded-md px-3 py-2 text-left transition-colors duration-[80ms] hover:bg-[var(--surface-hover)]"
+      className="flex w-full gap-2 rounded-md px-3 py-2 text-left transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)]"
     >
       <div className="mt-[3px] flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-[var(--accent)] text-[10px] font-bold text-[var(--text-white)]">
         {initials || "?"}
@@ -348,7 +348,7 @@ function PersonResult({
     <button
       type="button"
       onClick={onSelect}
-      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition-colors duration-[80ms] hover:bg-[var(--surface-hover)]"
+      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)]"
     >
       <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[10px] font-bold text-[var(--text-white)]">
         {initials || "?"}
@@ -382,7 +382,7 @@ function EntityResult({
     <button
       type="button"
       onClick={onSelect}
-      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition-colors duration-[80ms] hover:bg-[var(--surface-hover)]"
+      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)]"
     >
       <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-[var(--surface-raised)] text-[var(--text-secondary)]">
         {icon}

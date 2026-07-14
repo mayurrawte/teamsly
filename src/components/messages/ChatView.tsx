@@ -798,7 +798,7 @@ export function ChatView({ chatId }: { chatId: string }) {
                         aria-label="Cancel scheduled message"
                         title="Cancel scheduled message"
                         onClick={() => removeScheduled(chatId, m.id)}
-                        className="flex-shrink-0 rounded p-0.5 text-[var(--text-secondary)] transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-[var(--accent)]"
+                        className="flex-shrink-0 rounded p-0.5 text-[var(--text-secondary)] transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)] hover:text-[var(--accent)]"
                       >
                         ✕
                       </button>

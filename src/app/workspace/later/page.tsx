@@ -117,7 +117,7 @@ function BookmarkRow({
           e.stopPropagation();
           onRemove();
         }}
-        className="absolute right-4 top-3 flex h-7 w-7 items-center justify-center rounded text-[var(--text-secondary)] opacity-0 transition-opacity duration-100 hover:bg-[var(--surface-hover)] hover:text-white focus-ring group-hover:opacity-100"
+        className="absolute right-4 top-3 flex h-7 w-7 items-center justify-center rounded text-[var(--text-secondary)] opacity-0 transition-opacity duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)] hover:text-white focus-ring group-hover:opacity-100"
       >
         <Trash2 size={14} strokeWidth={2} />
       </button>

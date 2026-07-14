@@ -139,7 +139,7 @@ function ActivityRow({
       <button
         type="button"
         onClick={handleClick}
-        className="group flex w-full items-start gap-3 px-4 py-3 text-left transition-colors duration-[80ms] ease-out hover:bg-white/5 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]"
+        className="group flex w-full items-start gap-3 px-4 py-3 text-left transition-colors duration-[var(--motion-fast)] ease-out hover:bg-white/5 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]"
       >
         {/* Avatar */}
         <div className="relative mt-0.5 flex-shrink-0">
@@ -166,7 +166,7 @@ function ActivityRow({
         {item.type === "thread" && (
           <ChevronDown
             className={cn(
-              "h-3.5 w-3.5 flex-shrink-0 text-[#6c6f75] transition-transform duration-150",
+              "h-3.5 w-3.5 flex-shrink-0 text-[#6c6f75] transition-transform duration-[var(--motion-fast)]",
               expanded && "rotate-180"
             )}
           />
@@ -514,7 +514,7 @@ export default function ActivityPage() {
                   aria-selected={active}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "relative px-3 pb-2.5 pt-1 text-[13px] font-medium transition-colors duration-[80ms] ease-out focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]",
+                    "relative px-3 pb-2.5 pt-1 text-[13px] font-medium transition-colors duration-[var(--motion-fast)] ease-out focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]",
                     active
                       ? "text-white"
                       : "text-[#ababad] hover:text-[#d1d2d3]"

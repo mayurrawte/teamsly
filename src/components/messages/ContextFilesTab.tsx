@@ -91,7 +91,7 @@ function ChannelFileRow({ item }: { item: MSDriveItem }) {
     <RowEl
       type={previewable ? "button" : undefined}
       onClick={previewable ? onRowClick : undefined}
-      className="group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors duration-[80ms] hover:bg-[var(--surface-hover)]"
+      className="group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)]"
     >
       <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[var(--surface)] text-[var(--text-secondary)]">
         <Icon size={18} />
@@ -109,7 +109,7 @@ function ChannelFileRow({ item }: { item: MSDriveItem }) {
           rel="noopener noreferrer"
           title={`Open ${item.name} in browser`}
           aria-label={`Open ${item.name} in browser`}
-          className="flex-shrink-0 text-[var(--text-secondary)] opacity-0 transition-opacity duration-[80ms] group-hover:opacity-100 focus:opacity-100"
+          className="flex-shrink-0 text-[var(--text-secondary)] opacity-0 transition-opacity duration-[var(--motion-fast)] group-hover:opacity-100 focus:opacity-100"
           onClick={(e) => e.stopPropagation()}
         >
           <ExternalLink size={15} />
@@ -142,7 +142,7 @@ function ChatFileRow({ item }: { item: MSChatFileAttachment }) {
     <RowEl
       type={href ? "button" : undefined}
       onClick={href ? onRowClick : undefined}
-      className="group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors duration-[80ms] hover:bg-[var(--surface-hover)]"
+      className="group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)]"
     >
       <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[var(--surface)] text-[var(--text-secondary)]">
         <Icon size={18} />
@@ -161,7 +161,7 @@ function ChatFileRow({ item }: { item: MSChatFileAttachment }) {
           rel="noopener noreferrer"
           title={`Open ${item.name} in browser`}
           aria-label={`Open ${item.name} in browser`}
-          className="flex-shrink-0 text-[var(--text-secondary)] opacity-0 transition-opacity duration-[80ms] group-hover:opacity-100 focus:opacity-100"
+          className="flex-shrink-0 text-[var(--text-secondary)] opacity-0 transition-opacity duration-[var(--motion-fast)] group-hover:opacity-100 focus:opacity-100"
           onClick={(e) => e.stopPropagation()}
         >
           <ExternalLink size={15} />
@@ -227,7 +227,7 @@ export function ContextFilesTab({ mode }: ContextFilesTabProps) {
         <p className="text-[13px] text-[var(--text-secondary)]">Couldn&apos;t load files</p>
         <button
           onClick={fetchFiles}
-          className="flex items-center gap-1.5 rounded-md border border-[var(--border)] px-3 py-1.5 text-[13px] text-[var(--text-primary)] transition-colors duration-[80ms] hover:bg-[var(--surface-hover)]"
+          className="flex items-center gap-1.5 rounded-md border border-[var(--border)] px-3 py-1.5 text-[13px] text-[var(--text-primary)] transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)]"
         >
           <RefreshCw size={13} />
           Retry

@@ -102,7 +102,7 @@ export function PreferencesModal({ open, onOpenChange }: Props) {
                   key={item.key}
                   type="button"
                   onClick={() => setSection(item.key)}
-                  className={`flex items-center justify-between gap-2 rounded-md px-2 py-[6px] text-left text-[13px] transition-colors duration-100 focus-ring ${
+                  className={`flex items-center justify-between gap-2 rounded-md px-2 py-[6px] text-left text-[13px] transition-colors duration-[var(--motion-fast)] focus-ring ${
                     active
                       ? "bg-[var(--accent)] text-[var(--text-white)]"
                       : "text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-primary)]"
@@ -409,7 +409,7 @@ function AccentSwatch({
       className="group flex flex-col items-center gap-[6px] rounded focus-ring"
     >
       <span
-        className={`relative flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 ${
+        className={`relative flex h-8 w-8 items-center justify-center rounded-full transition-all duration-[var(--motion-fast)] ${
           selected
             ? "ring-2 ring-[var(--text-primary)] ring-offset-2 ring-offset-[var(--modal-bg)]"
             : "hover:ring-2 hover:ring-[var(--text-secondary)] hover:ring-offset-2 hover:ring-offset-[var(--modal-bg)]"
@@ -421,7 +421,7 @@ function AccentSwatch({
         )}
       </span>
       <span
-        className={`text-[11px] transition-colors duration-100 ${
+        className={`text-[11px] transition-colors duration-[var(--motion-fast)] ${
           selected ? "text-[var(--text-primary)]" : "text-[var(--text-muted)] group-hover:text-[var(--text-secondary)]"
         }`}
       >
@@ -573,12 +573,12 @@ function ToggleRow({
         aria-checked={value}
         aria-label={label || undefined}
         onClick={() => onChange(!value)}
-        className={`relative mt-[2px] h-5 w-9 flex-shrink-0 rounded-full transition-colors duration-150 ${
+        className={`relative mt-[2px] h-5 w-9 flex-shrink-0 rounded-full transition-colors duration-[var(--motion-fast)] ${
           value ? "bg-[var(--accent)]" : "bg-[var(--border-input)]"
         }`}
       >
         <span
-          className={`absolute top-[2px] h-4 w-4 rounded-full bg-white transition-transform duration-150 ${
+          className={`absolute top-[2px] h-4 w-4 rounded-full bg-white transition-transform duration-[var(--motion-fast)] ${
             value ? "translate-x-[18px]" : "translate-x-[2px]"
           }`}
         />
@@ -1029,7 +1029,7 @@ function ModeButton({
       type="button"
       aria-pressed={active}
       onClick={() => onSelect(mode)}
-      className={`flex w-[90px] flex-col items-center gap-2 rounded-lg border py-3 text-[12px] font-semibold transition-colors duration-150 focus-ring ${
+      className={`flex w-[90px] flex-col items-center gap-2 rounded-lg border py-3 text-[12px] font-semibold transition-colors duration-[var(--motion-fast)] focus-ring ${
         active
           ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--text-primary)]"
           : "border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:border-[var(--border-input)] hover:text-[var(--text-primary)]"
@@ -1051,7 +1051,7 @@ function Checkbox({ checked, onChange }: { checked: boolean; onChange: (v: boole
         onChange={(e) => onChange(e.target.checked)}
       />
       <span
-        className={`flex h-4 w-4 items-center justify-center rounded border transition-colors duration-150 ${
+        className={`flex h-4 w-4 items-center justify-center rounded border transition-colors duration-[var(--motion-fast)] ${
           checked
             ? "border-[var(--accent)] bg-[var(--accent)]"
             : "border-[var(--border-input)] bg-[var(--surface)]"
