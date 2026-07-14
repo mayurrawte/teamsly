@@ -107,7 +107,10 @@ const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "frida
 function extractWeekday(text: string): number | null {
   for (let i = 0; i < WEEKDAYS.length; i++) {
     const name = WEEKDAYS[i];
-    if (text.includes(name) || text.includes(name.slice(0, 3))) return i;
+    // Whole words only — "wedding", "friend", "monthly" must not read as
+    // wed/fri/mon and silently schedule the wrong day.
+    const asWord = new RegExp(`\\b(?:${name}|${name.slice(0, 3)})\\b`);
+    if (asWord.test(text)) return i;
   }
   return null;
 }

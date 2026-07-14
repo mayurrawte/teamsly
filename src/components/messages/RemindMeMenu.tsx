@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { remindPresets, parseNaturalTime } from "@/lib/utils/reminder-time";
 
@@ -14,9 +14,8 @@ interface Props {
 /**
  * "Remind me" dropdown for a message: quick presets, a natural-language box,
  * and a native datetime fallback. Radix gives outside-click/Escape dismissal
- * and keyboard nav for free. NL parsing tries the offline parser first and
- * only calls the AI endpoint when that can't resolve the phrase, so the common
- * cases cost nothing and work offline.
+ * and keyboard nav for free. NL parsing is fully client-side (`parseNaturalTime`)
+ * — phrases it can't resolve get a hint pointing at the presets/date picker.
  */
 export function RemindMeMenu({ children, onPick }: Props) {
   const [open, setOpen] = useState(false);
@@ -63,42 +62,17 @@ export function RemindMeMenu({ children, onPick }: Props) {
 
 function NaturalLanguageRow({ onPick }: { onPick: (fireAt: number) => void }) {
   const [value, setValue] = useState("");
-  const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function submit() {
+  function submit() {
     const phrase = value.trim();
     if (!phrase) return;
-    setError(null);
-
-    // 1) Offline parse — instant, free, covers the common phrasings.
-    const local = parseNaturalTime(phrase);
-    if (local) {
-      onPick(local);
+    const parsed = parseNaturalTime(phrase);
+    if (parsed) {
+      onPick(parsed);
       return;
     }
-
-    // 2) AI fallback for anything the local parser missed. Graceful: any
-    // failure (unconfigured / rate-limited / network) surfaces a hint and
-    // leaves the presets + custom input available.
-    setPending(true);
-    try {
-      const res = await fetch("/api/ai/parse-time", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: phrase, now: Date.now() }),
-      });
-      const data = (await res.json()) as { fireAt?: number | null; status?: string };
-      if (res.ok && typeof data.fireAt === "number" && data.fireAt > Date.now()) {
-        onPick(data.fireAt);
-        return;
-      }
-      setError("Couldn't read that time — try a preset or pick below.");
-    } catch {
-      setError("Couldn't read that time — try a preset or pick below.");
-    } finally {
-      setPending(false);
-    }
+    setError("Couldn't read that time — try a preset or pick below.");
   }
 
   return (
@@ -113,16 +87,16 @@ function NaturalLanguageRow({ onPick }: { onPick: (fireAt: number) => void }) {
           value={value}
           placeholder="in 3h, tomorrow 9am…"
           onChange={(e) => { setValue(e.target.value); setError(null); }}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void submit(); } }}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submit(); } }}
           className="min-w-0 flex-1 rounded border border-[var(--border)] bg-[var(--message-bg)] px-1.5 py-1 text-[12px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus-ring"
         />
         <button
           type="button"
-          disabled={pending || !value.trim()}
-          onClick={() => void submit()}
+          disabled={!value.trim()}
+          onClick={submit}
           className="rounded bg-[var(--accent)] px-2 py-1 text-[11px] font-medium text-white transition-colors disabled:opacity-40"
         >
-          {pending ? "…" : "Set"}
+          Set
         </button>
       </div>
       {error && <p className="mt-1 text-[10px] text-[var(--status-busy)]">{error}</p>}
@@ -159,14 +133,3 @@ function CustomTimeRow({ onPick }: { onPick: (fireAt: number) => void }) {
     </div>
   );
 }
-
-/**
- * Small forwardRef button so callers can pass their own toolbar-styled trigger
- * to `RemindMeMenu` via `asChild`. Not used internally (the toolbar supplies
- * its own `ToolbarButton`) but exported for reuse.
- */
-export const RemindTriggerButton = forwardRef<HTMLButtonElement, React.ComponentPropsWithoutRef<"button">>(
-  function RemindTriggerButton(props, ref) {
-    return <button ref={ref} type="button" {...props} />;
-  }
-);
