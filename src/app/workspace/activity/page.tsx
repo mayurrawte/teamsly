@@ -94,7 +94,7 @@ function ThreadPreviewPanel({
   return (
     <div
       className="mx-4 mb-3 overflow-hidden rounded-lg border border-[#3f4144] bg-[#222529]"
-      style={{ animation: "context-fade-in 150ms ease-out both" }}
+      style={{ animation: "context-fade-in var(--motion-fast) ease-out both" }}
     >
       <div className="p-3">
         <p className="text-[12px] font-semibold text-[#d1d2d3]">{item.senderName}</p>

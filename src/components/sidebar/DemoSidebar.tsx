@@ -81,7 +81,7 @@ export function DemoSidebar() {
       <button
         type="button"
         onClick={() => setSearchOpen(true)}
-        className="mx-3 my-2 flex h-7 items-center gap-2 rounded-md border border-[#565856] bg-[#2c2d30] px-2 text-left text-[13px] text-[#ababad] [transition:border-color_150ms_ease,background_150ms_ease] hover:border-white hover:bg-[#1a1d21] focus:border-white focus:bg-[#1a1d21] focus:outline-none"
+        className="mx-3 my-2 flex h-7 items-center gap-2 rounded-md border border-[#565856] bg-[#2c2d30] px-2 text-left text-[13px] text-[#ababad] [transition:border-color_var(--motion-fast)_ease,background_var(--motion-fast)_ease] hover:border-white hover:bg-[#1a1d21] focus:border-white focus:bg-[#1a1d21] focus:outline-none"
       >
         <Search className="h-3.5 w-3.5 flex-shrink-0" />
         <span className="truncate">Search...</span>
