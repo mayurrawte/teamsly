@@ -66,15 +66,15 @@ export default function TermsPage() {
           <section>
             <h2 className="mb-3 text-[16px] font-bold text-white">4. Hosted Service</h2>
             <p className="mb-3">
-              The hosted service at teamsly.app is provided on a subscription basis. By subscribing
-              you agree to:
+              The hosted service at teamsly.app is currently provided free of charge — there is no
+              paywall and no feature gating. By using the hosted service you agree to:
             </p>
             <ul className="flex flex-col gap-2 pl-4">
               {[
-                "Pay the applicable subscription fee on time.",
                 "Use the service only for lawful purposes.",
                 "Not attempt to reverse-engineer, abuse, or overload the service.",
-                "Understand that the service may be modified, suspended, or discontinued with reasonable notice.",
+                "Understand that resource-intensive features (such as AI summaries) may be subject to fair-use limits.",
+                "Understand that the service may be modified, suspended, or discontinued with reasonable notice. If paid plans are ever introduced, existing functionality will not move behind a paywall without prior notice.",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2">
                   <span className="mt-1 text-[#818CF8]">•</span>
