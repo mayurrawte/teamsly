@@ -526,6 +526,17 @@ body.focus-mode .focus-mode-hide {
     animation: slash-menu-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
     transform-origin: bottom left;
   }
+
+  /* Celebration confetti (#72 motion pass): each particle drifts to a
+     deterministic offset (set via inline --cf-* vars) while spinning and
+     fading. Only defined under no-preference so reduced-motion users never
+     see it animate; the CelebrationBurst component also refuses to render
+     when the celebrationEffects preference is off. */
+  @keyframes confetti-fall {
+    0%   { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); opacity: 1; }
+    100% { transform: translate3d(var(--cf-x), var(--cf-y), 0) rotate(var(--cf-r)) scale(0.6); opacity: 0; }
+  }
+  .confetti-particle { animation: confetti-fall var(--motion-slower) var(--ease-out-soft) forwards; }
 }
 
 @keyframes typing-dot {

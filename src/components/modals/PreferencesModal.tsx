@@ -435,11 +435,13 @@ function AccentSwatch({
 
 function NotificationsPanel() {
   const desktop = usePreferencesStore((s) => s.desktopNotifications);
+  const celebrationEffects = usePreferencesStore((s) => s.celebrationEffects);
   const mentionsOnly = usePreferencesStore((s) => s.mentionsOnly);
   const keywords = usePreferencesStore((s) => s.notificationKeywords);
   const soundTheme = usePreferencesStore((s) => s.soundTheme);
   const soundVolume = usePreferencesStore((s) => s.soundVolume);
   const setDesktop = usePreferencesStore((s) => s.setDesktopNotifications);
+  const setCelebrationEffects = usePreferencesStore((s) => s.setCelebrationEffects);
   const setMentionsOnly = usePreferencesStore((s) => s.setMentionsOnly);
   const setKeywords = usePreferencesStore((s) => s.setNotificationKeywords);
   const setSoundTheme = usePreferencesStore((s) => s.setSoundTheme);
@@ -462,6 +464,12 @@ function NotificationsPanel() {
         hint="Mute everything except direct @mentions and DMs."
         value={mentionsOnly}
         onChange={setMentionsOnly}
+      />
+      <ToggleRow
+        label="Celebration effects"
+        hint="Confetti when a message is pure celebration (🎉)."
+        value={celebrationEffects}
+        onChange={setCelebrationEffects}
       />
 
       <FieldGroup label="Sound" hint="Tone style for incoming notifications.">
