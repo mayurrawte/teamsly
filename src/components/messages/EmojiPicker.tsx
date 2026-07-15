@@ -98,7 +98,10 @@ function EmojiButton({
         // into one arbitrary `transition` property — two separate Tailwind
         // transition-property utilities (transition-colors + transition-transform)
         // would collide via tailwind-merge and silently drop the color fade.
-        className="motion-fade-up flex h-9 w-9 items-center justify-center rounded-md text-[22px] [transition:background-color_150ms_ease,transform_var(--motion-fast)_var(--ease-snap)] hover:scale-125 hover:bg-[var(--surface-hover)] focus-visible:scale-125"
+        // `scale` is listed separately from `transform` because Tailwind 4's
+        // `hover:scale-125` compiles to the standalone CSS `scale` property,
+        // not `transform` — without it the hover/focus pop never eases in.
+        className="motion-fade-up flex h-9 w-9 items-center justify-center rounded-md text-[22px] [transition:background-color_150ms_ease,transform_var(--motion-fast)_var(--ease-snap),scale_var(--motion-fast)_var(--ease-snap)] hover:scale-125 hover:bg-[var(--surface-hover)] focus-visible:scale-125"
         style={{ animationDelay: `${Math.min(index, 20) * 12}ms` }}
       >
         {REACTION_EMOJI[type]}

@@ -688,6 +688,28 @@ body.focus-mode .focus-mode-hide {
   animation: message-in var(--motion-base) var(--ease-spring) both;
 }
 
+/* Zeroing --motion-base/--motion-fast above isn't enough on its own for these
+   two `both`-fill animations: at 0ms the keyframe still resolves immediately
+   and its fill-mode holds the `to` state forever. On `.motion-fade-up` that
+   collides with EmojiPicker's inline per-item `animationDelay` — the delay
+   is untouched (inline styles always win that sub-property over a
+   stylesheet rule), so a staggered item still sits invisible until its delay
+   elapses, then pops. On `.message-in` the `to { opacity: 1 }` hold
+   permanently overrides the `opacity-60` pending-message dim. Disabling the
+   animation outright avoids both — and this override must be declared AFTER
+   `.motion-fade-up`/`.message-in` above (equal specificity, so the later
+   rule in source order wins whenever both apply); placing it up in the
+   `:root` token block near the top of this file would silently lose the
+   cascade to these rules — the same reason the `.motion-stagger-*`
+   no-preference override earlier in this file is placed after
+   `.motion-fade-up` rather than next to the token block. */
+@media (prefers-reduced-motion: reduce) {
+  .motion-fade-up,
+  .message-in {
+    animation: none;
+  }
+}
+
 @keyframes send-ripple {
   to { transform: scale(4); opacity: 0; }
 }
@@ -712,7 +734,7 @@ body.focus-mode .focus-mode-hide {
   to   { opacity: 1; }
 }
 .context-fade-in {
-  animation: context-fade-in 120ms ease-out both;
+  animation: context-fade-in var(--motion-fast) ease-out both;
 }
 
 /* Electron macOS drag regions — no-ops in the browser */
