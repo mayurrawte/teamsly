@@ -1176,7 +1176,7 @@ export function MessageInput({
                   insertMention(c);
                 }}
                 className={cn(
-                  "flex w-full items-center gap-2 px-3 py-1.5 text-left transition-colors duration-100",
+                  "flex w-full items-center gap-2 px-3 py-1.5 text-left transition-colors duration-[var(--motion-fast)]",
                   idx === mentionSelectedIdx
                     ? "bg-[var(--surface-hover)]"
                     : "hover:bg-[var(--surface-hover)]"
@@ -1198,7 +1198,7 @@ export function MessageInput({
           </div>
         )}
 
-        <div className="rounded-md border border-[var(--border-input)] bg-[var(--surface)] transition-[border-color,box-shadow] duration-150 focus-within:border-[var(--accent)] focus-within:shadow-[0_0_0_2px_var(--accent-light)]">
+        <div className="rounded-md border border-[var(--border-input)] bg-[var(--surface)] transition-[border-color,box-shadow] duration-[var(--motion-fast)] focus-within:border-[var(--accent)] focus-within:shadow-[0_0_0_2px_var(--accent-light)]">
           {/* Formatting toolbar */}
           <div className="flex items-center gap-0.5 border-b border-[var(--border)] px-3 py-1">
             {toolbarButtons.map((item, idx) => {
@@ -1222,7 +1222,7 @@ export function MessageInput({
                     e.preventDefault();
                     applyFormat(item.action);
                   }}
-                  className="flex h-6 w-6 items-center justify-center rounded text-[var(--text-secondary)] transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] active:bg-[var(--accent)] active:text-white focus-ring"
+                  className="flex h-6 w-6 items-center justify-center rounded text-[var(--text-secondary)] transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] active:bg-[var(--accent)] active:text-white focus-ring"
                 >
                   {item.icon}
                 </button>
@@ -1239,7 +1239,7 @@ export function MessageInput({
                 aria-label="Attach file"
                 disabled={isBusy}
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-shrink-0 rounded p-1 text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-ring disabled:opacity-40"
+                className="flex-shrink-0 rounded p-1 text-[var(--text-secondary)] transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-ring disabled:opacity-40"
               >
                 <Paperclip className="h-4 w-4" />
               </button>
@@ -1278,7 +1278,7 @@ export function MessageInput({
                   aria-label="Insert emoji"
                   onClick={() => setEmojiOpen((o) => !o)}
                   className={cn(
-                    "rounded p-1 transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-ring",
+                    "rounded p-1 transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-ring",
                     emojiOpen ? "bg-[var(--surface-hover)] text-white" : "text-[var(--text-secondary)]"
                   )}
                 >
@@ -1318,7 +1318,7 @@ export function MessageInput({
                   }
                 }}
                 className={cn(
-                  "rounded px-1.5 py-0.5 transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-ring",
+                  "rounded px-1.5 py-0.5 transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-ring",
                   slashMenuOpen ? "bg-[var(--surface-hover)] text-white" : "text-[var(--text-secondary)]"
                 )}
               >
@@ -1331,7 +1331,7 @@ export function MessageInput({
                   type="button"
                   aria-label="Send a GIF"
                   disabled={isBusy}
-                  className="rounded px-1.5 py-0.5 text-[10px] font-bold text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-ring disabled:opacity-40"
+                  className="rounded px-1.5 py-0.5 text-[10px] font-bold text-[var(--text-secondary)] transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-ring disabled:opacity-40"
                 >
                   GIF
                 </button>
@@ -1493,7 +1493,7 @@ export function MessageInput({
                   // outright. `scale` is listed separately from `transform`
                   // because Tailwind 4's `active:scale-90` compiles to the
                   // standalone CSS `scale` property, not `transform`.
-                  "relative overflow-hidden flex h-8 items-center justify-center rounded [transition:background_150ms_ease-out,color_150ms_ease-out,transform_var(--motion-fast)_var(--ease-snap),scale_var(--motion-fast)_var(--ease-snap)] active:scale-90 focus-ring",
+                  "relative overflow-hidden flex h-8 items-center justify-center rounded [transition:background_var(--motion-fast)_ease-out,color_var(--motion-fast)_ease-out,transform_var(--motion-fast)_var(--ease-snap),scale_var(--motion-fast)_var(--ease-snap)] active:scale-90 focus-ring",
                   scheduleTime ? "w-auto gap-1 px-2.5 text-[13px] font-medium" : "w-8",
                   canSend
                     ? "bg-[var(--accent)] text-white hover:opacity-90"
@@ -1525,7 +1525,7 @@ export function MessageInput({
                 <div className="flex flex-shrink-0 items-center gap-2">
                   <div className="h-1 w-20 overflow-hidden rounded-full bg-[var(--border)]">
                     <div
-                      className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-150"
+                      className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-[var(--motion-fast)]"
                       style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
@@ -1541,7 +1541,7 @@ export function MessageInput({
                       type="button"
                       aria-label={`Remove attachment ${pendingFile.name}`}
                       onClick={() => setPendingFile(null)}
-                      className="flex-shrink-0 rounded p-0.5 text-[var(--text-secondary)] transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-ring"
+                      className="flex-shrink-0 rounded p-0.5 text-[var(--text-secondary)] transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-ring"
                     >
                       <X className="h-3 w-3" />
                     </button>

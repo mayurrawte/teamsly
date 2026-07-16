@@ -415,7 +415,7 @@ function MessageItemImpl({
         {/* Gutter width = head row's avatar column: 32px avatar + gap-2 (8px) = 40px,
             so continuation text aligns pixel-for-pixel under the group head's body. */}
         <span
-          className="flex w-10 flex-shrink-0 select-none items-start justify-end gap-0.5 pr-2 pt-[3px] text-right text-[11px] tabular-nums leading-[18px] text-[var(--text-muted)] opacity-0 transition-opacity duration-100 group-hover:opacity-100"
+          className="flex w-10 flex-shrink-0 select-none items-start justify-end gap-0.5 pr-2 pt-[3px] text-right text-[11px] tabular-nums leading-[18px] text-[var(--text-muted)] opacity-0 transition-opacity duration-[var(--motion-fast)] group-hover:opacity-100"
           title={formatFullTimestamp(message.createdDateTime)}
         >
           {message.__pending && (
