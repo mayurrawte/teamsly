@@ -479,7 +479,7 @@ export function Sidebar() {
         <DropdownMenu.Trigger asChild>
           <button
             type="button"
-            className="flex h-[var(--chrome-header-h)] w-full items-center justify-between border-b border-[var(--border)] px-4 transition-colors duration-[80ms] ease-out hover:bg-[var(--sidebar-hover)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+            className="flex h-[var(--chrome-header-h)] w-full items-center justify-between border-b border-[var(--border)] px-4 transition-colors duration-[var(--motion-fast)] ease-out hover:bg-[var(--sidebar-hover)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
           >
             <span className="truncate text-[15px] font-black text-white">
               {activeTeam?.displayName ?? "Teamsly"}
@@ -774,7 +774,7 @@ export function Sidebar() {
             <button
               type="button"
               onClick={() => setChannelsOpen((v) => !v)}
-              className="flex min-w-0 flex-1 items-center gap-1 transition-colors duration-[80ms] ease-out hover:text-[var(--text-secondary)] focus:outline-none"
+              className="flex min-w-0 flex-1 items-center gap-1 transition-colors duration-[var(--motion-fast)] ease-out hover:text-[var(--text-secondary)] focus:outline-none"
             >
               <ChevronRight
                 className={cn(
@@ -791,12 +791,12 @@ export function Sidebar() {
                   aria-label="Mark all channels read"
                   title="Mark all read"
                   onClick={() => teamChannels.forEach((ch) => markRead(ch.id))}
-                  className="opacity-0 transition-colors duration-150 hover:text-[var(--text-secondary)] focus:outline-none focus-visible:opacity-100 group-hover/section:opacity-100"
+                  className="opacity-0 transition-colors duration-[var(--motion-fast)] hover:text-[var(--text-secondary)] focus:outline-none focus-visible:opacity-100 group-hover/section:opacity-100"
                 >
                   <CheckCheck className="h-3.5 w-3.5" />
                 </button>
               )}
-              <Plus className="h-3 w-3 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
+              <Plus className="h-3 w-3 opacity-0 transition-opacity duration-[var(--motion-fast)] group-hover/section:opacity-100" />
             </div>
           </div>
 
@@ -837,7 +837,7 @@ export function Sidebar() {
             <button
               type="button"
               onClick={() => setDmsOpen((v) => !v)}
-              className="flex min-w-0 flex-1 items-center gap-1 transition-colors duration-[80ms] ease-out hover:text-[var(--text-secondary)] focus:outline-none"
+              className="flex min-w-0 flex-1 items-center gap-1 transition-colors duration-[var(--motion-fast)] ease-out hover:text-[var(--text-secondary)] focus:outline-none"
             >
               <ChevronRight
                 className={cn(
@@ -854,7 +854,7 @@ export function Sidebar() {
                   aria-label="Mark all direct messages read"
                   title="Mark all read"
                   onClick={() => chats.forEach((chat) => markRead(chat.id))}
-                  className="opacity-0 transition-colors duration-150 hover:text-[var(--text-secondary)] focus:outline-none focus-visible:opacity-100 group-hover/section:opacity-100"
+                  className="opacity-0 transition-colors duration-[var(--motion-fast)] hover:text-[var(--text-secondary)] focus:outline-none focus-visible:opacity-100 group-hover/section:opacity-100"
                 >
                   <CheckCheck className="h-3.5 w-3.5" />
                 </button>
@@ -897,7 +897,7 @@ export function Sidebar() {
                   type="button"
                   disabled={loadingMoreChats}
                   onClick={loadMoreChats}
-                  className="mx-2 mt-0.5 flex h-7 w-[calc(100%-16px)] items-center gap-1.5 rounded-md px-2 text-[13px] text-[var(--text-muted)] transition-colors duration-[80ms] ease-out hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+                  className="mx-2 mt-0.5 flex h-7 w-[calc(100%-16px)] items-center gap-1.5 rounded-md px-2 text-[13px] text-[var(--text-muted)] transition-colors duration-[var(--motion-fast)] ease-out hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
                 >
                   <ChevronDown className="h-3 w-3 flex-shrink-0" />
                   <span>{loadingMoreChats ? "Loading..." : "Show older chats"}</span>
@@ -933,7 +933,7 @@ function SectionHeader({
     <button
       type="button"
       onClick={onToggle}
-      className="group/section flex w-full items-center gap-1.5 px-4 py-1 text-[12px] font-semibold text-[var(--text-muted)] transition-colors duration-[80ms] ease-out hover:text-[var(--text-secondary)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+      className="group/section flex w-full items-center gap-1.5 px-4 py-1 text-[12px] font-semibold text-[var(--text-muted)] transition-colors duration-[var(--motion-fast)] ease-out hover:text-[var(--text-secondary)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
     >
       <ChevronRight
         className={cn(
@@ -1076,7 +1076,7 @@ function SidebarItem({
               aria-label="Conversation options"
               onClick={(e) => e.stopPropagation()}
               className={cn(
-                "absolute right-3 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded text-[var(--text-secondary)] transition-opacity duration-100 hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-primary)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
+                "absolute right-3 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded text-[var(--text-secondary)] transition-opacity duration-[var(--motion-fast)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-primary)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
                 menuOpen ? "opacity-100" : "opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100"
               )}
             >
