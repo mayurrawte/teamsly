@@ -41,6 +41,11 @@ interface Props {
   contextLabel?: string;
   onReplyInThread?: (message: MSMessage) => void;
   onForward?: (message: MSMessage) => void;
+  /**
+   * Set a reminder on this message at `fireAt` (epoch ms). The parent (Chat/
+   * ChannelView) builds the persisted reminder from the message + context ids.
+   */
+  onRemind?: (message: MSMessage, fireAt: number) => void;
   onToggleReaction?: (messageId: string, reactionType: ReactionType) => void;
   onDelete?: (messageId: string) => void;
   onEdit?: (messageId: string, newContent: string) => Promise<void> | void;
@@ -82,6 +87,7 @@ function MessageItemImpl({
   contextLabel,
   onReplyInThread,
   onForward,
+  onRemind,
   onToggleReaction,
   onDelete,
   onEdit,
@@ -401,6 +407,7 @@ function MessageItemImpl({
             onForward={onForward ? () => onForward(message) : undefined}
             onSave={handleSaveToggle}
             isSaved={isSaved}
+            onRemind={onRemind && canSave ? (_id, fireAt) => onRemind(message, fireAt) : undefined}
             onEdit={editHandler ? startEditing : undefined}
             onDelete={deleteHandler}
           />
@@ -486,6 +493,9 @@ function MessageItemImpl({
           onReact={onToggleReaction}
           onReplyInThread={() => onReplyInThread?.(message)}
           onForward={onForward ? () => onForward(message) : undefined}
+          onSave={handleSaveToggle}
+          isSaved={isSaved}
+          onRemind={onRemind && canSave ? (_id, fireAt) => onRemind(message, fireAt) : undefined}
           onEdit={editHandler ? startEditing : undefined}
           onDelete={deleteHandler}
         />

@@ -1,9 +1,10 @@
 "use client";
 
 import { forwardRef, type ComponentPropsWithoutRef } from "react";
-import { Bookmark, Smile, MessageSquare, Forward, Pin, MoreHorizontal, Trash2, Pencil, type LucideIcon } from "lucide-react";
+import { Bookmark, Smile, MessageSquare, Forward, Pin, MoreHorizontal, Trash2, Pencil, Clock, type LucideIcon } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { EmojiPicker } from "./EmojiPicker";
+import { RemindMeMenu } from "./RemindMeMenu";
 import { cn } from "@/lib/utils";
 import type { ReactionType } from "@/lib/utils/reactions";
 
@@ -16,6 +17,8 @@ interface Props {
   /** Toggle save-for-later. When `isSaved`, the icon shows filled. */
   onSave?: (messageId: string) => void;
   isSaved?: boolean;
+  /** Set a "remind me" on this message at `fireAt` (epoch ms). */
+  onRemind?: (messageId: string, fireAt: number) => void;
   onEdit?: (messageId: string) => void;
   onDelete?: (messageId: string) => void;
 }
@@ -28,6 +31,7 @@ export function MessageHoverToolbar({
   onPin,
   onSave,
   isSaved,
+  onRemind,
   onEdit,
   onDelete,
 }: Props) {
@@ -53,6 +57,11 @@ export function MessageHoverToolbar({
           onClick={() => onSave(messageId)}
           active={isSaved}
         />
+      )}
+      {onRemind && (
+        <RemindMeMenu onPick={(fireAt) => onRemind(messageId, fireAt)}>
+          <ToolbarButton icon={Clock} label="Remind me" />
+        </RemindMeMenu>
       )}
       {onPin && <ToolbarButton icon={Pin} label="Pin message" onClick={() => onPin(messageId)} />}
       {showMoreMenu && (

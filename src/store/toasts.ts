@@ -7,6 +7,12 @@ export interface ToastMessage {
   title: string;
   description?: string;
   tone?: "error" | "info";
+  /**
+   * Optional primary action rendered as a button in the toast. Used by
+   * reminder toasts to offer a "View message" jump. Selecting it dismisses
+   * the toast. Kept out of the auto-dismiss path — the timer still fires.
+   */
+  action?: { label: string; onClick: () => void };
 }
 
 interface ToastState {
