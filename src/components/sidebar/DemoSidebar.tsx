@@ -71,7 +71,7 @@ export function DemoSidebar() {
 
   return (
     <div className="flex w-[260px] flex-shrink-0 flex-col overflow-hidden bg-[#19171d]">
-      <div className="flex h-[49px] items-center justify-between border-b border-[#3f4144] px-4 transition-colors duration-[80ms] ease-out hover:bg-[#27242c]">
+      <div className="flex h-[49px] items-center justify-between border-b border-[#3f4144] px-4 transition-colors duration-[var(--motion-fast)] ease-out hover:bg-[#27242c]">
         <span className="truncate text-[15px] font-black text-white">
           {activeTeam?.displayName ?? "Teamsly"}
         </span>
@@ -81,7 +81,7 @@ export function DemoSidebar() {
       <button
         type="button"
         onClick={() => setSearchOpen(true)}
-        className="mx-3 my-2 flex h-7 items-center gap-2 rounded-md border border-[#565856] bg-[#2c2d30] px-2 text-left text-[13px] text-[#ababad] [transition:border-color_150ms_ease,background_150ms_ease] hover:border-white hover:bg-[#1a1d21] focus:border-white focus:bg-[#1a1d21] focus:outline-none"
+        className="mx-3 my-2 flex h-7 items-center gap-2 rounded-md border border-[#565856] bg-[#2c2d30] px-2 text-left text-[13px] text-[#ababad] [transition:border-color_var(--motion-fast)_ease,background_var(--motion-fast)_ease] hover:border-white hover:bg-[#1a1d21] focus:border-white focus:bg-[#1a1d21] focus:outline-none"
       >
         <Search className="h-3.5 w-3.5 flex-shrink-0" />
         <span className="truncate">Search...</span>
@@ -91,18 +91,18 @@ export function DemoSidebar() {
         <div className="mb-1">
           <button
             onClick={() => setChannelsOpen((v) => !v)}
-            className="group/section flex w-full items-center justify-between px-4 py-1 text-[13px] font-bold text-[#ababad] transition-colors duration-[80ms] ease-out hover:text-white"
+            className="group/section flex w-full items-center justify-between px-4 py-1 text-[13px] font-bold text-[#ababad] transition-colors duration-[var(--motion-fast)] ease-out hover:text-white"
           >
             <span className="flex min-w-0 items-center gap-1">
               <ChevronRight
                 className={cn(
-                  "h-3 w-3 transition-transform duration-200 ease-out",
+                  "h-3 w-3 transition-transform duration-[var(--motion-base)] ease-out",
                   channelsOpen && "rotate-90"
                 )}
               />
               <span className="truncate">Channels</span>
             </span>
-            <Plus className="h-3.5 w-3.5 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
+            <Plus className="h-3.5 w-3.5 opacity-0 transition-opacity duration-[var(--motion-fast)] group-hover/section:opacity-100" />
           </button>
 
           {channelsOpen &&
@@ -130,18 +130,18 @@ export function DemoSidebar() {
         <div className="mt-3">
           <button
             onClick={() => setDmsOpen((v) => !v)}
-            className="group/section flex w-full items-center justify-between px-4 py-1 text-[13px] font-bold text-[#ababad] transition-colors duration-[80ms] ease-out hover:text-white"
+            className="group/section flex w-full items-center justify-between px-4 py-1 text-[13px] font-bold text-[#ababad] transition-colors duration-[var(--motion-fast)] ease-out hover:text-white"
           >
             <span className="flex min-w-0 items-center gap-1">
               <ChevronRight
                 className={cn(
-                  "h-3 w-3 transition-transform duration-200 ease-out",
+                  "h-3 w-3 transition-transform duration-[var(--motion-base)] ease-out",
                   dmsOpen && "rotate-90"
                 )}
               />
               <span className="truncate">Direct Messages</span>
             </span>
-            <Plus className="h-3.5 w-3.5 opacity-0 transition-opacity duration-150 group-hover/section:opacity-100" />
+            <Plus className="h-3.5 w-3.5 opacity-0 transition-opacity duration-[var(--motion-fast)] group-hover/section:opacity-100" />
           </button>
 
           {dmsOpen &&
@@ -220,14 +220,14 @@ function SidebarItem({
     <button
       onClick={onClick}
       className={cn(
-        "mx-2 flex h-7 w-[calc(100%-16px)] items-center gap-2 rounded-md px-2 text-[15px] transition-colors duration-[80ms] ease-out",
+        "mx-2 flex h-7 w-[calc(100%-16px)] items-center gap-2 rounded-md px-2 text-[15px] transition-colors duration-[var(--motion-fast)] ease-out",
         active ? "bg-[#0F5A8F] text-white" : "text-[#ababad] hover:bg-[#27292d] hover:text-white"
       )}
     >
       <span className="flex-shrink-0 opacity-70">{icon}</span>
       <span className={cn("truncate", unread && "font-black text-white")}>{label}</span>
       {unread && (
-        <span className="ml-auto flex h-[18px] min-w-[18px] flex-shrink-0 scale-100 items-center justify-center rounded-full bg-[#cd2553] px-[5px] text-[11px] font-bold text-white transition-transform duration-150">
+        <span className="ml-auto flex h-[18px] min-w-[18px] flex-shrink-0 scale-100 items-center justify-center rounded-full bg-[#cd2553] px-[5px] text-[11px] font-bold text-white transition-transform duration-[var(--motion-fast)]">
           {unreadCount > 99 ? "99+" : unreadCount}
         </span>
       )}

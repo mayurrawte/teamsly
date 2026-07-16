@@ -94,7 +94,7 @@ function ThreadPreviewPanel({
   return (
     <div
       className="mx-4 mb-3 overflow-hidden rounded-lg border border-[#3f4144] bg-[#222529]"
-      style={{ animation: "context-fade-in 150ms ease-out both" }}
+      style={{ animation: "context-fade-in var(--motion-fast) ease-out both" }}
     >
       <div className="p-3">
         <p className="text-[12px] font-semibold text-[#d1d2d3]">{item.senderName}</p>
@@ -139,7 +139,7 @@ function ActivityRow({
       <button
         type="button"
         onClick={handleClick}
-        className="group flex w-full items-start gap-3 px-4 py-3 text-left transition-colors duration-[80ms] ease-out hover:bg-white/5 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]"
+        className="group flex w-full items-start gap-3 px-4 py-3 text-left transition-colors duration-[var(--motion-fast)] ease-out hover:bg-white/5 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]"
       >
         {/* Avatar */}
         <div className="relative mt-0.5 flex-shrink-0">
@@ -166,7 +166,7 @@ function ActivityRow({
         {item.type === "thread" && (
           <ChevronDown
             className={cn(
-              "h-3.5 w-3.5 flex-shrink-0 text-[#6c6f75] transition-transform duration-150",
+              "h-3.5 w-3.5 flex-shrink-0 text-[#6c6f75] transition-transform duration-[var(--motion-fast)]",
               expanded && "rotate-180"
             )}
           />
@@ -497,7 +497,7 @@ export default function ActivityPage() {
   const showSkeleton = isScanTab && scanLoading && !scanLoadedRef.current;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="context-fade-in flex h-full flex-col overflow-hidden">
       {/* Header */}
       <div className="flex-shrink-0 border-b border-[#3f4144] px-4 pb-0 pt-4">
         <h1 className="mb-3 text-[18px] font-bold text-white">Activity</h1>
@@ -514,7 +514,7 @@ export default function ActivityPage() {
                   aria-selected={active}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "relative px-3 pb-2.5 pt-1 text-[13px] font-medium transition-colors duration-[80ms] ease-out focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]",
+                    "relative px-3 pb-2.5 pt-1 text-[13px] font-medium transition-colors duration-[var(--motion-fast)] ease-out focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]",
                     active
                       ? "text-white"
                       : "text-[#ababad] hover:text-[#d1d2d3]"

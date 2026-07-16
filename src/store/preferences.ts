@@ -60,6 +60,8 @@ export interface Preferences {
   density: Density;
   desktopNotifications: boolean;
   notificationSound: boolean;
+  /** Confetti when a message is pure celebration (🎉). Purely local delight. */
+  celebrationEffects: boolean;
   mentionsOnly: boolean;
   notificationKeywords: string;
   /**
@@ -139,6 +141,7 @@ interface PreferencesState extends Preferences {
   setDensity: (d: Density) => void;
   setDesktopNotifications: (v: boolean) => void;
   setNotificationSound: (v: boolean) => void;
+  setCelebrationEffects: (v: boolean) => void;
   setMentionsOnly: (v: boolean) => void;
   setNotificationKeywords: (v: string) => void;
   setMutedKeywords: (keywords: string[]) => void;
@@ -184,6 +187,7 @@ const DEFAULTS: Preferences = {
   density: "comfortable",
   desktopNotifications: true,
   notificationSound: true,
+  celebrationEffects: true,
   mentionsOnly: false,
   notificationKeywords: "",
   mutedKeywords: [],
@@ -230,6 +234,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       setDensity: (density) => set({ density }),
       setDesktopNotifications: (desktopNotifications) => set({ desktopNotifications }),
       setNotificationSound: (notificationSound) => set({ notificationSound }),
+      setCelebrationEffects: (celebrationEffects) => set({ celebrationEffects }),
       setMentionsOnly: (mentionsOnly) => set({ mentionsOnly }),
       setNotificationKeywords: (notificationKeywords) => set({ notificationKeywords }),
       setMutedKeywords: (mutedKeywords) => set({ mutedKeywords }),

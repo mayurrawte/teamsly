@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth/config";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Logo } from "@/components/ui/Logo";
+import { LandingReveal } from "@/components/landing/LandingReveal";
 import {
   Star,
   GitFork,
@@ -100,18 +101,18 @@ export default async function LandingPage() {
           >
             Open source · AGPL-3.0
           </a>
-          <h1 className="mx-auto mb-6 max-w-3xl text-4xl font-black leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
+          <h1 className="motion-fade-up mx-auto mb-6 max-w-3xl text-4xl font-black leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
             A keyboard-first
             <br />
             Microsoft Teams client.
           </h1>
-          <p className="mx-auto mb-9 max-w-2xl text-[17px] leading-relaxed text-[#8b9ab0]">
+          <p className="motion-fade-up motion-stagger-1 mx-auto mb-9 max-w-2xl text-[17px] leading-relaxed text-[#8b9ab0]">
             Teamsly connects to your real Teams account through the official Microsoft Graph
             API — same channels, DMs, and files — and adds what Teams never shipped: a command
             palette, AI thread summaries, voice rooms, disappearing DMs, themes, and an MCP
             server that lets Claude read and send your messages.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="motion-fade-up motion-stagger-2 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/login"
               className="rounded-xl px-6 py-3 text-[15px] font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98]"
@@ -145,9 +146,11 @@ export default async function LandingPage() {
         </div>
 
         {/* Real product screenshot */}
-        <BrowserFrame className="mt-14">
-          <img src="/shots/workspace.png" alt="Teamsly workspace — channels, messages, and sidebar" className="block w-full" loading="eager" />
-        </BrowserFrame>
+        <div className="motion-fade-up motion-stagger-3 mt-14">
+          <BrowserFrame className="tilt-on-hover">
+            <img src="/shots/workspace.png" alt="Teamsly workspace — channels, messages, and sidebar" className="block w-full" loading="eager" />
+          </BrowserFrame>
+        </div>
       </section>
 
       {/* Trust bar */}
@@ -215,38 +218,44 @@ Claude: ✓ Sent to Priya Sharma`}</CodeBlock>
 
       {/* Feature rows with real screenshots */}
       <section id="features" className="mx-auto max-w-6xl scroll-mt-20 px-6">
-        <FeatureRow
-          eyebrow="Your real Teams, faster"
-          title="Channels, DMs, threads — all live from Graph"
-          body="Everything is fetched live from the Microsoft Graph API: channels, group and 1:1 chats, threaded replies, reactions, mentions, and file attachments. No scraping, no shadow copy — Teamsly stores nothing of its own."
-          points={["Channels & direct messages", "Threads, reactions & mentions", "Inline file previews", "Org-wide people search"]}
-          shot="/shots/workspace.png"
-          alt="Teamsly channel view"
-        />
-        <FeatureRow
-          reverse
-          eyebrow="Keyboard-first"
-          title="Jump anywhere with ⌘K"
-          body="A fast command palette to jump between channels and DMs, plus shortcuts throughout. Search finds people you've never messaged and starts a DM in one keystroke."
-          points={["⌘K quick switcher", "Org directory search", "Shortcuts for everything", "Built for people who live in the terminal"]}
-          shot="/shots/cmdk.png"
-          alt="Teamsly command palette"
-        />
-        <FeatureRow
-          eyebrow="Messaging, done right"
-          title="DMs with disappearing messages"
-          body="Send a DM that self-destructs after 30 seconds, 5 minutes, or an hour — it shows a live countdown and vanishes for both sides. Reactions, edits, forwarding, and emoji/GIF are all here too."
-          points={["Disappearing DMs (30s / 5m / 1h)", "Emoji & GIF picker (Tenor)", "Edit, delete, forward", "Smart notifications & focus mode"]}
-          shot="/shots/dm.png"
-          alt="Teamsly direct message view"
-        />
+        <LandingReveal>
+          <FeatureRow
+            eyebrow="Your real Teams, faster"
+            title="Channels, DMs, threads — all live from Graph"
+            body="Everything is fetched live from the Microsoft Graph API: channels, group and 1:1 chats, threaded replies, reactions, mentions, and file attachments. No scraping, no shadow copy — Teamsly stores nothing of its own."
+            points={["Channels & direct messages", "Threads, reactions & mentions", "Inline file previews", "Org-wide people search"]}
+            shot="/shots/workspace.png"
+            alt="Teamsly channel view"
+          />
+        </LandingReveal>
+        <LandingReveal>
+          <FeatureRow
+            reverse
+            eyebrow="Keyboard-first"
+            title="Jump anywhere with ⌘K"
+            body="A fast command palette to jump between channels and DMs, plus shortcuts throughout. Search finds people you've never messaged and starts a DM in one keystroke."
+            points={["⌘K quick switcher", "Org directory search", "Shortcuts for everything", "Built for people who live in the terminal"]}
+            shot="/shots/cmdk.png"
+            alt="Teamsly command palette"
+          />
+        </LandingReveal>
+        <LandingReveal>
+          <FeatureRow
+            eyebrow="Messaging, done right"
+            title="DMs with disappearing messages"
+            body="Send a DM that self-destructs after 30 seconds, 5 minutes, or an hour — it shows a live countdown and vanishes for both sides. Reactions, edits, forwarding, and emoji/GIF are all here too."
+            points={["Disappearing DMs (30s / 5m / 1h)", "Emoji & GIF picker (Tenor)", "Edit, delete, forward", "Smart notifications & focus mode"]}
+            shot="/shots/dm.png"
+            alt="Teamsly direct message view"
+          />
+        </LandingReveal>
       </section>
 
       {/* And more grid */}
       <section className="mx-auto max-w-6xl px-6 pb-24 pt-8">
         <h2 className="mb-3 text-center text-3xl font-black tracking-tight">And a lot more</h2>
         <p className="mb-12 text-center text-[15px] text-[#8b9ab0]">The things you&apos;d expect from a client built by people who use it daily.</p>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <LandingReveal className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
             { icon: Sparkles, title: "AI unread summaries", description: "Catch up on long threads in seconds — Claude highlights blockers and decisions." },
             { icon: Mic, title: "Voice rooms", description: "Drop-in audio per channel or DM, powered by LiveKit. No meeting links." },
@@ -268,7 +277,7 @@ Claude: ✓ Sent to Priya Sharma`}</CodeBlock>
               <p className="text-[12px] leading-relaxed text-[#8b9ab0]">{description}</p>
             </div>
           ))}
-        </div>
+        </LandingReveal>
       </section>
 
       {/* Comparison */}
@@ -504,7 +513,7 @@ function FeatureRow({
         </ul>
       </div>
       <div className="w-full lg:flex-1">
-        <BrowserFrame>
+        <BrowserFrame className="tilt-on-hover">
           <img src={shot} alt={alt} className="block w-full" loading="lazy" />
         </BrowserFrame>
       </div>

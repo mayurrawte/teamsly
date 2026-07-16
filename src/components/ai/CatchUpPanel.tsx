@@ -31,7 +31,7 @@ export function CatchUpPanel() {
       <aside
         className={[
           "fixed bottom-0 right-0 top-0 z-50 flex w-full flex-col border-l border-[var(--border)] bg-[var(--content-bg)] shadow-[-4px_0_24px_rgba(0,0,0,0.3)] sm:w-[440px]",
-          "transition-transform duration-[280ms] ease-[cubic-bezier(0.34,1.2,0.64,1)]",
+          "transition-transform duration-[var(--motion-slow)] ease-[cubic-bezier(0.34,1.2,0.64,1)]",
           open ? "translate-x-0" : "translate-x-full",
         ].join(" ")}
         aria-label="Catch-up panel"

@@ -3,6 +3,13 @@
 @theme {
   --font-family-sans: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI",
     "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --shadow-raised: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-overlay: -4px 0 16px rgba(0, 0, 0, 0.3);
+  --shadow-popover: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 /* ─── Global interactive element cursors ─────────────────────────────── */
@@ -103,9 +110,11 @@ body {
   --ease-snap: cubic-bezier(0.32, 0.72, 0, 1);        /* iOS-style snappy */
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);       /* gentle overshoot-free spring */
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);    /* fade-in default */
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);   /* earned-playful overshoot */
   --motion-fast: 120ms;
   --motion-base: 200ms;
   --motion-slow: 320ms;
+  --motion-slower: 480ms;                             /* celebration-scale effects */
 
   /* ─── Density (defaults: comfortable) ──────────────────────────────────
      Components use these vars in place of hardcoded padding/avatar sizes.
@@ -127,6 +136,7 @@ body {
     --motion-fast: 0ms;
     --motion-base: 0ms;
     --motion-slow: 0ms;
+    --motion-slower: 0ms;
   }
 }
 
@@ -462,6 +472,50 @@ body {
   opacity: 0.85;
 }
 
+/* ─── Landing page first-impression motion (Task 6) ────────────────────
+   Scroll-reveal + hover-tilt for the public marketing page.
+
+   Crawler / no-JS safety: the hidden `.reveal-on-scroll` state (opacity:0)
+   is NEVER present in the server-rendered HTML — `LandingReveal` only adds
+   the class after mount. So a crawler or a JS-disabled visitor always gets
+   the copy at full opacity. Under reduced motion the hidden state is
+   restored to fully visible as a belt-and-braces fallback. */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(12px);
+}
+.reveal-on-scroll.revealed {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity var(--motion-slow) var(--ease-out-soft),
+    transform var(--motion-slow) var(--ease-spring);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-on-scroll {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Hero entrance stagger + screenshot tilt. The stagger delays live under
+   no-preference (not as inline styles) so reduced-motion users never get a
+   delayed opacity hold — `motion-fade-up` collapses to 0ms and every hero
+   element is visible at once. Tilt stays ≤4deg and is motion-gated, so it is
+   simply absent under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .motion-stagger-1 { animation-delay: 60ms; }
+  .motion-stagger-2 { animation-delay: 120ms; }
+  .motion-stagger-3 { animation-delay: 180ms; }
+
+  .tilt-on-hover {
+    transition: transform var(--motion-base) var(--ease-spring);
+    transform: perspective(900px);
+  }
+  .tilt-on-hover:hover {
+    transform: perspective(900px) rotateX(2deg) rotateY(-3deg) scale(1.01);
+  }
+}
+
 @keyframes reaction-pop {
   0%   { transform: scale(1); }
   30%  { transform: scale(0.85); }
@@ -506,7 +560,7 @@ body.focus-mode .focus-mode-hide {
     60%  { transform: scale(1.08) rotate(2deg); }
     100% { opacity: 1; transform: scale(1) rotate(0); }
   }
-  .slash-fx-pop { animation: slash-fx-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .slash-fx-pop { animation: slash-fx-pop 420ms var(--ease-bounce); }
 
   @keyframes slash-menu-in {
     from { opacity: 0; transform: scale(0.95) translateY(4px); }
@@ -516,6 +570,17 @@ body.focus-mode .focus-mode-hide {
     animation: slash-menu-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
     transform-origin: bottom left;
   }
+
+  /* Celebration confetti (#72 motion pass): each particle drifts to a
+     deterministic offset (set via inline --cf-* vars) while spinning and
+     fading. Only defined under no-preference so reduced-motion users never
+     see it animate; the CelebrationBurst component also refuses to render
+     when the celebrationEffects preference is off. */
+  @keyframes confetti-fall {
+    0%   { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); opacity: 1; }
+    100% { transform: translate3d(var(--cf-x), var(--cf-y), 0) rotate(var(--cf-r)) scale(0.6); opacity: 0; }
+  }
+  .confetti-particle { animation: confetti-fall var(--motion-slower) var(--ease-out-soft) forwards; }
 }
 
 @keyframes typing-dot {
@@ -610,10 +675,38 @@ body.focus-mode .focus-mode-hide {
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  @keyframes message-in {
-    from { transform: translateY(8px); opacity: 0; }
-    to   { transform: translateY(0); opacity: 1; }
+/* Own optimistic sends only — gated on `message.__pending` in MessageItem,
+ * never on recency, so polled/history rows and other people's real-time
+ * messages never trigger it. Reconciling to the Graph id remounts the row
+ * (keyed by message.id) with `__pending` already false, so it does not
+ * replay on reconcile. */
+@keyframes message-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.message-in {
+  animation: message-in var(--motion-base) var(--ease-spring) both;
+}
+
+/* Zeroing --motion-base/--motion-fast above isn't enough on its own for these
+   two `both`-fill animations: at 0ms the keyframe still resolves immediately
+   and its fill-mode holds the `to` state forever. On `.motion-fade-up` that
+   collides with EmojiPicker's inline per-item `animationDelay` — the delay
+   is untouched (inline styles always win that sub-property over a
+   stylesheet rule), so a staggered item still sits invisible until its delay
+   elapses, then pops. On `.message-in` the `to { opacity: 1 }` hold
+   permanently overrides the `opacity-60` pending-message dim. Disabling the
+   animation outright avoids both — and this override must be declared AFTER
+   `.motion-fade-up`/`.message-in` above (equal specificity, so the later
+   rule in source order wins whenever both apply); placing it up in the
+   `:root` token block near the top of this file would silently lose the
+   cascade to these rules — the same reason the `.motion-stagger-*`
+   no-preference override earlier in this file is placed after
+   `.motion-fade-up` rather than next to the token block. */
+@media (prefers-reduced-motion: reduce) {
+  .motion-fade-up,
+  .message-in {
+    animation: none;
   }
 }
 
@@ -627,12 +720,21 @@ body.focus-mode .focus-mode-hide {
   100% { transform: scale(1); }
 }
 
+/* Odometer-lite digit roll for RollingNumber — fires only when the numeric
+   value actually changes (component re-keys the inner span), never on
+   first mount. Token-driven duration/easing so reduced-motion zeroes it. */
+@keyframes roll-in {
+  from { transform: translateY(0.7em); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.roll-in { animation: roll-in var(--motion-base) var(--ease-spring) both; }
+
 @keyframes context-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 .context-fade-in {
-  animation: context-fade-in 120ms ease-out both;
+  animation: context-fade-in var(--motion-fast) ease-out both;
 }
 
 /* Electron macOS drag regions — no-ops in the browser */

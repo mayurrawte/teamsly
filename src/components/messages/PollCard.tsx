@@ -57,7 +57,7 @@ export function PollCard({
               {/* Fill bar behind the row content. */}
               <span
                 aria-hidden
-                className="absolute inset-y-0 left-0 bg-[var(--accent)]/15 transition-[width] duration-300"
+                className="absolute inset-y-0 left-0 bg-[var(--accent)]/15 transition-[width] duration-[var(--motion-slow)]"
                 style={{ width: `${pct}%` }}
               />
               <span className="relative z-[1] text-[15px] leading-none">{opt.emoji}</span>

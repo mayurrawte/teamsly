@@ -177,7 +177,7 @@ function EventRow({ event }: { event: MSCalendarEvent }) {
   return (
     <div
       className={cn(
-        "group flex items-start gap-3 rounded-lg px-3 py-3 transition-colors duration-[80ms] hover:bg-white/5",
+        "group flex items-start gap-3 rounded-lg px-3 py-3 transition-colors duration-[var(--motion-fast)] hover:bg-white/5",
         cancelled && "opacity-60"
       )}
     >
@@ -229,7 +229,7 @@ function EventRow({ event }: { event: MSCalendarEvent }) {
             type="button"
             onClick={handleJoin}
             title="Join meeting"
-            className="flex items-center gap-1.5 rounded-md bg-[#0F5A8F] px-2.5 py-1.5 text-[12px] font-medium text-white transition-colors duration-[80ms] hover:bg-[#1470b0] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]"
+            className="flex items-center gap-1.5 rounded-md bg-[#0F5A8F] px-2.5 py-1.5 text-[12px] font-medium text-white transition-colors duration-[var(--motion-fast)] hover:bg-[#1470b0] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]"
           >
             <Video size={13} />
             Join
@@ -239,7 +239,7 @@ function EventRow({ event }: { event: MSCalendarEvent }) {
             type="button"
             onClick={handleOpen}
             title="Open in Outlook"
-            className="flex items-center justify-center rounded-md p-1.5 text-[#6c6f75] transition-colors duration-[80ms] hover:bg-white/8 hover:text-[#ababad] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]"
+            className="flex items-center justify-center rounded-md p-1.5 text-[#6c6f75] transition-colors duration-[var(--motion-fast)] hover:bg-white/8 hover:text-[#ababad] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]"
           >
             <ExternalLink size={14} />
           </button>
@@ -309,7 +309,7 @@ export default function MeetingsPage() {
             onClick={fetchMeetings}
             disabled={loading}
             title="Refresh calendar"
-            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] font-medium text-[#ababad] transition-colors duration-[80ms] hover:bg-white/8 hover:text-[#d1d2d3] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F] disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] font-medium text-[#ababad] transition-colors duration-[var(--motion-fast)] hover:bg-white/8 hover:text-[#d1d2d3] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F] disabled:opacity-50"
           >
             <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
             Refresh
@@ -327,7 +327,7 @@ export default function MeetingsPage() {
                 aria-selected={active}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "relative px-3 pb-2.5 pt-1 text-[13px] font-medium transition-colors duration-[80ms] ease-out focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]",
+                  "relative px-3 pb-2.5 pt-1 text-[13px] font-medium transition-colors duration-[var(--motion-fast)] ease-out focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0F5A8F]",
                   active ? "text-white" : "text-[#ababad] hover:text-[#d1d2d3]"
                 )}
               >
@@ -355,7 +355,7 @@ export default function MeetingsPage() {
             <button
               type="button"
               onClick={fetchMeetings}
-              className="flex items-center gap-1.5 rounded-md border border-[#3f4144] px-3 py-1.5 text-[13px] text-[#d1d2d3] transition-colors duration-[80ms] hover:bg-[#27292d]"
+              className="flex items-center gap-1.5 rounded-md border border-[#3f4144] px-3 py-1.5 text-[13px] text-[#d1d2d3] transition-colors duration-[var(--motion-fast)] hover:bg-[#27292d]"
             >
               <RefreshCw size={13} />
               Retry

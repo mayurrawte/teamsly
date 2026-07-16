@@ -96,7 +96,7 @@ export function JumpToSwitcher({ open, onOpenChange, items }: JumpToSwitcherProp
             </kbd>
             <Dialog.Close
               aria-label="Close jump to"
-              className="mr-3 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
+              className="mr-3 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-[var(--text-secondary)] transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
             >
               <X size={16} />
             </Dialog.Close>
@@ -116,7 +116,7 @@ export function JumpToSwitcher({ open, onOpenChange, items }: JumpToSwitcherProp
                     type="button"
                     onMouseEnter={() => setActiveIndex(index)}
                     onClick={() => selectItem(item)}
-                    className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors duration-[80ms] ${
+                    className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors duration-[var(--motion-fast)] ${
                       index === activeIndex
                         ? "bg-[var(--accent)] text-[var(--text-white)]"
                         : "text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"

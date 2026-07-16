@@ -1485,7 +1485,15 @@ export function MessageInput({
                 onClick={submit}
                 disabled={!canSend}
                 className={cn(
-                  "relative overflow-hidden flex h-8 items-center justify-center rounded transition-[background,color,transform] duration-150 ease-out focus-ring",
+                  // Single arbitrary `transition` property (rather than separate
+                  // `transition-[...]`/`transition-transform` utilities) so the
+                  // background/color fade and the transform/scale snap keep their
+                  // own durations — two Tailwind transition-property utilities
+                  // would collide via tailwind-merge and one would silently win
+                  // outright. `scale` is listed separately from `transform`
+                  // because Tailwind 4's `active:scale-90` compiles to the
+                  // standalone CSS `scale` property, not `transform`.
+                  "relative overflow-hidden flex h-8 items-center justify-center rounded [transition:background_150ms_ease-out,color_150ms_ease-out,transform_var(--motion-fast)_var(--ease-snap),scale_var(--motion-fast)_var(--ease-snap)] active:scale-90 focus-ring",
                   scheduleTime ? "w-auto gap-1 px-2.5 text-[13px] font-medium" : "w-8",
                   canSend
                     ? "bg-[var(--accent)] text-white hover:opacity-90"

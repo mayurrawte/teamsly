@@ -14,6 +14,7 @@ import { clearAllReminders } from "@/lib/storage/reminders";
 import { cn } from "@/lib/utils";
 import { isDisappearing, unwrapMessage, wrapMessage, UNDECODABLE_BLOB_GRACE_MS } from "@/lib/utils/disappear";
 import { useScheduledStore } from "@/store/scheduled";
+import { RollingNumber } from "@/components/ui/RollingNumber";
 
 async function sweepAllDms(
   chatIds: string[],
@@ -623,7 +624,7 @@ export function Sidebar() {
       <button
         type="button"
         onClick={() => useSearchStore.getState().open()}
-        className="mx-3 my-2 flex h-7 items-center gap-2 rounded-md border border-[var(--border-input)] bg-[var(--reaction-bg)] px-2 text-left text-[13px] text-[var(--text-secondary)] [transition:border-color_150ms_ease,background_150ms_ease] hover:border-white/50 hover:bg-[var(--sidebar-hover)] focus:border-white/50 focus:bg-[var(--sidebar-hover)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+        className="mx-3 my-2 flex h-7 items-center gap-2 rounded-md border border-[var(--border-input)] bg-[var(--reaction-bg)] px-2 text-left text-[13px] text-[var(--text-secondary)] [transition:border-color_var(--motion-fast)_var(--ease-out-soft),background_var(--motion-fast)_var(--ease-out-soft)] hover:border-white/50 hover:bg-[var(--sidebar-hover)] focus:border-white/50 focus:bg-[var(--sidebar-hover)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
       >
         <Search className="h-3.5 w-3.5 flex-shrink-0" />
         <span className="truncate">Search...</span>
@@ -641,7 +642,7 @@ export function Sidebar() {
           />
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
+              "grid transition-[grid-template-rows] duration-[var(--motion-base)] [transition-timing-function:var(--ease-spring)]",
               unreadsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >
@@ -698,7 +699,7 @@ export function Sidebar() {
           />
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
+              "grid transition-[grid-template-rows] duration-[var(--motion-base)] [transition-timing-function:var(--ease-spring)]",
               threadsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >
@@ -719,7 +720,7 @@ export function Sidebar() {
           />
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
+              "grid transition-[grid-template-rows] duration-[var(--motion-base)] [transition-timing-function:var(--ease-spring)]",
               starredOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >
@@ -777,7 +778,7 @@ export function Sidebar() {
             >
               <ChevronRight
                 className={cn(
-                  "h-2.5 w-2.5 transition-transform duration-200 ease-out",
+                  "h-2.5 w-2.5 transition-transform duration-[var(--motion-base)] ease-out",
                   channelsOpen && "rotate-90"
                 )}
               />
@@ -801,7 +802,7 @@ export function Sidebar() {
 
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
+              "grid transition-[grid-template-rows] duration-[var(--motion-base)] [transition-timing-function:var(--ease-spring)]",
               channelsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >
@@ -840,7 +841,7 @@ export function Sidebar() {
             >
               <ChevronRight
                 className={cn(
-                  "h-2.5 w-2.5 transition-transform duration-200 ease-out",
+                  "h-2.5 w-2.5 transition-transform duration-[var(--motion-base)] ease-out",
                   dmsOpen && "rotate-90"
                 )}
               />
@@ -872,7 +873,7 @@ export function Sidebar() {
 
           <div
             className={cn(
-              "grid transition-[grid-template-rows] duration-200 [transition-timing-function:var(--ease-spring)]",
+              "grid transition-[grid-template-rows] duration-[var(--motion-base)] [transition-timing-function:var(--ease-spring)]",
               dmsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
           >
@@ -936,7 +937,7 @@ function SectionHeader({
     >
       <ChevronRight
         className={cn(
-          "h-2.5 w-2.5 flex-shrink-0 transition-transform duration-200 ease-out",
+          "h-2.5 w-2.5 flex-shrink-0 transition-transform duration-[var(--motion-base)] ease-out",
           open && "rotate-90"
         )}
       />
@@ -944,7 +945,7 @@ function SectionHeader({
       <span className="truncate">{label}</span>
       {count > 0 && (
         <span className="ml-auto flex h-[15px] min-w-[15px] flex-shrink-0 items-center justify-center rounded-full bg-[var(--badge-unread)] px-[4px] text-[10px] font-bold text-white">
-          {count > 99 ? "99+" : count}
+          {count > 99 ? "99+" : <RollingNumber value={count} />}
         </span>
       )}
     </button>
@@ -992,7 +993,10 @@ function SidebarItem({
   useEffect(() => {
     if (unreadCount > prevCountRef.current) {
       setPulsing(true);
-      const t = setTimeout(() => setPulsing(false), 300);
+      // Kept in step with the badge-pulse animation's CSS duration below
+      // (var(--motion-slow) = 320ms) so the inline style isn't torn off
+      // before the keyframe finishes.
+      const t = setTimeout(() => setPulsing(false), 320);
       return () => clearTimeout(t);
     }
     prevCountRef.current = unreadCount;
@@ -1019,7 +1023,14 @@ function SidebarItem({
           fontSize: "var(--density-sidebar-font-size)",
         }}
         className={cn(
-          "press-snap mx-2 flex w-[calc(100%-16px)] items-center gap-2 rounded-md px-2 transition-colors [transition-duration:var(--motion-fast)] [transition-timing-function:var(--ease-out-soft)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
+          // Single combined [transition:...] property (not a second transition-*
+          // utility) — tailwind-merge strips an earlier transition-property
+          // utility when a later one is stacked on top of it (see
+          // MultiTenantSwitcher.tsx / ThreadPanel.tsx for the same pattern).
+          // Includes `scale` alongside `transform`: Tailwind v4 compiles
+          // `active:scale-[...]` to the standalone `scale` CSS property, not
+          // `transform`, so a transform-only transition wouldn't ease it.
+          "active:scale-[0.98] mx-2 flex w-[calc(100%-16px)] items-center gap-2 rounded-md px-2 [transition:background-color_var(--motion-base)_var(--ease-spring),color_var(--motion-base)_var(--ease-spring),scale_var(--motion-base)_var(--ease-spring)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
           active
             ? "bg-[var(--accent)]/15 font-semibold text-[var(--text-primary)]"
             : "text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-primary)]"
@@ -1050,7 +1061,7 @@ function SidebarItem({
               "flex h-[16px] min-w-[16px] flex-shrink-0 items-center justify-center rounded-full bg-[var(--badge-unread)] px-[4px] text-[10px] font-bold text-white",
               voiceCount > 0 || isSnoozed ? "ml-1" : "ml-auto"
             )}
-            style={pulsing ? { animation: 'badge-pulse 300ms ease-out' } : undefined}
+            style={pulsing ? { animation: 'badge-pulse var(--motion-slow) ease-out' } : undefined}
           >
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>

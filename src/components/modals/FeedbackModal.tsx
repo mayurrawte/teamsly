@@ -120,7 +120,7 @@ export function FeedbackModal({ open, onOpenChange }: Props) {
   }
 
   const inputClass =
-    "w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-150 placeholder:text-[var(--text-muted)] focus:border-[var(--accent)]";
+    "w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-[var(--motion-fast)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent)]";
   const textareaClass = `${inputClass} resize-none`;
   const labelClass = "text-[12px] font-semibold text-[var(--text-secondary)]";
 
@@ -305,7 +305,7 @@ function TypeButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex items-center justify-center gap-2 rounded-lg border px-4 py-3 text-[13px] font-semibold transition-colors duration-100",
+        "flex items-center justify-center gap-2 rounded-lg border px-4 py-3 text-[13px] font-semibold transition-colors duration-[var(--motion-fast)]",
         active
           ? "border-[var(--accent)] bg-[var(--accent)]/10 text-white"
           : "border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:border-[var(--text-muted)] hover:text-[var(--text-primary)]"

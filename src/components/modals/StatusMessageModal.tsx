@@ -166,7 +166,7 @@ export function StatusMessageModal({ open, onOpenChange }: Props) {
                 placeholder="What's your status?"
                 minRows={3}
                 maxRows={6}
-                className="w-full resize-none rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-150 placeholder:text-[var(--text-muted)] focus:border-[var(--accent)]"
+                className="w-full resize-none rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-[var(--motion-fast)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent)]"
               />
               <span
                 className={`absolute bottom-2 right-3 text-[11px] tabular-nums ${

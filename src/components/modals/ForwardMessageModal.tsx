@@ -152,7 +152,7 @@ export function ForwardMessageModal({ open, onOpenChange, message, onForward }: 
             <h2 className="text-[15px] font-bold text-[var(--text-primary)]">Forward message</h2>
             <Dialog.Close
               aria-label="Close"
-              className="flex h-7 w-7 items-center justify-center rounded text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
+              className="flex h-7 w-7 items-center justify-center rounded text-[var(--text-secondary)] transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
             >
               <X size={16} />
             </Dialog.Close>
@@ -302,7 +302,7 @@ function DestinationRow({
       type="button"
       onClick={onSelect}
       className={cn(
-        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition-colors duration-[80ms]",
+        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition-colors duration-[var(--motion-fast)]",
         active ? "bg-[var(--accent)] text-white" : "text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
       )}
     >

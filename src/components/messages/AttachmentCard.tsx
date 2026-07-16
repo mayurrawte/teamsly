@@ -80,7 +80,7 @@ export function AttachmentCard({ attachment }: AttachmentCardProps) {
       // Middle-click (button 1) goes to onAuxClick, not onClick, so the
       // browser's default "open in new tab" already works for us — no
       // explicit handler needed.
-      className="mt-2 flex max-w-[420px] cursor-pointer items-center gap-3 rounded-md border border-[var(--border)] bg-[var(--modal-bg)] px-3 py-2 text-left transition-colors duration-150 hover:border-[var(--border-input)] hover:bg-[var(--surface-hover)]"
+      className="mt-2 flex max-w-[420px] cursor-pointer items-center gap-3 rounded-md border border-[var(--border)] bg-[var(--modal-bg)] px-3 py-2 text-left transition-colors duration-[var(--motion-fast)] hover:border-[var(--border-input)] hover:bg-[var(--surface-hover)]"
     >
       {content}
     </a>
@@ -125,7 +125,7 @@ function InlineImageAttachment({ attachment }: { attachment: MSAttachment }) {
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-2 flex max-w-[420px] cursor-pointer items-center gap-3 rounded-md border border-[var(--border)] bg-[var(--modal-bg)] px-3 py-2 text-left transition-colors duration-150 hover:border-[var(--border-input)] hover:bg-[var(--surface-hover)]"
+        className="mt-2 flex max-w-[420px] cursor-pointer items-center gap-3 rounded-md border border-[var(--border)] bg-[var(--modal-bg)] px-3 py-2 text-left transition-colors duration-[var(--motion-fast)] hover:border-[var(--border-input)] hover:bg-[var(--surface-hover)]"
       >
         {content}
       </a>

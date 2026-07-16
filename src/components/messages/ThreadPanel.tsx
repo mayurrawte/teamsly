@@ -99,7 +99,7 @@ export function ThreadPanel({ message, open, onClose, onSendReply, onForward }: 
           type="button"
           aria-label="Close thread"
           onClick={onClose}
-          className="flex h-7 w-7 items-center justify-center rounded-md text-[#ababad] transition-colors duration-150 hover:bg-[#27292d] hover:text-white"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-[#ababad] transition-colors duration-[var(--motion-fast)] hover:bg-[#27292d] hover:text-white"
         >
           <X size={16} />
         </button>

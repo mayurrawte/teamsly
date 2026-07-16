@@ -6,11 +6,21 @@ import { MessageItem } from "./MessageItem";
 import { DateDivider } from "./DateDivider";
 import { LoadingSkeleton } from "./LoadingSkeleton";
 import { AiSummaryBanner } from "./AiSummaryBanner";
+import { CelebrationBurst } from "./CelebrationBurst";
 import type { ReactionType } from "@/lib/utils/reactions";
 import { useSmartNotifications } from "@/hooks/useSmartNotifications";
+import { isCelebrationMessage } from "@/lib/utils/celebrate";
+import { messagePlainText } from "@/lib/utils/render-message";
 
 const GROUP_WINDOW_MS = 7 * 60 * 1000;
 const NEAR_BOTTOM_THRESHOLD = 150;
+
+// Message ids that have already been evaluated for a celebration burst.
+// Module-level so a given message fires confetti at most once even as the
+// `messages` array churns under polling refetches. Seeded with the current
+// window each time the open context changes (see the effect below) so
+// pre-existing history never fires.
+const celebratedIds = new Set<string>();
 
 interface Props {
   messages: MSMessage[];
@@ -86,6 +96,13 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
   const CAP_STEP = 100;
   const [visibleCount, setVisibleCount] = useState(INITIAL_CAP);
 
+  // Confetti trigger — the id of the message that earned a celebration burst.
+  // CelebrationBurst plays once per distinct non-empty key.
+  const [celebrateKey, setCelebrateKey] = useState("");
+  // False until the seen-id set has been seeded with the current context's
+  // window; re-armed on every context switch (in the reset effect below).
+  const celebrationSeededRef = useRef(false);
+
   useSmartNotifications({ messages, contextName, contextId, contextKind, currentUserId });
 
   // Detect whether the user is near the bottom of the scroll container.
@@ -146,6 +163,11 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
     setIsNearBottom(true);
     setNewMessagesCount(0);
     setVisibleCount(INITIAL_CAP);
+    // Re-seed the celebration set against the incoming context's history so a
+    // conversation that already contains 🎉 never bursts on open, and clear any
+    // stale trigger from the previous context.
+    celebrationSeededRef.current = false;
+    setCelebrateKey("");
   }, [contextId]);
 
   // On initial load or context change: once messages are present and not
@@ -192,6 +214,36 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
     prevMessageCountRef.current = curr;
     prevLastIdRef.current = lastId;
   }, [messages, loading, isNearBottom, scrollToBottom, currentUserId]);
+
+  // Fire a confetti burst when a newly arrived message is a pure-celebration
+  // message (🎉 / 🎊 / 🥳, no prose). One code path covers own sends (the
+  // optimistic append) and incoming messages in the open conversation.
+  useEffect(() => {
+    if (loading) return;
+    if (messages.length === 0) return;
+
+    // Seed the current context's window on first run so history never fires.
+    if (!celebrationSeededRef.current) {
+      for (const m of messages) celebratedIds.add(m.id);
+      celebrationSeededRef.current = true;
+      return;
+    }
+
+    const last = messages[messages.length - 1];
+    if (!last || celebratedIds.has(last.id)) return;
+    celebratedIds.add(last.id);
+
+    // Own sends burst on the optimistic (pending) append; skip the reconciled
+    // copy — its id swaps to the Graph id and would otherwise fire a second
+    // time — so a send celebrates exactly once. Incoming messages (not ours)
+    // always take the normal path.
+    const isOwn = !!currentUserId && last.from?.user?.id === currentUserId;
+    if (isOwn && !last.__pending) return;
+
+    if (isCelebrationMessage(messagePlainText(last.body.content, last.body.contentType))) {
+      setCelebrateKey(last.id);
+    }
+  }, [messages, loading, currentUserId]);
 
   // Track which anchor request we've already handled so polling refetches
   // don't re-flash the row every 5s. We tag each request with the current
@@ -325,6 +377,12 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
         <div ref={bottomRef} />
         </div>
       </div>
+
+      {/* Confetti overlay: anchored to the feed viewport (this relative,
+          overflow-hidden container), out of the scroll container so it can't
+          affect scrollHeight, and pointer-events-none so it never blocks the
+          feed or the "new messages" button. */}
+      <CelebrationBurst playKey={celebrateKey} />
 
       {newMessagesCount > 0 && (
         <div className="pointer-events-none absolute bottom-4 left-0 right-0 flex justify-center">

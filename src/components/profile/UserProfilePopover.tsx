@@ -40,7 +40,7 @@ export function UserProfilePopover({
             </div>
             <Popover.Close
               aria-label="Close profile"
-              className="flex h-7 w-7 items-center justify-center rounded-md text-[#ababad] transition-colors duration-150 hover:bg-[#27292d] hover:text-white"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-[#ababad] transition-colors duration-[var(--motion-fast)] hover:bg-[#27292d] hover:text-white"
             >
               <X size={16} />
             </Popover.Close>
@@ -55,7 +55,7 @@ export function UserProfilePopover({
               <button
                 type="button"
                 onClick={onSendDm}
-                className="inline-flex h-8 items-center gap-2 rounded-md bg-[#0F5A8F] px-3 text-[13px] font-bold text-white transition-colors duration-150 hover:bg-[#0A4571]"
+                className="inline-flex h-8 items-center gap-2 rounded-md bg-[#0F5A8F] px-3 text-[13px] font-bold text-white transition-colors duration-[var(--motion-fast)] hover:bg-[#0A4571]"
               >
                 <MessageSquare size={14} />
                 Send DM
@@ -66,7 +66,7 @@ export function UserProfilePopover({
                     type="button"
                     onClick={() => openTeamsCall([email])}
                     title="Call"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#3f4144] bg-transparent text-[#ababad] transition-colors duration-150 hover:bg-[#27292d] hover:text-white"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#3f4144] bg-transparent text-[#ababad] transition-colors duration-[var(--motion-fast)] hover:bg-[#27292d] hover:text-white"
                   >
                     <Phone size={14} />
                   </button>
@@ -74,7 +74,7 @@ export function UserProfilePopover({
                     type="button"
                     onClick={() => openTeamsCall([email], { withVideo: true })}
                     title="Video call"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#3f4144] bg-transparent text-[#ababad] transition-colors duration-150 hover:bg-[#27292d] hover:text-white"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#3f4144] bg-transparent text-[#ababad] transition-colors duration-[var(--motion-fast)] hover:bg-[#27292d] hover:text-white"
                   >
                     <Video size={14} />
                   </button>

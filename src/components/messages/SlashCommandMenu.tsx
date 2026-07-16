@@ -66,7 +66,7 @@ export function SlashCommandMenu({ filtered, selectedIdx, onHover, onPick, open 
             onPick(cmd);
           }}
           className={cn(
-            "flex w-full items-baseline gap-2 px-3 py-1.5 text-left transition-colors duration-100",
+            "flex w-full items-baseline gap-2 px-3 py-1.5 text-left transition-colors duration-[var(--motion-fast)]",
             idx === selectedIdx
               ? "bg-[var(--surface-hover)]"
               : "hover:bg-[var(--surface-hover)]"

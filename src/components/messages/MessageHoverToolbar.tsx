@@ -35,7 +35,7 @@ export function MessageHoverToolbar({
 
   return (
     <div
-      className="absolute right-2 top-[-20px] z-[100] flex gap-[2px] rounded-md border border-[var(--border)] bg-[#1a1d21] px-1 py-[2px] opacity-0 shadow-[0_2px_8px_rgba(0,0,0,0.35)] transition-opacity duration-[80ms] ease-out group-hover:opacity-100"
+      className="absolute right-2 top-[-20px] z-[100] flex gap-[2px] rounded-md border border-[var(--border)] bg-[#1a1d21] px-1 py-[2px] opacity-0 shadow-[0_2px_8px_rgba(0,0,0,0.35)] transition-opacity duration-[var(--motion-fast)] ease-out group-hover:opacity-100"
       role="toolbar"
       aria-label="Message actions"
     >
@@ -116,7 +116,7 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(function
       aria-pressed={active ?? undefined}
       title={label}
       className={cn(
-        "flex h-7 w-7 items-center justify-center rounded transition-colors duration-100 hover:bg-[var(--surface-hover)] hover:text-white focus-ring",
+        "flex h-7 w-7 items-center justify-center rounded transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)] hover:text-white focus-ring",
         active ? "text-[var(--accent)]" : "text-[var(--text-secondary)]",
         className
       )}

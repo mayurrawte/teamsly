@@ -91,7 +91,7 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-2 rounded-md px-2 py-[6px] text-left text-[14px] transition-colors duration-100 ${
+      className={`flex items-center gap-2 rounded-md px-2 py-[6px] text-left text-[14px] transition-colors duration-[var(--motion-fast)] ${
         active ? "bg-[var(--accent)] text-white" : "text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-primary)]"
       }`}
     >
@@ -192,7 +192,7 @@ function NotificationsPanel() {
           value={keywords}
           onChange={(event) => setKeywords(event.target.value)}
           placeholder="launch, incident, blocker"
-          className="h-8 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-150 placeholder:text-[var(--text-muted)] focus:border-[var(--text-primary)]"
+          className="h-8 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-[var(--motion-fast)] placeholder:text-[var(--text-muted)] focus:border-[var(--text-primary)]"
         />
       </FieldGroup>
       <FieldGroup
@@ -204,7 +204,7 @@ function NotificationsPanel() {
           onChange={(event) => handleMutedChange(event.target.value)}
           placeholder="standup, lunch, friday-jam"
           rows={2}
-          className="min-h-[56px] resize-y rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-150 placeholder:text-[var(--text-muted)] focus:border-[var(--text-primary)]"
+          className="min-h-[56px] resize-y rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-[var(--motion-fast)] placeholder:text-[var(--text-muted)] focus:border-[var(--text-primary)]"
         />
       </FieldGroup>
       <FieldGroup
@@ -224,7 +224,7 @@ function NotificationsPanel() {
               value={quietHoursStart}
               onChange={(event) => setQuietHoursStart(event.target.value)}
               disabled={!quietHoursEnabled}
-              className="h-8 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-150 focus:border-[var(--text-primary)] disabled:opacity-50"
+              className="h-8 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-[var(--motion-fast)] focus:border-[var(--text-primary)] disabled:opacity-50"
             />
             <span className="text-[12px] text-[var(--text-muted)]">to</span>
             <input
@@ -232,7 +232,7 @@ function NotificationsPanel() {
               value={quietHoursEnd}
               onChange={(event) => setQuietHoursEnd(event.target.value)}
               disabled={!quietHoursEnabled}
-              className="h-8 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-150 focus:border-[var(--text-primary)] disabled:opacity-50"
+              className="h-8 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors duration-[var(--motion-fast)] focus:border-[var(--text-primary)] disabled:opacity-50"
             />
           </div>
         </div>
@@ -341,12 +341,12 @@ function ToggleRow({
         role="switch"
         aria-checked={value}
         onClick={() => onChange(!value)}
-        className={`relative mt-[2px] h-5 w-9 flex-shrink-0 rounded-full transition-colors duration-150 ${
+        className={`relative mt-[2px] h-5 w-9 flex-shrink-0 rounded-full transition-colors duration-[var(--motion-fast)] ${
           value ? "bg-[var(--status-online)]" : "bg-[var(--border-input)]"
         }`}
       >
         <span
-          className={`absolute top-[2px] h-4 w-4 rounded-full bg-white transition-transform duration-150 ${
+          className={`absolute top-[2px] h-4 w-4 rounded-full bg-white transition-transform duration-[var(--motion-fast)] ${
             value ? "translate-x-[18px]" : "translate-x-[2px]"
           }`}
         />
@@ -373,7 +373,7 @@ function RadioRow({
       type="button"
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
-      className={`flex items-start gap-3 rounded-md border px-3 py-2 text-left transition-colors duration-100 ${
+      className={`flex items-start gap-3 rounded-md border px-3 py-2 text-left transition-colors duration-[var(--motion-fast)] ${
         checked
           ? "border-[var(--accent)] bg-[var(--accent-light)]"
           : "border-[var(--border)] bg-[var(--surface)]"

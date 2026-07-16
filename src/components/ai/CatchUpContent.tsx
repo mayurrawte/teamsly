@@ -45,7 +45,7 @@ export function CatchUpContent({ onNavigate, className }: Props) {
     : null;
 
   return (
-    <div className={["flex h-full flex-col", className ?? ""].join(" ")}>
+    <div className={["context-fade-in flex h-full flex-col", className ?? ""].join(" ")}>
       <div role="tablist" className="flex flex-shrink-0 items-center gap-1 border-b border-[var(--border)] px-4 pt-2">
         {TABS.map((t) => (
           <button

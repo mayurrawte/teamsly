@@ -21,7 +21,7 @@ export function DemoWorkspaceBar() {
           title={team.displayName}
           onClick={() => switchTeam(team.id)}
           className={cn(
-            "relative flex h-10 w-10 items-center justify-center rounded-[14px] text-sm font-bold [transition:border-radius_200ms_ease,background-color_150ms_ease]",
+            "relative flex h-10 w-10 items-center justify-center rounded-[14px] text-sm font-bold [transition:border-radius_var(--motion-base)_ease,background-color_var(--motion-fast)_ease]",
             activeTeamId === team.id
               ? "rounded-lg bg-[#0F5A8F] text-white"
               : "bg-[#26415C] text-white hover:rounded-lg"

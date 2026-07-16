@@ -135,7 +135,7 @@ export function SignInPage() {
 
           <button
             onClick={() => signIn("microsoft-entra-id", { callbackUrl: "/workspace" })}
-            className="group flex w-full items-center justify-center gap-3 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98]"
+            className="group flex w-full items-center justify-center gap-3 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-all duration-[var(--motion-fast)] active:scale-[0.98]"
             style={{
               background: "linear-gradient(135deg, #6366F1 0%, #818CF8 100%)",
               boxShadow: "0 0 0 1px rgba(99,102,241,0.6)",
@@ -159,7 +159,7 @@ export function SignInPage() {
 
           <Link
             href="/demo"
-            className="flex w-full items-center justify-center gap-1 rounded-xl border px-5 py-3 text-sm font-medium text-[#8b9ab0] transition-colors duration-150 hover:border-[#6366F1] hover:text-white"
+            className="flex w-full items-center justify-center gap-1 rounded-xl border px-5 py-3 text-sm font-medium text-[#8b9ab0] transition-colors duration-[var(--motion-fast)] hover:border-[#6366F1] hover:text-white"
             style={{ borderColor: "rgba(255,255,255,0.09)" }}
           >
             Preview UI without signing in
