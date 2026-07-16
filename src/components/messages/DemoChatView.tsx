@@ -9,6 +9,7 @@ import { textToHtml } from "@/lib/utils/render-message";
 import { MessageFeed } from "./MessageFeed";
 import { MessageInput } from "./MessageInput";
 import { ThreadPanel } from "./ThreadPanel";
+import { selectThreadParent } from "@/lib/utils/threads";
 import { DmMessageHeader, type Tab } from "./MessageHeader";
 import { DmIntroCard } from "./IntroCard";
 import { ForwardMessageModal, type ForwardDestination } from "@/components/modals/ForwardMessageModal";
@@ -172,7 +173,7 @@ export function DemoChatView({ chatId }: { chatId: string }) {
       )}
       <ThreadPanel
         open={Boolean(threadMessage)}
-        message={threadMessage}
+        message={selectThreadParent(messages, threadMessage)}
         onClose={() => setThreadMessage(null)}
         onForward={setForwardMessage}
       />

@@ -8,6 +8,7 @@ import { usePreferencesStore } from "@/store/preferences";
 import { MessageFeed } from "./MessageFeed";
 import { MessageInput } from "./MessageInput";
 import { ThreadPanel } from "./ThreadPanel";
+import { selectThreadParent } from "@/lib/utils/threads";
 import { DmMessageHeader, type Tab } from "./MessageHeader";
 import { DmIntroCard } from "./IntroCard";
 import { ContextFilesTab } from "./ContextFilesTab";
@@ -853,7 +854,7 @@ export function ChatView({ chatId }: { chatId: string }) {
       )}
       <ThreadPanel
         open={Boolean(threadMessage)}
-        message={threadMessage}
+        message={selectThreadParent(messages, threadMessage)}
         onClose={() => setThreadMessage(null)}
         onSendReply={handleThreadReply}
         onForward={setForwardMessage}

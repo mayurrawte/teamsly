@@ -6,6 +6,7 @@ import { MessageInput } from "./MessageInput";
 import { MessageItem } from "./MessageItem";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useToastStore } from "@/store/toasts";
+import { mergeThreadReplies } from "@/lib/utils/threads";
 
 interface ThreadPanelProps {
   message: MSMessage | null;
@@ -21,9 +22,13 @@ export function ThreadPanel({ message, open, onClose, onSendReply, onForward }: 
   const currentUserName = useWorkspaceStore((state) => state.currentUserName);
   const showToast = useToastStore((state) => state.showToast);
 
+  // Server replies render from the live parent; local state holds only
+  // optimistic sends, reset when the panel moves to another thread.
   useEffect(() => {
-    setLocalReplies(message?.replies ?? []);
+    setLocalReplies([]);
   }, [message?.id]);
+
+  const replies = mergeThreadReplies(message?.replies, localReplies);
 
   useEffect(() => {
     if (!open) return;
@@ -102,16 +107,16 @@ export function ThreadPanel({ message, open, onClose, onSendReply, onForward }: 
 
       <div className="flex-1 overflow-y-auto py-2">
         <MessageItem message={message} isGroupHead onForward={onForward} />
-        {localReplies.length > 0 && (
+        {replies.length > 0 && (
           <div className="my-2 flex items-center px-4">
             <div className="h-px flex-1 bg-[#3f4144]" />
             <span className="mx-3 text-[12px] font-bold text-[#6c6f75]">
-              {localReplies.length} {localReplies.length === 1 ? "reply" : "replies"}
+              {replies.length} {replies.length === 1 ? "reply" : "replies"}
             </span>
             <div className="h-px flex-1 bg-[#3f4144]" />
           </div>
         )}
-        {localReplies.map((reply) => (
+        {replies.map((reply) => (
           <MessageItem
             key={reply.id}
             message={reply}
