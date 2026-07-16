@@ -523,7 +523,7 @@ function NotificationsPanel() {
 
       <FieldGroup
         label="Keyword alerts"
-        hint="Comma-separated words that trigger notifications (case-insensitive)."
+        hint="Comma-separated words that trigger notifications across your DMs + active team's channels (case-insensitive)."
       >
         <input
           value={keywords}

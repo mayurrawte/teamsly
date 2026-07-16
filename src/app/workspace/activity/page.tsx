@@ -17,6 +17,7 @@ import {
   GitBranch,
   Smile,
   Bell,
+  Hash,
   ChevronDown,
 } from "lucide-react";
 
@@ -24,11 +25,12 @@ import {
 // Types
 // ---------------------------------------------------------------------------
 
-type ActivityTab = "all" | "mentions" | "threads" | "reactions" | "dms";
+type ActivityTab = "all" | "mentions" | "threads" | "reactions" | "keywords" | "dms";
 
 interface ActivityItem {
   id: string;
-  type: "dm" | "channel_unread" | "mention" | "thread" | "reaction";
+  type: "dm" | "channel_unread" | "mention" | "thread" | "reaction" | "keyword";
+  matchedKeyword?: string;
   senderId: string;
   senderName: string;
   summary: string;
@@ -40,6 +42,7 @@ interface ScanResponse {
   mentions: ActivityItem[];
   threads: ActivityItem[];
   reactions: ActivityItem[];
+  keywords?: ActivityItem[];
   partial?: boolean;
 }
 
@@ -54,10 +57,11 @@ const TABS: TabDef[] = [
   { id: "mentions", label: "Mentions" },
   { id: "threads", label: "Threads" },
   { id: "reactions", label: "Reactions" },
+  { id: "keywords", label: "Keywords" },
   { id: "dms", label: "DMs" },
 ];
 
-const SCAN_TABS: ActivityTab[] = ["all", "mentions", "threads", "reactions"];
+const SCAN_TABS: ActivityTab[] = ["all", "mentions", "threads", "reactions", "keywords"];
 const SCAN_POLL_MS = 60 * 1000;
 
 // ---------------------------------------------------------------------------
@@ -77,6 +81,8 @@ function ActivityTypeIcon({ type }: { type: ActivityItem["type"] }) {
       return <GitBranch className={cn(cls, "text-[#57bb8a]")} />;
     case "reaction":
       return <Smile className={cn(cls, "text-[#cd5b45]")} />;
+    case "keyword":
+      return <Hash className={cn(cls, "text-[#818CF8]")} />;
   }
 }
 
@@ -206,6 +212,10 @@ function EmptyState({ tab, unreadOnly }: { tab: ActivityTab; unreadOnly: boolean
       heading: "No reactions",
       sub: "Nobody reacted to your recent messages.",
     },
+    keywords: {
+      heading: "No keyword hits",
+      sub: "None of your watched keywords appeared in recent messages. Set keywords in Settings.",
+    },
   };
 
   const msg = messages[tab];
@@ -302,6 +312,20 @@ export default function ActivityPage() {
 
   useActivityNotifications(scanData ?? undefined);
 
+  // Watched keywords — passed to the scan so it matches across DMs + the active
+  // team's channels; a change re-fires the scan (fetchScan depends on it).
+  // Debounced: the settings modals write the pref on every keystroke, and each
+  // distinct keyword string is a server-cache miss (kw is in the cache key), so
+  // an undebounced dep would fire a full Graph walk per character typed.
+  const notificationKeywords = usePreferencesStore((s) => s.notificationKeywords);
+  const [scanKeywords, setScanKeywords] = useState(notificationKeywords);
+  useEffect(() => {
+    if (notificationKeywords === scanKeywords) return;
+    const timer = setTimeout(() => setScanKeywords(notificationKeywords), 800);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notificationKeywords]);
+
   // Reset cached state when the active team changes so the next visit
   // refetches against the new scope.
   useEffect(() => {
@@ -314,9 +338,11 @@ export default function ActivityPage() {
       const isFirstLoad = !scanLoadedRef.current;
       if (isFirstLoad) setScanLoading(true);
       try {
-        const qs = activeTeamId
-          ? `?teamId=${encodeURIComponent(activeTeamId)}`
-          : "";
+        const params = new URLSearchParams();
+        if (activeTeamId) params.set("teamId", activeTeamId);
+        if (scanKeywords.trim()) params.set("kw", scanKeywords);
+        const qsStr = params.toString();
+        const qs = qsStr ? `?${qsStr}` : "";
         const res = await fetch(`/api/activity/scan${qs}`, { signal });
         if (res.status === 401) {
           // The reconnect banner in AppShell already handles refresh-token
@@ -343,7 +369,7 @@ export default function ActivityPage() {
         if (isFirstLoad) setScanLoading(false);
       }
     },
-    [activeTeamId, showToast]
+    [activeTeamId, scanKeywords, showToast]
   );
 
   const isScanTab = SCAN_TABS.includes(activeTab);
@@ -446,6 +472,7 @@ export default function ActivityPage() {
       ...(scanData?.mentions ?? []),
       ...(scanData?.threads ?? []),
       ...(scanData?.reactions ?? []),
+      ...(scanData?.keywords ?? []),
     ];
     const merged = [...allItems, ...scanItems];
     const seen = new Set<string>();
@@ -465,6 +492,8 @@ export default function ActivityPage() {
     visibleItems = scanData?.threads ?? [];
   } else if (activeTab === "reactions") {
     visibleItems = scanData?.reactions ?? [];
+  } else if (activeTab === "keywords") {
+    visibleItems = scanData?.keywords ?? [];
   }
 
   // Unread-only filter — applies to every tab.

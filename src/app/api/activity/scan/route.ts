@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth/config";
 import { getGraphClient } from "@/lib/graph/client";
+import { firstKeywordMatch, parseKeywords } from "@/lib/utils/keyword-match";
 import { NextRequest, NextResponse } from "next/server";
 
 // ---------------------------------------------------------------------------
@@ -24,18 +25,21 @@ import { NextRequest, NextResponse } from "next/server";
 
 export interface ActivityItem {
   id: string;
-  type: "mention" | "thread" | "reaction";
+  type: "mention" | "thread" | "reaction" | "keyword";
   senderId: string;
   senderName: string;
   summary: string;
   timestamp: string;
   href: string;
+  /** Keyword-bucket items only: the watched keyword that matched (lowercased). */
+  matchedKeyword?: string;
 }
 
 interface ScanResult {
   mentions: ActivityItem[];
   threads: ActivityItem[];
   reactions: ActivityItem[];
+  keywords: ActivityItem[];
   partial: boolean;
 }
 
@@ -144,6 +148,7 @@ export async function GET(request: NextRequest) {
 
   const accessToken = session.accessToken;
   const teamId = request.nextUrl.searchParams.get("teamId");
+  const keywordList = parseKeywords(request.nextUrl.searchParams.get("kw"));
 
   const client = getGraphClient(accessToken);
 
@@ -169,7 +174,9 @@ export async function GET(request: NextRequest) {
   // Serve from cache if fresh. The cache key is the userId — teamId scoping
   // is implicit because most users only have one active team and the
   // sub-60-second staleness is acceptable for an activity hub.
-  const cacheKey = `${meId}::${teamId ?? "no-team"}`;
+  // keywordList is part of the key so changing watched keywords doesn't serve a
+  // stale bucket from the 60s cache.
+  const cacheKey = `${meId}::${teamId ?? "no-team"}::${keywordList.join(",")}`;
   const now = Date.now();
   const cached = cache.get(cacheKey);
   if (cached && cached.expiresAt > now) {
@@ -179,6 +186,7 @@ export async function GET(request: NextRequest) {
   const mentions: ActivityItem[] = [];
   const threads: ActivityItem[] = [];
   const reactions: ActivityItem[] = [];
+  const keywords: ActivityItem[] = [];
   let partial = false;
 
   // -----------------------------------------------------------------------
@@ -257,6 +265,23 @@ export async function GET(request: NextRequest) {
             summary: `Reacted ${reactor.reactionType} to "${summary}"`,
             timestamp: msg.createdDateTime,
             href: chatHref,
+          });
+        }
+      }
+
+      // keyword — someone else's message contains a watched keyword
+      if (sender && sender.id !== meId) {
+        const matched = firstKeywordMatch(bodyText(msg), keywordList);
+        if (matched) {
+          keywords.push({
+            id: `keyword-chat-${chat.id}-${msg.id}`,
+            type: "keyword",
+            senderId: sender.id,
+            senderName: sender.displayName,
+            summary,
+            timestamp: msg.createdDateTime,
+            href: chatHref,
+            matchedKeyword: matched,
           });
         }
       }
@@ -349,6 +374,23 @@ export async function GET(request: NextRequest) {
               summary: `Reacted ${reactor.reactionType} in #${channel.displayName}`,
               timestamp: msg.createdDateTime,
               href: channelHref,
+            });
+          }
+        }
+
+        // keyword — someone else's message contains a watched keyword
+        if (sender && sender.id !== meId) {
+          const matched = firstKeywordMatch(bodyText(msg), keywordList);
+          if (matched) {
+            keywords.push({
+              id: `keyword-ch-${channel.id}-${msg.id}`,
+              type: "keyword",
+              senderId: sender.id,
+              senderName: sender.displayName,
+              summary: `#${channel.displayName}: ${summary}`,
+              timestamp: msg.createdDateTime,
+              href: channelHref,
+              matchedKeyword: matched,
             });
           }
         }
@@ -450,6 +492,7 @@ export async function GET(request: NextRequest) {
     mentions: dedupe(mentions).sort(sortDesc),
     threads: dedupe(threads).sort(sortDesc),
     reactions: dedupe(reactions).sort(sortDesc),
+    keywords: dedupe(keywords).sort(sortDesc),
     partial,
   };
 
