@@ -33,6 +33,7 @@ import { z } from "zod";
 import { readFileSync, writeFileSync, mkdirSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
+import { version } from "./package.json";
 
 // ---------------------------------------------------------------------------
 // Config
@@ -241,7 +242,7 @@ async function graph(path: string, options: RequestInit = {}) {
 // MCP server + tools
 // ---------------------------------------------------------------------------
 
-const server = new McpServer({ name: "teamsly", version: "2.0.0" });
+const server = new McpServer({ name: "teamsly", version });
 
 server.tool(
   "list_chats",
