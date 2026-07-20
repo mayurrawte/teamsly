@@ -58,23 +58,23 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.2",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19",
     "concurrently": "^10.0.3",
-    "electron": "^43.1.0",
+    "electron": "^43.1.1",
     "electron-builder": "^26.15.3",
     "eslint": "^10",
     "eslint-config-next": "16.2.10",
     "jsdom": "^29.1.1",
-    "postcss": "8.5.19",
+    "postcss": "8.5.20",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.10",
     "wait-on": "^9.0.10"
   },
   "overrides": {
-    "postcss": "8.5.19"
+    "postcss": "8.5.20"
   }
 }
