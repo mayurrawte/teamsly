@@ -162,9 +162,9 @@ export default function PrivacyPage() {
             <h2 className="mb-3 text-[16px] font-bold text-white">8. Data Retention</h2>
             <p>
               For the hosted service: session cookies expire after sign-out or browser close.
-              We do not retain any Teams data after your session ends. Subscription billing
-              records (name, email, payment reference) are retained by our payment processor
-              (Stripe/Polar) per their own retention policies.
+              We do not retain any Teams data after your session ends. Teamsly is free and
+              processes no payments, so no billing records exist. If paid plans are ever
+              introduced, this policy will be updated first.
             </p>
           </section>
 
@@ -173,7 +173,7 @@ export default function PrivacyPage() {
             <p className="mb-3">
               Since we store virtually no personal data, most data rights (access, deletion,
               portability) are exercised directly with Microsoft via your Microsoft account
-              settings. For any data we do hold (billing email for the hosted service):
+              settings. For anything else:
             </p>
             <ul className="flex flex-col gap-2 pl-4">
               {[

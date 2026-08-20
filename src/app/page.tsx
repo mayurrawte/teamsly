@@ -330,6 +330,9 @@ Claude: ✓ Sent to Priya Sharma`}</CodeBlock>
               <a href={REPO} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-[14px] font-semibold text-white transition-all hover:brightness-110" style={{ background: "linear-gradient(135deg, #6366F1 0%, #818CF8 100%)" }}>
                 <GitFork size={15} /> Clone on GitHub
               </a>
+              <a href="https://github.com/sponsors/mayurrawte" target="_blank" rel="noopener noreferrer" className="rounded-xl border px-5 py-2.5 text-[14px] font-semibold text-[#8b9ab0] transition-colors hover:border-[#EC4899] hover:text-white" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+                ♥ Sponsor
+              </a>
               <a href={`${REPO}/blob/main/SELF_HOSTING.md`} target="_blank" rel="noopener noreferrer" className="rounded-xl border px-5 py-2.5 text-[14px] font-semibold text-[#8b9ab0] transition-colors hover:border-[#6366F1] hover:text-white" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
                 Self-hosting guide
               </a>

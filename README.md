@@ -159,6 +159,10 @@ PRs welcome. Open areas:
 - Richer markdown editor in the composer
 - Emoji picker improvements
 
+## Sponsor
+
+Teamsly is free — no paywall, no feature gates. If it saves you from the official Teams client daily, consider [sponsoring](https://github.com/sponsors/mayurrawte) to cover hosting and AI-summary inference costs.
+
 ## License
 
 [AGPL-3.0](LICENSE) — free to use, self-host, and modify. If you distribute a modified version as a hosted service, you must open-source your changes under the same license.
