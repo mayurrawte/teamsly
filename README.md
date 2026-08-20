@@ -14,6 +14,13 @@
 
 ---
 
+<div align="center">
+  <img src="public/demo.gif" alt="Teamsly demo — browse channels, Cmd+K jump-to, send a DM" width="800" />
+  <p><em>Browse channels → <kbd>Cmd K</kbd> jump anywhere → DM — all keyboard-first. <a href="https://teamsly.app/demo">Try it live, no account needed.</a></em></p>
+</div>
+
+---
+
 Teamsly is an open-source, third-party web client for Microsoft Teams. It reads and writes your real Teams data via the **official Microsoft Graph API** — no scraping, no reverse engineering. Your messages stay in Microsoft's infrastructure. Teamsly is just a better interface.
 
 ## Features

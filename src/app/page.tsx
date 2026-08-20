@@ -148,7 +148,7 @@ export default async function LandingPage() {
         {/* Real product screenshot */}
         <div className="motion-fade-up motion-stagger-3 mt-14">
           <BrowserFrame className="tilt-on-hover">
-            <img src="/shots/workspace.png" alt="Teamsly workspace — channels, messages, and sidebar" className="block w-full" loading="eager" />
+            <img src="/demo.gif" alt="Teamsly demo — browse channels, Cmd+K jump-to, send a DM, all keyboard-first" className="block w-full" loading="eager" />
           </BrowserFrame>
         </div>
       </section>
