@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.claude
+.clone
+release
+electron/dist
+mcp-server/node_modules
+mcp-server/dist
+*.log
+.env*
+!.env.example

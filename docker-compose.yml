@@ -1,0 +1,11 @@
+# Self-host Teamsly with Docker:  cp .env.example .env  →  fill in Azure AD values  →  docker compose up -d
+services:
+  teamsly:
+    build: .
+    image: teamsly:local
+    ports:
+      - "3000:3000"
+    env_file: .env
+    environment:
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+    restart: unless-stopped

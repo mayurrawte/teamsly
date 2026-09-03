@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ShieldCheck, GitFork, Database } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
+import { adminConsentUrl, isConsentError } from "@/lib/auth/consent";
 
 const features = [
   {
@@ -26,9 +27,17 @@ const features = [
 
 export function SignInPage() {
   const [authError, setAuthError] = useState<string | null>(null);
+  const [showAdminHelp, setShowAdminHelp] = useState(false);
+  const [consentUrl, setConsentUrl] = useState<string | null>(null);
   useEffect(() => {
-    setAuthError(new URLSearchParams(window.location.search).get("error"));
+    const err = new URLSearchParams(window.location.search).get("error");
+    setAuthError(err);
+    setConsentUrl(adminConsentUrl(process.env.NEXT_PUBLIC_AZURE_AD_CLIENT_ID, `${window.location.origin}/login`));
+    if (isConsentError(err)) setShowAdminHelp(true);
   }, []);
+  const copyConsentLink = async () => {
+    if (consentUrl) await navigator.clipboard.writeText(consentUrl);
+  };
   return (
     <div className="flex min-h-screen bg-[#0d1117] text-white">
       {/* Left panel — hero */}
@@ -127,9 +136,53 @@ export function SignInPage() {
             Use your Microsoft 365 account to continue.
           </p>
 
-          {authError && (
+          {authError && !isConsentError(authError) && (
             <div className="mb-4 w-full rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-center text-[13px] text-red-300">
               Sign-in failed: <span className="font-mono font-semibold">{authError}</span>
+            </div>
+          )}
+          {showAdminHelp && (
+            <div
+              data-testid="admin-consent-help"
+              className="mb-4 w-full rounded-lg border px-4 py-3 text-[13px] leading-relaxed text-[#c7d0dd]"
+              style={{ borderColor: "rgba(129,140,248,0.4)", background: "rgba(99,102,241,0.08)" }}
+            >
+              <p className="mb-2 font-semibold text-white">
+                {isConsentError(authError) ? "Your organisation needs to approve Teamsly first." : "Company account says “Need admin approval”?"}
+              </p>
+              <p className="mb-2">
+                Most Microsoft 365 tenants block users from approving third-party apps. An IT admin can
+                approve Teamsly for everyone in one click — send them this link:
+              </p>
+              {consentUrl ? (
+                <div className="flex gap-2">
+                  <input
+                    readOnly
+                    value={consentUrl}
+                    className="min-w-0 flex-1 rounded-md bg-black/30 px-2 py-1.5 font-mono text-[11px] text-[#8b9ab0]"
+                    onFocus={(e) => e.currentTarget.select()}
+                  />
+                  <button
+                    type="button"
+                    onClick={copyConsentLink}
+                    className="rounded-md px-3 py-1.5 text-[12px] font-semibold text-white"
+                    style={{ background: "rgba(99,102,241,0.6)" }}
+                  >
+                    Copy
+                  </button>
+                </div>
+              ) : (
+                <p className="text-[#8b9ab0]">
+                  This instance has not published its app id. Ask its operator, or{" "}
+                  <a className="underline" href="https://github.com/mayurrawte/teamsly/blob/main/SELF_HOSTING.md" target="_blank" rel="noopener">
+                    self-host under your own Azure app
+                  </a>{" "}
+                  so your admin approves it once.
+                </p>
+              )}
+              <p className="mt-2 text-[12px] text-[#8b9ab0]">
+                Teamsly stores nothing — messages and files stay in Microsoft 365 and are read live via the official Graph API.
+              </p>
             </div>
           )}
 
@@ -165,6 +218,16 @@ export function SignInPage() {
             Preview UI without signing in
             <span aria-hidden="true" className="ml-0.5">→</span>
           </Link>
+
+          {!showAdminHelp && (
+            <button
+              type="button"
+              onClick={() => setShowAdminHelp(true)}
+              className="mt-4 w-full text-center text-[12px] text-[#5b6b82] underline-offset-2 hover:text-[#8b9ab0] hover:underline"
+            >
+              Work account blocked by “Need admin approval”?
+            </button>
+          )}
         </div>
       </div>
     </div>
