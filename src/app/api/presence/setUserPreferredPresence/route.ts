@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth/config";
+import { requireScopes } from "@/lib/auth/require-scope";
 import { NextResponse } from "next/server";
 
 type Availability = "Available" | "Busy" | "DoNotDisturb" | "BeRightBack" | "Away" | "Offline";
@@ -12,6 +13,8 @@ interface SetPresenceBody {
 
 export async function POST(req: Request) {
   const session = await auth();
+  const denied = requireScopes(session, ["Presence.ReadWrite"]);
+  if (denied) return denied;
   if (!session?.accessToken) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

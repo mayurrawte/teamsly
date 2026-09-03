@@ -33,7 +33,15 @@ export function SignInPage() {
     const err = new URLSearchParams(window.location.search).get("error");
     setAuthError(err);
     setConsentUrl(adminConsentUrl(process.env.NEXT_PUBLIC_AZURE_AD_CLIENT_ID, `${window.location.origin}/login`));
-    if (isConsentError(err)) setShowAdminHelp(true);
+    if (isConsentError(err)) {
+      setShowAdminHelp(true);
+      // privacy-safe counter: how often the consent wall ends a sign-in (no user data)
+      try {
+        navigator.sendBeacon("/api/telemetry/consent-error");
+      } catch {
+        /* telemetry is best-effort */
+      }
+    }
   }, []);
   const copyConsentLink = async () => {
     if (consentUrl) await navigator.clipboard.writeText(consentUrl);
@@ -151,8 +159,9 @@ export function SignInPage() {
                 {isConsentError(authError) ? "Your organisation needs to approve Teamsly first." : "Company account says “Need admin approval”?"}
               </p>
               <p className="mb-2">
-                Most Microsoft 365 tenants block users from approving third-party apps. An IT admin can
-                approve Teamsly for everyone in one click — send them this link:
+                Most Microsoft 365 tenants block users from approving third-party apps. If Microsoft’s dialog
+                showed a <span className="font-semibold text-white">“Request approval”</span> button, use it — your
+                admin gets a ticket. Otherwise an IT admin can approve Teamsly for everyone in one click:
               </p>
               {consentUrl ? (
                 <div className="flex gap-2">
@@ -181,7 +190,8 @@ export function SignInPage() {
                 </p>
               )}
               <p className="mt-2 text-[12px] text-[#8b9ab0]">
-                Teamsly stores nothing — messages and files stay in Microsoft 365 and are read live via the official Graph API.
+                Teamsly stores nothing — messages and files stay in Microsoft 365 and are read live via the official Graph API.{" "}
+                <a className="underline" href="/for-admins" target="_blank" rel="noopener">What admins are approving →</a>
               </p>
             </div>
           )}

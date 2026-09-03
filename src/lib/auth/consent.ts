@@ -50,3 +50,19 @@ export function adminConsentUrl(clientId: string | undefined, redirectUri: strin
   u.searchParams.set("scope", FULL_SCOPE);
   return u.toString();
 }
+
+/** Every delegated permission, with the plain-language reason an admin will ask for. */
+export const PERMISSIONS: Array<{ scope: string; when: "sign-in" | "files" | "presence" | "meetings"; why: string }> = [
+  { scope: "User.Read", when: "sign-in", why: "Your name, photo and email for the signed-in account." },
+  { scope: "User.ReadBasic.All", when: "sign-in", why: "Names and photos of the people in your chats." },
+  { scope: "Team.ReadBasic.All", when: "sign-in", why: "List the teams you belong to." },
+  { scope: "Channel.ReadBasic.All", when: "sign-in", why: "List the channels in those teams." },
+  { scope: "ChannelMessage.Read.All", when: "sign-in", why: "Read channel messages you can already see in Teams." },
+  { scope: "ChannelMessage.Send", when: "sign-in", why: "Post to channels as you." },
+  { scope: "Chat.ReadWrite", when: "sign-in", why: "Read and send your direct and group messages." },
+  { scope: "Files.Read.All", when: "files", why: "Preview files shared with you (requested when you open Files)." },
+  { scope: "Files.ReadWrite", when: "files", why: "Upload attachments (requested when you open Files)." },
+  { scope: "Presence.Read.All", when: "presence", why: "Show who is online (requested when you enable presence)." },
+  { scope: "Presence.ReadWrite", when: "presence", why: "Set your own status (requested when you enable presence)." },
+  { scope: "Calendars.Read", when: "meetings", why: "List your meetings and join links (requested when you open Meetings)." },
+];

@@ -438,6 +438,7 @@ npm run dev   # → http://localhost:3000`}</CodeBlock>
             <a href={`${REPO}/issues`} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white">Issues</a>
             <Link href="/demo" className="transition-colors hover:text-white">Demo</Link>
             <Link href="/privacy" className="transition-colors hover:text-white">Privacy</Link>
+            <Link href="/for-admins" className="transition-colors hover:text-white">For IT admins</Link>
             <Link href="/terms" className="transition-colors hover:text-white">Terms</Link>
           </div>
         </div>
