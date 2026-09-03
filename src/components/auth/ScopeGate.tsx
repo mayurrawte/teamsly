@@ -21,7 +21,7 @@ export function ScopeGate({ feature, children }: { feature: Feature; children: R
     signIn(
       "microsoft-entra-id",
       { callbackUrl: window.location.href },
-      { scope: unionScopes(session?.scopes, FEATURE_SCOPES[feature]) },
+      { scope: unionScopes(session?.scopes, FEATURE_SCOPES[feature].join(" ")) },
     );
 
   return (
