@@ -6,6 +6,17 @@ This guide walks you through running your own Teamsly instance. You need a Micro
 
 ## 1. Register an Azure AD App
 
+**Fast path (az CLI):** one command creates the app with the exact permissions, redirect
+URIs and a secret, and prints the `.env` lines:
+
+```bash
+az login
+./scripts/azure-app.sh https://teams.example.com            # add --single-tenant for org-only,
+                                                             # --grant to also grant admin consent
+```
+
+Manual path, if you prefer the portal:
+
 1. Go to [Azure Portal](https://portal.azure.com) → **Microsoft Entra ID** → **App registrations** → **New registration**
 2. Give it a name (e.g. "Teamsly Self-Hosted")
 3. For **Supported account types**, choose:
