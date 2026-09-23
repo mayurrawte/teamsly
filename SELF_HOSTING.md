@@ -6,6 +6,17 @@ This guide walks you through running your own Teamsly instance. You need a Micro
 
 ## 1. Register an Azure AD App
 
+**Fast path (az CLI):** one command creates the app with the exact permissions, redirect
+URIs and a secret, and prints the `.env` lines:
+
+```bash
+az login
+./scripts/azure-app.sh https://teams.example.com            # add --single-tenant for org-only,
+                                                             # --grant to also grant admin consent
+```
+
+Manual path, if you prefer the portal:
+
 1. Go to [Azure Portal](https://portal.azure.com) → **Microsoft Entra ID** → **App registrations** → **New registration**
 2. Give it a name (e.g. "Teamsly Self-Hosted")
 3. For **Supported account types**, choose:
@@ -151,27 +162,16 @@ npm run build
 npm start   # runs on port 3000 by default
 ```
 
-Or build a Docker image:
+Or use the included `Dockerfile` / `docker-compose.yml`:
 
-```dockerfile
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-
-FROM node:20-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
-EXPOSE 3000
-CMD ["node", "server.js"]
+```bash
+cp .env.example .env     # fill in the Azure AD values
+docker compose up -d     # builds the standalone Next.js server, runs as a non-root user on :3000
 ```
 
-> Note: add `output: "standalone"` to `next.config.ts` for the Docker build.
+Put a TLS-terminating reverse proxy (Caddy, nginx, Traefik) in front and set
+`NEXTAUTH_URL` to the public URL. `NEXT_PUBLIC_*` values are baked in at image
+build time — pass them as `--build-arg` (see the Dockerfile) if you change them.
 
 ---
 

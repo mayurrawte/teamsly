@@ -1,36 +1,25 @@
 import NextAuth from "next-auth";
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
 import { appendFileSync } from "node:fs";
+import { MINIMAL_SCOPE } from "./consent";
+import { unionScopes } from "./scopes";
 
 const DESKTOP = process.env.DESKTOP_MODE === "1";
 
-const SCOPE = [
-  "openid",
-  "profile",
-  "email",
-  "offline_access",
-  "User.Read",
-  "Team.ReadBasic.All",
-  "Channel.ReadBasic.All",
-  "ChannelMessage.Read.All",
-  "ChannelMessage.Send",
-  "Chat.ReadWrite",
-  "Presence.Read.All",
-  "Presence.ReadWrite",
-  "Files.Read.All",
-  "Files.ReadWrite",
-  "Calendars.Read",
-  "User.ReadBasic.All",
-].join(" ");
+// Incremental consent: first sign-in asks only for MINIMAL_SCOPE (fewer tenants
+// block it, and the admin-consent screen is far less alarming). Files, presence and
+// calendar scopes are requested when those features are first opened (see
+// ScopeGate); Entra then returns the union, which we persist in the JWT.
+const SCOPE = MINIMAL_SCOPE;
 
-async function refreshAccessToken(refreshToken: string) {
+async function refreshAccessToken(refreshToken: string, scope: string = SCOPE) {
   const tenant = process.env.AZURE_AD_TENANT_ID ?? "common";
   const url = `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`;
   const params = new URLSearchParams({
     client_id: process.env.AZURE_AD_CLIENT_ID!,
     grant_type: "refresh_token",
     refresh_token: refreshToken,
-    scope: SCOPE,
+    scope,
   });
   if (!DESKTOP) {
     params.set("client_secret", process.env.AZURE_AD_CLIENT_SECRET!);
@@ -46,6 +35,7 @@ async function refreshAccessToken(refreshToken: string) {
     access_token?: string;
     refresh_token?: string;
     expires_in?: number;
+    scope?: string;
     error?: string;
     error_description?: string;
   };
@@ -58,6 +48,7 @@ async function refreshAccessToken(refreshToken: string) {
     accessToken: body.access_token,
     refreshToken: body.refresh_token ?? refreshToken,
     expiresAt: Math.floor(Date.now() / 1000) + (body.expires_in ?? 3600),
+    scope: body.scope ?? scope,
   };
 }
 
@@ -67,10 +58,10 @@ async function refreshAccessToken(refreshToken: string) {
 // one get invalid_grant and force a spurious re-login. Coalesce concurrent
 // refreshes for a given refresh token into one in-flight request per instance.
 const inflightRefreshes = new Map<string, ReturnType<typeof refreshAccessToken>>();
-function refreshAccessTokenDeduped(refreshToken: string) {
+function refreshAccessTokenDeduped(refreshToken: string, scope: string) {
   const existing = inflightRefreshes.get(refreshToken);
   if (existing) return existing;
-  const p = refreshAccessToken(refreshToken).finally(() => {
+  const p = refreshAccessToken(refreshToken, scope).finally(() => {
     inflightRefreshes.delete(refreshToken);
   });
   inflightRefreshes.set(refreshToken, p);
@@ -129,11 +120,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, account }) {
       if (account) {
+        // Entra returns every scope the user has consented to so far; keep the union
+        // with what we already knew so a later feature grant never narrows it.
+        const grantedScope = unionScopes(
+          typeof token.scope === "string" ? token.scope : "",
+          account.scope ?? SCOPE,
+        );
         return {
           ...token,
           accessToken: account.access_token,
           refreshToken: account.refresh_token,
           expiresAt: account.expires_at,
+          scope: grantedScope,
           error: undefined,
         };
       }
@@ -149,12 +147,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
 
       try {
-        const refreshed = await refreshAccessTokenDeduped(token.refreshToken);
+        const knownScope = typeof token.scope === "string" && token.scope ? token.scope : SCOPE;
+        const refreshed = await refreshAccessTokenDeduped(token.refreshToken, knownScope);
         return {
           ...token,
           accessToken: refreshed.accessToken,
           refreshToken: refreshed.refreshToken,
           expiresAt: refreshed.expiresAt,
+          scope: unionScopes(knownScope, refreshed.scope),
           error: undefined,
         };
       } catch (err) {
@@ -165,6 +165,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       session.accessToken = token.accessToken as string;
       session.userId = (token.sub as string) ?? "";
+      session.scopes = typeof token.scope === "string" ? token.scope : SCOPE;
       if (token.error) {
         (session as unknown as { error?: string }).error = token.error as string;
       }

@@ -1,5 +1,7 @@
 "use client";
 
+import { ScopeGate } from "@/components/auth/ScopeGate";
+
 import { useState, useEffect, useMemo } from "react";
 import { formatDistanceToNow, format, differenceInDays } from "date-fns";
 import { Search, ExternalLink, FileX, RefreshCw } from "lucide-react";
@@ -178,7 +180,7 @@ const TABS: { id: FileTab; label: string }[] = [
   { id: "images", label: "Images" },
 ];
 
-export default function FilesPage() {
+function FilesPageInner() {
   const [items, setItems] = useState<MSDriveItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -296,5 +298,13 @@ export default function FilesPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function FilesPage() {
+  return (
+    <ScopeGate feature="files">
+      <FilesPageInner />
+    </ScopeGate>
   );
 }

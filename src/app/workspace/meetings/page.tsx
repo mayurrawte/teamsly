@@ -1,5 +1,7 @@
 "use client";
 
+import { ScopeGate } from "@/components/auth/ScopeGate";
+
 import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   format,
@@ -255,7 +257,7 @@ function EventRow({ event }: { event: MSCalendarEvent }) {
 // Main page
 // ---------------------------------------------------------------------------
 
-export default function MeetingsPage() {
+function MeetingsPageInner() {
   const [items, setItems] = useState<MSCalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -386,5 +388,13 @@ export default function MeetingsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function MeetingsPage() {
+  return (
+    <ScopeGate feature="calendar">
+      <MeetingsPageInner />
+    </ScopeGate>
   );
 }

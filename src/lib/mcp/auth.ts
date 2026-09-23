@@ -7,7 +7,7 @@ import { auth } from "@/lib/auth/config";
  *
  * Two auth paths:
  * 1. Bearer token — MCP clients (Claude Desktop, Cursor, etc.) send a user-scoped
- *    Graph access token obtained from /api/mcp/token. Validated against Graph /me,
+ *    Graph access token obtained via the device-code flow. Validated against Graph /me,
  *    and (when AZURE_AD_CLIENT_ID is set) the token's app id is verified to match
  *    the Teamsly app so a token minted for some other app can't be replayed here.
  * 2. Session cookie — same-browser fallback (e.g. direct API calls from the web app).

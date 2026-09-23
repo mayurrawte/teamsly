@@ -14,6 +14,13 @@
 
 ---
 
+<div align="center">
+  <img src="public/demo.gif" alt="Teamsly demo — browse channels, Cmd+K jump-to, send a DM" width="800" />
+  <p><em>Browse channels → <kbd>Cmd K</kbd> jump anywhere → DM — all keyboard-first. <a href="https://teamsly.app/demo">Try it live, no account needed.</a></em></p>
+</div>
+
+---
+
 Teamsly is an open-source, third-party web client for Microsoft Teams. It reads and writes your real Teams data via the **official Microsoft Graph API** — no scraping, no reverse engineering. Your messages stay in Microsoft's infrastructure. Teamsly is just a better interface.
 
 ## Features
@@ -39,7 +46,18 @@ Go to **[teamsly.app](https://teamsly.app)** and sign in with your Microsoft 365
 
 ### Self-hosting
 
-See **[SELF_HOSTING.md](SELF_HOSTING.md)** for the full guide — Azure AD app registration, environment variables, and deployment to Vercel, Fly, Render, or any Node.js host.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmayurrawte%2Fteamsly&env=AZURE_AD_CLIENT_ID,AZURE_AD_CLIENT_SECRET,AZURE_AD_TENANT_ID,AUTH_SECRET&envDescription=Azure%20AD%20app%20registration%20values%20%2B%20a%20random%20AUTH_SECRET%20(openssl%20rand%20-base64%2032)&envLink=https%3A%2F%2Fgithub.com%2Fmayurrawte%2Fteamsly%2Fblob%2Fmain%2FSELF_HOSTING.md&project-name=teamsly&repository-name=teamsly)
+
+```bash
+# Docker
+git clone https://github.com/mayurrawte/teamsly.git && cd teamsly
+cp .env.example .env            # fill in the Azure AD values (5 minutes, see SELF_HOSTING.md §1)
+docker compose up -d            # http://localhost:3000
+```
+
+See **[SELF_HOSTING.md](SELF_HOSTING.md)** for the full guide — Azure AD app registration, environment variables, and deployment to Vercel, Fly, Render, Docker, or any Node.js host.
+
+> **Company account says "Need admin approval"?** Most tenants block users from consenting to third-party apps. Send your IT admin the link on the sign-in page (or self-host under your own Azure app, which admins can approve once for everyone).
 
 Quick start for local development:
 
@@ -158,6 +176,10 @@ PRs welcome. Open areas:
 - Graph change notifications (replace 5-second polling with webhooks)
 - Richer markdown editor in the composer
 - Emoji picker improvements
+
+## Sponsor
+
+Teamsly is free — no paywall, no feature gates. If it saves you from the official Teams client daily, consider [sponsoring](https://github.com/sponsors/mayurrawte) to cover hosting and AI-summary inference costs.
 
 ## License
 
