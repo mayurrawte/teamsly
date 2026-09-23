@@ -65,7 +65,8 @@ function DisappearBadge({ disappearAt }: { disappearAt: number }) {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
-  const remaining = Math.max(0, disappearAt - now);
+  const remaining = disappearAt - now;
+  if (remaining <= 0) return null;
   const secs = Math.ceil(remaining / 1000);
   const text = secs >= 3600 ? `${Math.ceil(secs / 3600)}h`
     : secs >= 60 ? `${Math.ceil(secs / 60)}m`
@@ -134,9 +135,10 @@ function MessageItemImpl({
   // className below). Keying the entrance animation off recency instead
   // would replay it for polled/history rows and other people's real-time
   // messages, which is exactly what it must never do.
+  const [mountedAt] = useState(() => Date.now());
   const isNew =
     message.__pending ||
-    Date.now() - new Date(message.createdDateTime).getTime() < 3000;
+    mountedAt - new Date(message.createdDateTime).getTime() < 3000;
   // Density vars drive padding via inline style so the density preset is the
   // single source of truth — no more 2-branch ternary that ignores "cozy".
   // The group-head row (`isGroupHead`) gets extra top spacing so groups
@@ -291,7 +293,7 @@ function MessageItemImpl({
   const SLASH_RESULT_EMOJIS = ["🪙", "🎲", "🎯", "🎱", "🃏", "✏️", "🗓️"];
   const isRecentSlashResult =
     isNew &&
-    Date.now() - new Date(message.createdDateTime).getTime() < 10000 &&
+    mountedAt - new Date(message.createdDateTime).getTime() < 10000 &&
     SLASH_RESULT_EMOJIS.some((e) => content.trimStart().startsWith(e));
 
   // Inline retry/discard row for failed optimistic messages.
@@ -452,7 +454,7 @@ function MessageItemImpl({
                         ? <span className="italic text-[var(--text-secondary,#ababad)]">🕓 Message not available here</span>
                         : <span className="italic text-[var(--text-secondary,#ababad)]">…</span>
                     : renderMessageBody(message.body.content, message.body.contentType)}
-                  {disappearing && decoded && decoded.disappearAt > Date.now() && (
+                  {disappearing && decoded && (
                     <DisappearBadge disappearAt={decoded.disappearAt} />
                   )}
                 </div>
@@ -548,7 +550,7 @@ function MessageItemImpl({
                       : <span className="italic text-[var(--text-secondary,#ababad)]">…</span>
                   : renderMessageBody(message.body.content, message.body.contentType)}
               </div>
-              {disappearing && decoded && decoded.disappearAt > Date.now() && (
+              {disappearing && decoded && (
                 <DisappearBadge disappearAt={decoded.disappearAt} />
               )}
               <GitHubCards links={detection.github} />

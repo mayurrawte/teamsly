@@ -294,6 +294,7 @@ export function MessageInput({
   const [showDisappearMenu, setShowDisappearMenu] = useState(false);
   const [scheduleTime, setScheduleTime] = useState<number | null>(null);
   const [showScheduleMenu, setShowScheduleMenu] = useState(false);
+  const [scheduleMenuOpenedAt, setScheduleMenuOpenedAt] = useState(0);
   const emojiAnchorRef = useRef<HTMLButtonElement>(null);
   const emojiContainerRef = useRef<HTMLDivElement>(null);
   const disappearMenuRef = useRef<HTMLDivElement>(null);
@@ -1406,7 +1407,10 @@ export function MessageInput({
                 <button
                   type="button"
                   aria-label="Schedule message"
-                  onClick={() => setShowScheduleMenu((v) => !v)}
+                  onClick={() => {
+                    setShowScheduleMenu((v) => !v);
+                    setScheduleMenuOpenedAt(Date.now());
+                  }}
                   className={`rounded p-1 text-[15px] transition-colors press-snap ${
                     scheduleTime ? "text-[var(--accent)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                   }`}
@@ -1462,7 +1466,7 @@ export function MessageInput({
                       Custom time
                       <input
                         type="datetime-local"
-                        min={toDatetimeLocalValue(Date.now())}
+                        min={toDatetimeLocalValue(scheduleMenuOpenedAt)}
                         value={scheduleTime !== null ? toDatetimeLocalValue(scheduleTime) : ""}
                         onChange={(e) => {
                           const next = e.target.value ? new Date(e.target.value).getTime() : NaN;

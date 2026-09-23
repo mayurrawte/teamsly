@@ -17,11 +17,11 @@ import { usePreferencesStore } from "@/store/preferences";
 import { useOfficeHours } from "@/hooks/useOfficeHours";
 
 export function OfficeHoursBanner() {
-  const { enabled, withinHours, nextBoundary, label } = useOfficeHours();
+  const { enabled, withinHours, nextBoundary, label, now } = useOfficeHours();
   const dismissedUntil = usePreferencesStore((s) => s.officeHoursDismissedUntil);
   const setDismissedUntil = usePreferencesStore((s) => s.setOfficeHoursDismissedUntil);
 
-  const dismissed = dismissedUntil !== null && Date.now() < dismissedUntil;
+  const dismissed = dismissedUntil !== null && now < dismissedUntil;
   if (!enabled || withinHours || dismissed) return null;
 
   function dismiss() {

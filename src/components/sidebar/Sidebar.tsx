@@ -988,7 +988,15 @@ function SidebarItem({
   const markUnread = useWorkspaceStore((s) => s.markUnread);
 
   const snoozedUntil = contextId ? snoozedContexts[contextId] : undefined;
-  const isSnoozed = !!snoozedUntil && snoozedUntil > Date.now();
+  const [now, setNow] = useState(() => Date.now());
+  const isSnoozed = !!snoozedUntil && snoozedUntil > now;
+
+  // Re-render when the snooze lapses (timeout capped at setTimeout's 32-bit limit).
+  useEffect(() => {
+    if (!snoozedUntil || snoozedUntil <= now) return;
+    const t = setTimeout(() => setNow(Date.now()), Math.min(snoozedUntil - Date.now(), 2 ** 31 - 1));
+    return () => clearTimeout(t);
+  }, [snoozedUntil, now]);
 
   useEffect(() => {
     if (unreadCount > prevCountRef.current) {
