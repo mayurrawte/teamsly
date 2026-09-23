@@ -10,14 +10,15 @@ interface AiSummaryBannerProps {
 
 export function AiSummaryBanner({ messages }: AiSummaryBannerProps) {
   const enabled = process.env.NEXT_PUBLIC_AI_ENABLED === "true";
-  const [summary, setSummary] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{ key: string; summary: string | null } | null>(null);
 
   // Only re-summarize when the conversation actually changes (count, or the last
   // message's id/edit time) — NOT on every poll, which rebuilds the `messages`
   // array by reference and would otherwise re-fire this paid endpoint each cycle.
   const lastMessage = messages[messages.length - 1];
   const summaryKey = `${messages.length}|${lastMessage?.id ?? ""}|${lastMessage?.lastModifiedDateTime ?? ""}`;
+  const loading = result?.key !== summaryKey;
+  const summary = result?.summary ?? null;
 
   useEffect(() => {
     if (!enabled || messages.length < 10) return;
@@ -28,18 +29,15 @@ export function AiSummaryBanner({ messages }: AiSummaryBannerProps) {
     }));
 
     let cancelled = false;
-    setLoading(true);
     fetch("/api/ai/summary", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ messages: input }),
     })
       .then((response) => (response.ok ? response.json() : null))
+      .catch(() => null)
       .then((data: { summary?: string } | null) => {
-        if (!cancelled) setSummary(data?.summary ?? null);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setResult({ key: summaryKey, summary: data?.summary ?? null });
       });
 
     return () => {

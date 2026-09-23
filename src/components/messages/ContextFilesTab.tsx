@@ -178,17 +178,16 @@ function ChatFileRow({ item }: { item: MSChatFileAttachment }) {
 export function ContextFilesTab({ mode }: ContextFilesTabProps) {
   const [channelItems, setChannelItems] = useState<MSDriveItem[]>([]);
   const [chatItems, setChatItems] = useState<MSChatFileAttachment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [error, setError] = useState(false);
 
   const fetchKey =
     mode.kind === "channel"
       ? `${mode.teamId}/${mode.channelId}`
       : mode.chatId;
+  const loading = loadedKey !== fetchKey;
 
   async function fetchFiles() {
-    setLoading(true);
-    setError(false);
     try {
       if (mode.kind === "channel") {
         const res = await fetch(
@@ -203,15 +202,17 @@ export function ContextFilesTab({ mode }: ContextFilesTabProps) {
         const data = (await res.json()) as { items?: MSChatFileAttachment[] };
         setChatItems(data.items ?? []);
       }
+      setError(false);
     } catch {
       setError(true);
     } finally {
-      setLoading(false);
+      setLoadedKey(fetchKey);
     }
   }
 
   // Re-fetch whenever the channel or chat changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch; every setState in fetchFiles runs after an await
     fetchFiles();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchKey]);
@@ -224,7 +225,10 @@ export function ContextFilesTab({ mode }: ContextFilesTabProps) {
         <FileX size={36} className="text-[var(--text-muted)]" />
         <p className="text-[13px] text-[var(--text-secondary)]">Couldn&apos;t load files</p>
         <button
-          onClick={fetchFiles}
+          onClick={() => {
+            setLoadedKey(null);
+            fetchFiles();
+          }}
           className="flex items-center gap-1.5 rounded-md border border-[var(--border)] px-3 py-1.5 text-[13px] text-[var(--text-primary)] transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)]"
         >
           <RefreshCw size={13} />

@@ -102,9 +102,11 @@ export function ChannelView({ teamId, channelId }: { teamId: string; channelId: 
   const channel = channels[teamId]?.find((c) => c.id === channelId);
 
   // Reset tab when channel changes
-  useEffect(() => {
+  const [tabChannelId, setTabChannelId] = useState(channelId);
+  if (tabChannelId !== channelId) {
+    setTabChannelId(channelId);
     setActiveTab("messages");
-  }, [channelId]);
+  }
 
   // loadRef lets the realtime handler trigger a fetch without becoming a
   // dependency of the SSE event callback (which would re-register on every render).
