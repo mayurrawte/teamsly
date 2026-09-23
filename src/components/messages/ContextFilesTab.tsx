@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ExternalLink, FileX, RefreshCw } from "lucide-react";
-import { getFileIcon } from "@/lib/utils/file-icon";
+import { FileIcon } from "@/lib/utils/file-icon";
 import { useFilePreviewStore } from "@/store/filePreview";
 
 // ---------------------------------------------------------------------------
@@ -65,7 +65,6 @@ function FilesTabSkeleton() {
 function ChannelFileRow({ item }: { item: MSDriveItem }) {
   const mimeType = item.file?.mimeType;
   const isFolder = !!item.folder;
-  const Icon = getFileIcon(mimeType, isFolder);
   const href = safeHref(item.webUrl);
   const openPreview = useFilePreviewStore((s) => s.openPreview);
 
@@ -94,7 +93,7 @@ function ChannelFileRow({ item }: { item: MSDriveItem }) {
       className="group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)]"
     >
       <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[var(--surface)] text-[var(--text-secondary)]">
-        <Icon size={18} />
+        <FileIcon mimeType={mimeType} isFolder={isFolder} size={18} />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[13px] font-bold text-[var(--text-primary)]">{item.name}</span>
@@ -126,7 +125,6 @@ function ChannelFileRow({ item }: { item: MSDriveItem }) {
 // ---------------------------------------------------------------------------
 
 function ChatFileRow({ item }: { item: MSChatFileAttachment }) {
-  const Icon = getFileIcon(undefined, false, item.name);
   const href = safeHref(item.contentUrl);
   const sharer = item.sharedBy?.displayName;
   const openPreview = useFilePreviewStore((s) => s.openPreview);
@@ -145,7 +143,7 @@ function ChatFileRow({ item }: { item: MSChatFileAttachment }) {
       className="group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors duration-[var(--motion-fast)] hover:bg-[var(--surface-hover)]"
     >
       <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[var(--surface)] text-[var(--text-secondary)]">
-        <Icon size={18} />
+        <FileIcon fileName={item.name} size={18} />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[13px] font-bold text-[var(--text-primary)]">{item.name}</span>

@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo } from "react";
 import { formatDistanceToNow, format, differenceInDays } from "date-fns";
 import { Search, ExternalLink, FileX, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getFileIcon } from "@/lib/utils/file-icon";
+import { FileIcon } from "@/lib/utils/file-icon";
 import { useFilePreviewStore } from "@/store/filePreview";
 
 // ---------------------------------------------------------------------------
@@ -112,7 +112,6 @@ function FilesSkeleton() {
 // ---------------------------------------------------------------------------
 
 function FileRow({ file }: { file: NormalisedFile }) {
-  const Icon = getFileIcon(file.mimeType, file.isFolder);
   const href = file.webUrl;
   const openPreview = useFilePreviewStore((s) => s.openPreview);
 
@@ -139,7 +138,7 @@ function FileRow({ file }: { file: NormalisedFile }) {
     >
       {/* Icon */}
       <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[#2c2d30] text-[#ababad]">
-        <Icon size={18} />
+        <FileIcon mimeType={file.mimeType} isFolder={file.isFolder} size={18} />
       </span>
 
       {/* Name + meta */}
