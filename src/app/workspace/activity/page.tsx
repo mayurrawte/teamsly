@@ -376,6 +376,7 @@ export default function ActivityPage() {
   useEffect(() => {
     if (!isScanTab) return;
     const controller = new AbortController();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- polls the scan API; every setState happens after an await
     fetchScan(controller.signal);
     const interval = window.setInterval(() => {
       fetchScan(controller.signal);

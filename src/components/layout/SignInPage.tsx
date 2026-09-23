@@ -1,7 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { ShieldCheck, GitFork, Database } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
@@ -25,16 +25,23 @@ const features = [
   },
 ];
 
+const noopSubscribe = () => () => {};
+
 export function SignInPage() {
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [showAdminHelp, setShowAdminHelp] = useState(false);
-  const [consentUrl, setConsentUrl] = useState<string | null>(null);
+  const authError = useSyncExternalStore(
+    noopSubscribe,
+    () => new URLSearchParams(window.location.search).get("error"),
+    () => null
+  );
+  const consentUrl = useSyncExternalStore(
+    noopSubscribe,
+    () => adminConsentUrl(process.env.NEXT_PUBLIC_AZURE_AD_CLIENT_ID, `${window.location.origin}/login`),
+    () => null
+  );
+  const [adminHelpRequested, setAdminHelpRequested] = useState(false);
+  const showAdminHelp = adminHelpRequested || isConsentError(authError);
   useEffect(() => {
-    const err = new URLSearchParams(window.location.search).get("error");
-    setAuthError(err);
-    setConsentUrl(adminConsentUrl(process.env.NEXT_PUBLIC_AZURE_AD_CLIENT_ID, `${window.location.origin}/login`));
-    if (isConsentError(err)) {
-      setShowAdminHelp(true);
+    if (isConsentError(authError)) {
       // privacy-safe counter: how often the consent wall ends a sign-in (no user data)
       try {
         navigator.sendBeacon("/api/telemetry/consent-error");
@@ -42,7 +49,7 @@ export function SignInPage() {
         /* telemetry is best-effort */
       }
     }
-  }, []);
+  }, [authError]);
   const copyConsentLink = async () => {
     if (consentUrl) await navigator.clipboard.writeText(consentUrl);
   };
@@ -232,7 +239,7 @@ export function SignInPage() {
           {!showAdminHelp && (
             <button
               type="button"
-              onClick={() => setShowAdminHelp(true)}
+              onClick={() => setAdminHelpRequested(true)}
               className="mt-4 w-full text-center text-[12px] text-[#5b6b82] underline-offset-2 hover:text-[#8b9ab0] hover:underline"
             >
               Work account blocked by “Need admin approval”?

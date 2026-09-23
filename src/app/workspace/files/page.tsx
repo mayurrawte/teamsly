@@ -186,9 +186,7 @@ function FilesPageInner() {
   const [activeTab, setActiveTab] = useState<FileTab>("all");
   const [query, setQuery] = useState("");
 
-  async function fetchFiles() {
-    setLoading(true);
-    setError(false);
+  async function loadFiles() {
     try {
       const res = await fetch("/api/files/recent");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -201,8 +199,15 @@ function FilesPageInner() {
     }
   }
 
+  function fetchFiles() {
+    setLoading(true);
+    setError(false);
+    void loadFiles();
+  }
+
   useEffect(() => {
-    fetchFiles();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch; every setState happens after an await
+    loadFiles();
   }, []);
 
   const filtered = useMemo(() => {

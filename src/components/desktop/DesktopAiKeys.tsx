@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 // Mirrors electron/secrets.ts BYO_KEYS. Each field is write-only from the UI;
 // we only learn whether a key is set, never its value.
@@ -23,17 +23,17 @@ function desktopApi(): DesktopApi | null {
   return w.electron as DesktopApi;
 }
 
+const noopSubscribe = () => () => {};
+
 export function DesktopAiKeys() {
-  const [api, setApi] = useState<DesktopApi | null>(null);
+  const api = useSyncExternalStore(noopSubscribe, desktopApi, () => null);
   const [status, setStatus] = useState<Record<string, boolean>>({});
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const a = desktopApi();
-    setApi(a);
-    if (a) void a.getByoStatus().then(setStatus);
-  }, []);
+    if (api) void api.getByoStatus().then(setStatus);
+  }, [api]);
 
   if (!api) return null; // web build / non-desktop: render nothing
 

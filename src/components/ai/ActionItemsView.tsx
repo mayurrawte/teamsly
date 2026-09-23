@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ArrowUpRight, Clock } from "lucide-react";
 import type { CatchUpWindow } from "@/store/catchUp";
 import type { ActionItem } from "@/lib/ai/conversation-gather";
@@ -102,37 +102,35 @@ export function ActionItemsView({
   onMeta: (meta: CatchUpMeta | null) => void;
   onNavigate: (href: string) => void;
 }) {
-  const [data, setData] = useState<ActionItemsResponse | null>(null);
-  const [loading, setLoading] = useState(false);
+  const requestKey = `${catchUpWindow}:${refreshNonce}`;
+  const [result, setResult] = useState<{ key: string; data: ActionItemsResponse } | null>(null);
+  const loading = result?.key !== requestKey;
+  const data = loading ? null : result.data;
   const addReminder = useRemindersStore((s) => s.add);
 
-  const fetchItems = useCallback(
-    async (win: CatchUpWindow) => {
-      setLoading(true);
-      onLoadingChange(true);
-      setData(null);
-      onMeta(null);
+  useEffect(() => {
+    let cancelled = false;
+    onLoadingChange(true);
+    onMeta(null);
+    (async () => {
+      let json: ActionItemsResponse;
       try {
         const d = new Date();
         const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-        const res = await fetch(`/api/ai/action-items?window=${win}&today=${today}`);
-        const json = (await res.json()) as ActionItemsResponse;
-        setData(json);
-        onMeta(json.status === "ok" ? { generatedAt: json.generatedAt, cached: json.cached } : null);
+        const res = await fetch(`/api/ai/action-items?window=${catchUpWindow}&today=${today}`);
+        json = (await res.json()) as ActionItemsResponse;
       } catch {
-        setData({ status: "error", cached: false, message: "Network error — please try again." });
-        onMeta(null);
-      } finally {
-        setLoading(false);
-        onLoadingChange(false);
+        json = { status: "error", cached: false, message: "Network error — please try again." };
       }
-    },
-    [onLoadingChange, onMeta]
-  );
-
-  useEffect(() => {
-    void fetchItems(catchUpWindow);
-  }, [catchUpWindow, refreshNonce, fetchItems]);
+      if (cancelled) return;
+      setResult({ key: requestKey, data: json });
+      onMeta(json.status === "ok" ? { generatedAt: json.generatedAt, cached: json.cached } : null);
+      onLoadingChange(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [catchUpWindow, requestKey, onLoadingChange, onMeta]);
 
   if (loading) {
     return (

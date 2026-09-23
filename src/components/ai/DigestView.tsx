@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import type { CatchUpWindow } from "@/store/catchUp";
 import { SkeletonCard, NotConfiguredCard, LimitReachedCard } from "./catchup-shared";
 
@@ -37,34 +37,32 @@ export function DigestView({
   onLoadingChange: (loading: boolean) => void;
   onMeta: (meta: CatchUpMeta | null) => void;
 }) {
-  const [digest, setDigest] = useState<DigestResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const fetchDigest = useCallback(
-    async (win: CatchUpWindow) => {
-      setLoading(true);
-      onLoadingChange(true);
-      setDigest(null);
-      onMeta(null);
-      try {
-        const res = await fetch(`/api/ai/tldr?window=${win}`);
-        const data = (await res.json()) as DigestResponse;
-        setDigest(data);
-        onMeta(data.status === "ok" ? { generatedAt: data.generatedAt, cached: data.cached } : null);
-      } catch {
-        setDigest({ status: "error", cached: false, message: "Network error — please try again." });
-        onMeta(null);
-      } finally {
-        setLoading(false);
-        onLoadingChange(false);
-      }
-    },
-    [onLoadingChange, onMeta]
-  );
+  const requestKey = `${catchUpWindow}:${refreshNonce}`;
+  const [result, setResult] = useState<{ key: string; digest: DigestResponse } | null>(null);
+  const loading = result?.key !== requestKey;
+  const digest = loading ? null : result.digest;
 
   useEffect(() => {
-    void fetchDigest(catchUpWindow);
-  }, [catchUpWindow, refreshNonce, fetchDigest]);
+    let cancelled = false;
+    onLoadingChange(true);
+    onMeta(null);
+    (async () => {
+      let data: DigestResponse;
+      try {
+        const res = await fetch(`/api/ai/tldr?window=${catchUpWindow}`);
+        data = (await res.json()) as DigestResponse;
+      } catch {
+        data = { status: "error", cached: false, message: "Network error — please try again." };
+      }
+      if (cancelled) return;
+      setResult({ key: requestKey, digest: data });
+      onMeta(data.status === "ok" ? { generatedAt: data.generatedAt, cached: data.cached } : null);
+      onLoadingChange(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [catchUpWindow, requestKey, onLoadingChange, onMeta]);
 
   if (loading) {
     return (
