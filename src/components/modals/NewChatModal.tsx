@@ -25,8 +25,8 @@ export function NewChatModal() {
   const currentUserId = useWorkspaceStore((s) => s.currentUserId);
 
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Person[]>([]);
-  const [searching, setSearching] = useState(false);
+  // Latest directory response, tagged with the query it answers.
+  const [search, setSearch] = useState<{ q: string; people: Person[] } | null>(null);
   const [selected, setSelected] = useState<Person[]>([]);
   const [topic, setTopic] = useState("");
   const [creating, setCreating] = useState(false);
@@ -35,41 +35,38 @@ export function NewChatModal() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Reset everything when the modal closes; focus the input when it opens.
-  useEffect(() => {
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (prevIsOpen !== isOpen) {
+    setPrevIsOpen(isOpen);
     if (!isOpen) {
       setQuery("");
-      setResults([]);
+      setSearch(null);
       setSelected([]);
       setTopic("");
       setError(null);
       setCreating(false);
     }
-  }, [isOpen]);
+  }
 
   // Debounced org-directory search.
+  const q = debounced.trim();
+  const results = q.length >= 2 && search ? search.people : [];
+  const searching = q.length >= 2 && search?.q !== q;
   useEffect(() => {
-    const q = debounced.trim();
-    if (q.length < 2) {
-      setResults([]);
-      return;
-    }
+    if (q.length < 2) return;
     let cancelled = false;
-    setSearching(true);
     fetch(`/api/people?q=${encodeURIComponent(q)}`)
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
-        if (!cancelled) setResults(Array.isArray(data) ? (data as Person[]) : []);
+        if (!cancelled) setSearch({ q, people: Array.isArray(data) ? (data as Person[]) : [] });
       })
       .catch(() => {
-        if (!cancelled) setResults([]);
-      })
-      .finally(() => {
-        if (!cancelled) setSearching(false);
+        if (!cancelled) setSearch({ q, people: [] });
       });
     return () => {
       cancelled = true;
     };
-  }, [debounced]);
+  }, [q]);
 
   const selectedIds = new Set(selected.map((p) => p.id));
   const visibleResults = results.filter((p) => p.id !== currentUserId && !selectedIds.has(p.id));
@@ -78,7 +75,7 @@ export function NewChatModal() {
   function add(p: Person) {
     setSelected((s) => (s.some((x) => x.id === p.id) ? s : [...s, p]));
     setQuery("");
-    setResults([]);
+    setSearch({ q, people: [] });
     inputRef.current?.focus();
   }
 

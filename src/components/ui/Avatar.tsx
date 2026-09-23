@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { avatarColor, avatarInitials } from "@/lib/utils/avatar";
 
 type AvatarSize = 18 | 20 | 24 | 28 | 32 | 36;
@@ -33,10 +33,12 @@ export function Avatar({ userId, displayName, size = 36, photoUrl, className }: 
   const [loaded, setLoaded] = useState(false);
 
   // Reset when the subject changes so we don't flash stale state
-  useEffect(() => {
+  const [prevUserId, setPrevUserId] = useState(userId);
+  if (prevUserId !== userId) {
+    setPrevUserId(userId);
     setLoaded(false);
     setImageError(false);
-  }, [userId]);
+  }
 
   const bg = avatarColor(userId);
   const initials = avatarInitials(displayName);

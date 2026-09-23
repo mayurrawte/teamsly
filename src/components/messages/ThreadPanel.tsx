@@ -24,9 +24,11 @@ export function ThreadPanel({ message, open, onClose, onSendReply, onForward }: 
 
   // Server replies render from the live parent; local state holds only
   // optimistic sends, reset when the panel moves to another thread.
-  useEffect(() => {
+  const [prevMessageId, setPrevMessageId] = useState(message?.id);
+  if (prevMessageId !== message?.id) {
+    setPrevMessageId(message?.id);
     setLocalReplies([]);
-  }, [message?.id]);
+  }
 
   const replies = mergeThreadReplies(message?.replies, localReplies);
 

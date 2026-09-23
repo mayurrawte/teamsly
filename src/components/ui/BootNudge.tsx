@@ -57,10 +57,12 @@ export function BootNudge() {
   useEffect(() => {
     const today = todayKey();
     if (lastNudgeDay !== today) {
-      setTip(tipForDay(today));
       // Defer briefly so the banner fades in after the initial layout
       // settles — otherwise it visibly snaps into place on cold boot.
-      const t = window.setTimeout(() => setVisible(true), 600);
+      const t = window.setTimeout(() => {
+        setTip(tipForDay(today));
+        setVisible(true);
+      }, 600);
       return () => window.clearTimeout(t);
     }
   }, [lastNudgeDay]);

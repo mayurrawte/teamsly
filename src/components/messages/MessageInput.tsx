@@ -313,26 +313,27 @@ export function MessageInput({
   // ---------------------------------------------------------------------------
   // Draft seed + debounced write-back
   // ---------------------------------------------------------------------------
-  // Seed `value` from the drafts store when the context changes (incl. mount).
-  // We read the store imperatively so this effect doesn't re-run on every
-  // draft mutation. When `contextId` is undefined (thread reply composer),
-  // skip persistence entirely.
-  useEffect(() => {
+  // Seed `value` from the drafts store when the context changes (mount is
+  // covered by the lazy initialisers above). We read the store imperatively
+  // so this doesn't re-run on every draft mutation. When `contextId` is
+  // undefined (thread reply composer), skip persistence entirely.
+  const [prevContextId, setPrevContextId] = useState(contextId);
+  if (prevContextId !== contextId) {
+    setPrevContextId(contextId);
     // A schedule selection is per-composition; never carry it across chats.
     setScheduleTime(null);
     setShowScheduleMenu(false);
     if (!contextId) {
       setValue("");
       setDisappearMs(null);
-      return;
+    } else {
+      setValue(useDraftsStore.getState().drafts[contextId] ?? "");
+      // Arm the disappearing timer from this conversation's saved default.
+      setDisappearMs(usePreferencesStore.getState().disappearDefaults[contextId] ?? null);
     }
-    const existing = useDraftsStore.getState().drafts[contextId] ?? "";
-    setValue(existing);
-    // Arm the disappearing timer from this conversation's saved default.
-    setDisappearMs(usePreferencesStore.getState().disappearDefaults[contextId] ?? null);
     // We intentionally reset on every contextId change so switching chats
     // doesn't leak the previous chat's typing into the new one.
-  }, [contextId]);
+  }
 
   // Debounced write-back: 300 ms after the user stops typing, persist the
   // current `value`. Cancelled on the next keystroke. Fire-and-forget IDB
@@ -396,11 +397,9 @@ export function MessageInput({
   const filteredCount = filteredCandidates.length;
 
   // Keep selected index in bounds when filtered list changes
-  useEffect(() => {
-    if (mentionOpen) {
-      setMentionSelectedIdx((prev) => Math.min(prev, filteredCount - 1));
-    }
-  }, [filteredCount, mentionOpen]);
+  if (mentionOpen && mentionSelectedIdx > filteredCount - 1) {
+    setMentionSelectedIdx(filteredCount - 1);
+  }
 
   // ---------------------------------------------------------------------------
   // Drag-drop state

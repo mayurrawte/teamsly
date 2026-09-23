@@ -204,8 +204,10 @@ function MessageItemImpl({
     let cancelled = false;
     unwrapMessage(contextId, rawContent).then((res) => {
       if (cancelled) return;
-      if (res) setDecoded(res);
-      else setDecodeFailed(true);
+      if (res) {
+        setDecoded(res);
+        if (res.disappearAt <= Date.now()) setExpired(true);
+      } else setDecodeFailed(true);
     });
     return () => { cancelled = true; };
   }, [disappearing, contextId, rawContent]);
@@ -216,11 +218,7 @@ function MessageItemImpl({
   // Graph DELETE for sent messages separately.
   useEffect(() => {
     if (!decoded) return;
-    const remaining = decoded.disappearAt - Date.now();
-    if (remaining <= 0) {
-      setExpired(true);
-      return;
-    }
+    const remaining = Math.max(0, decoded.disappearAt - Date.now());
     const timer = setTimeout(() => setExpired(true), remaining);
     return () => clearTimeout(timer);
   }, [decoded]);

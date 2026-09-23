@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Hash, MessageSquare, Search, X } from "lucide-react";
 import { getChatLabel } from "@/lib/utils/chat-label";
@@ -37,14 +37,18 @@ export function ForwardMessageModal({ open, onOpenChange, message, onForward }: 
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Reset internal state whenever the modal opens for a new message
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevMessageId, setPrevMessageId] = useState(message?.id);
+  if (prevOpen !== open || prevMessageId !== message?.id) {
+    setPrevOpen(open);
+    setPrevMessageId(message?.id);
     if (open) {
       setQuery("");
       setSelected(null);
       setNote("");
       setSubmitting(false);
     }
-  }, [open, message?.id]);
+  }
 
   // Build a flat list of destinations once per dependency change.
   const chatDestinations = useMemo<ForwardDestination[]>(
