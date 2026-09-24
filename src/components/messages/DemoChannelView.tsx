@@ -34,10 +34,15 @@ export function DemoChannelView({ channelId }: { channelId: string }) {
     if (pendingAnchorMessageId) setPendingAnchorMessageId(null);
   }, [pendingAnchorMessageId, setPendingAnchorMessageId]);
 
+  const [tabChannelId, setTabChannelId] = useState(channelId);
+  if (tabChannelId !== channelId) {
+    setTabChannelId(channelId);
+    setActiveTab("messages");
+  }
+
   useEffect(() => {
     const msgs = mockMessages[channelId] ?? [];
     setMessages(contextId, msgs);
-    setActiveTab("messages");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelId]);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { usePreferencesStore } from "@/store/preferences";
 
 // Deterministic particle set — no Math.random / Date.now, so a given index
@@ -21,6 +21,13 @@ function prefersReducedMotion(): boolean {
   );
 }
 
+function subscribeReducedMotion(onChange: () => void): () => void {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return () => {};
+  const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+}
+
 interface Props {
   /** Plays a burst once per distinct, non-empty value seen during this mount. */
   playKey?: string;
@@ -38,18 +45,9 @@ export function CelebrationBurst({ playKey }: Props) {
   // The keyframes live only under (prefers-reduced-motion: no-preference), so
   // under reduced motion the particles would render statically instead of
   // animating. Bail out entirely so reduced-motion users see nothing at all.
-  const [reducedMotion, setReducedMotion] = useState(prefersReducedMotion);
+  const reducedMotion = useSyncExternalStore(subscribeReducedMotion, prefersReducedMotion, () => false);
   const seenRef = useRef<Set<string>>(new Set());
   const endedRef = useRef(0);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReducedMotion(mq.matches);
-    const onChange = () => setReducedMotion(mq.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
 
   // Start a burst only for a non-empty key we haven't played this mount.
   useEffect(() => {

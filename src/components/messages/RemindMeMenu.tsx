@@ -106,8 +106,10 @@ function NaturalLanguageRow({ onPick }: { onPick: (fireAt: number) => void }) {
 
 function CustomTimeRow({ onPick }: { onPick: (fireAt: number) => void }) {
   const [value, setValue] = useState("");
+  // Mounted when the menu opens; the click handler re-checks against the real clock.
+  const [openedAt] = useState(() => Date.now());
   const parsed = new Date(value).getTime();
-  const valid = !Number.isNaN(parsed) && parsed > Date.now();
+  const valid = !Number.isNaN(parsed) && parsed > openedAt;
   return (
     <div>
       <label htmlFor="remind-custom" className="mb-1 block text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
@@ -124,7 +126,7 @@ function CustomTimeRow({ onPick }: { onPick: (fireAt: number) => void }) {
         <button
           type="button"
           disabled={!valid}
-          onClick={() => { if (valid) onPick(parsed); }}
+          onClick={() => { if (valid && parsed > Date.now()) onPick(parsed); }}
           className="rounded bg-[var(--accent)] px-2 py-1 text-[11px] font-medium text-white transition-colors disabled:opacity-40"
         >
           Set

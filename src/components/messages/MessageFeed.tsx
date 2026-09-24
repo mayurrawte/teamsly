@@ -154,21 +154,25 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
   // We key on contextId rather than the `loading` flag because a *cached*
   // context never flips loading true — so relying on loading meant opening a
   // cached chat left the feed wherever it was instead of pinned to the latest
-  // message. Defined before the scroll-to-bottom effect so the ref is reset
-  // first within the same commit.
+  // message. State is reset during render; the refs are reset in the effect,
+  // which is defined before the scroll-to-bottom effect so they're reset first
+  // within the same commit.
+  const [prevContextId, setPrevContextId] = useState(contextId);
+  if (prevContextId !== contextId) {
+    setPrevContextId(contextId);
+    setIsNearBottom(true);
+    setNewMessagesCount(0);
+    setVisibleCount(INITIAL_CAP);
+    setCelebrateKey("");
+  }
   useEffect(() => {
     isInitialLoad.current = true;
     prevMessageCountRef.current = 0;
     prevLastIdRef.current = null;
     pinnedRef.current = true;
-    setIsNearBottom(true);
-    setNewMessagesCount(0);
-    setVisibleCount(INITIAL_CAP);
     // Re-seed the celebration set against the incoming context's history so a
-    // conversation that already contains 🎉 never bursts on open, and clear any
-    // stale trigger from the previous context.
+    // conversation that already contains 🎉 never bursts on open.
     celebrationSeededRef.current = false;
-    setCelebrateKey("");
   }, [contextId]);
 
   // On initial load or context change: once messages are present and not
@@ -242,6 +246,7 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
     if (isOwn && !last.__pending) return;
 
     if (isCelebrationMessage(messagePlainText(last.body.content, last.body.contentType))) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- fires on message arrival, deduped against the module-level celebratedIds set, which can't be touched during render
       setCelebrateKey(last.id);
     }
   }, [messages, loading, currentUserId]);
@@ -276,12 +281,6 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
     const scroll = scrollRef.current;
     if (!scroll) return;
 
-    const fullIdx = messages.findIndex((m) => m.id === anchorMessageId);
-    if (fullIdx >= 0 && messages.length - fullIdx > visibleCount) {
-      setVisibleCount(messages.length - fullIdx + 10);
-      return; // re-runs after the slice grows (messages.length / visibleCount dep) and the row mounts
-    }
-
     const node = scroll.querySelector<HTMLElement>(
       `[data-message-id="${cssEscape(anchorMessageId)}"]`
     );
@@ -308,7 +307,14 @@ export function MessageFeed({ messages, loading, contextName, bookmarkContextId,
     return () => window.clearTimeout(giveUp);
     // Re-run when the array length changes so we re-try once the target row
     // is added by a polling refetch.
-  }, [anchorMessageId, loading, messages, messages.length, onAnchorConsumed, visibleCount]);
+  }, [anchorMessageId, loading, messages, messages.length, onAnchorConsumed]);
+
+  // Grow the rendered slice so an anchor older than the cap is mounted before
+  // the anchor effect looks for its row.
+  const anchorIdx = anchorMessageId && !loading ? messages.findIndex((m) => m.id === anchorMessageId) : -1;
+  if (anchorIdx >= 0 && messages.length - anchorIdx > visibleCount) {
+    setVisibleCount(messages.length - anchorIdx + 10);
+  }
 
   const visible = useMemo(
     () => (messages.length > visibleCount ? messages.slice(-visibleCount) : messages),

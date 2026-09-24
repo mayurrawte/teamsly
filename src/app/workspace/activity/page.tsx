@@ -306,9 +306,15 @@ export default function ActivityPage() {
   // 60s client poll so re-renders / tab switches are cheap.
   // -----------------------------------------------------------------------
 
-  const [scanData, setScanData] = useState<ScanResponse | null>(null);
-  const [scanLoading, setScanLoading] = useState(false);
-  const scanLoadedRef = useRef(false);
+  // Tagged with the team it was fetched for, so a team switch reads as "not
+  // loaded" without a reset effect. `data: null` = first load settled empty.
+  const [scanResult, setScanResult] = useState<{
+    teamId: typeof activeTeamId;
+    data: ScanResponse | null;
+  } | null>(null);
+  const scanForTeam = scanResult?.teamId === activeTeamId ? scanResult : null;
+  const scanData = scanForTeam?.data ?? null;
+  const scanLoadedForRef = useRef<typeof activeTeamId | undefined>(undefined);
 
   useActivityNotifications(scanData ?? undefined);
 
@@ -326,17 +332,9 @@ export default function ActivityPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notificationKeywords]);
 
-  // Reset cached state when the active team changes so the next visit
-  // refetches against the new scope.
-  useEffect(() => {
-    scanLoadedRef.current = false;
-    setScanData(null);
-  }, [activeTeamId]);
-
   const fetchScan = useCallback(
     async (signal?: AbortSignal) => {
-      const isFirstLoad = !scanLoadedRef.current;
-      if (isFirstLoad) setScanLoading(true);
+      const isFirstLoad = scanLoadedForRef.current !== activeTeamId;
       try {
         const params = new URLSearchParams();
         if (activeTeamId) params.set("teamId", activeTeamId);
@@ -347,26 +345,26 @@ export default function ActivityPage() {
         if (res.status === 401) {
           // The reconnect banner in AppShell already handles refresh-token
           // failure visually — don't pile on with a toast.
+          if (isFirstLoad) setScanResult({ teamId: activeTeamId, data: null });
           return;
         }
         if (!res.ok) {
           throw new Error(`scan failed: ${res.status}`);
         }
         const data = (await res.json()) as ScanResponse;
-        setScanData(data);
-        scanLoadedRef.current = true;
+        setScanResult({ teamId: activeTeamId, data });
+        scanLoadedForRef.current = activeTeamId;
       } catch (err) {
         if (signal?.aborted) return;
         console.error("[activity] scan failed:", err);
         if (isFirstLoad) {
+          setScanResult({ teamId: activeTeamId, data: null });
           showToast({
             title: "Could not load activity",
             description: "Try again in a moment.",
             tone: "error",
           });
         }
-      } finally {
-        if (isFirstLoad) setScanLoading(false);
       }
     },
     [activeTeamId, scanKeywords, showToast]
@@ -378,6 +376,7 @@ export default function ActivityPage() {
   useEffect(() => {
     if (!isScanTab) return;
     const controller = new AbortController();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- polls the scan API; every setState happens after an await
     fetchScan(controller.signal);
     const interval = window.setInterval(() => {
       fetchScan(controller.signal);
@@ -523,7 +522,7 @@ export default function ActivityPage() {
     });
   }
 
-  const showSkeleton = isScanTab && scanLoading && !scanLoadedRef.current;
+  const showSkeleton = isScanTab && !scanForTeam;
 
   return (
     <div className="context-fade-in flex h-full flex-col overflow-hidden">

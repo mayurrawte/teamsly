@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Hash, Lock, MessageSquare, Search, X } from "lucide-react";
 
@@ -32,9 +32,13 @@ export function JumpToSwitcher({ open, onOpenChange, items }: JumpToSwitcherProp
     return source.slice(0, 12);
   }, [items, query]);
 
-  useEffect(() => {
+  const [prevQuery, setPrevQuery] = useState(query);
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevQuery !== query || prevOpen !== open) {
+    setPrevQuery(query);
+    setPrevOpen(open);
     setActiveIndex(0);
-  }, [query, open]);
+  }
 
   function selectItem(item: JumpToItem | undefined) {
     if (!item) return;

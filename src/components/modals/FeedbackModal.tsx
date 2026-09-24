@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, Bug, Sparkles } from "lucide-react";
 import { useToastStore } from "@/store/toasts";
@@ -31,6 +31,8 @@ function buildEnvString(): string {
 
   return `Teamsly ${version} · ${platform} · ${runtime}`;
 }
+
+const subscribeNoop = () => () => {};
 
 // Open the GitHub new-issue URL pre-filled with the user's input.
 // GitHub's issue-form URL parameter format for structured forms is:
@@ -71,15 +73,13 @@ export function FeedbackModal({ open, onOpenChange }: Props) {
   const [featProblem, setFeatProblem] = useState("");
   const [featProposed, setFeatProposed] = useState("");
 
-  const [envString, setEnvString] = useState("");
-
-  // Compute env string once on the client (navigator is not available on server)
-  useEffect(() => {
-    setEnvString(buildEnvString());
-  }, []);
+  // Compute env string on the client only (navigator is not available on server)
+  const envString = useSyncExternalStore(subscribeNoop, buildEnvString, () => "");
 
   // Reset all fields whenever the modal opens so re-opening starts fresh
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
     if (open) {
       setType("bug");
       setBugTitle("");
@@ -90,7 +90,7 @@ export function FeedbackModal({ open, onOpenChange }: Props) {
       setFeatProblem("");
       setFeatProposed("");
     }
-  }, [open]);
+  }
 
   const canSubmitBug = bugTitle.trim().length > 0 && bugWhat.trim().length > 0;
   const canSubmitFeat = featTitle.trim().length > 0 && featProblem.trim().length > 0;

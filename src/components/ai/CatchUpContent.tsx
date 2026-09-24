@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
 import { useCatchUpStore, type CatchUpWindow, type CatchUpTab } from "@/store/catchUp";
@@ -33,9 +33,11 @@ export function CatchUpContent({ onNavigate, className }: Props) {
   const [refreshNonce, setRefreshNonce] = useState(0);
 
   // Reset transient meta when the tab changes.
-  useEffect(() => {
+  const [metaTab, setMetaTab] = useState(tab);
+  if (metaTab !== tab) {
+    setMetaTab(tab);
     setMeta(null);
-  }, [tab]);
+  }
 
   const handleRefresh = useCallback(() => setRefreshNonce((n) => n + 1), []);
   const navigate = onNavigate ?? ((href: string) => router.push(href));

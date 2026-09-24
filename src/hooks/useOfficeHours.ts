@@ -7,7 +7,7 @@
  * open). No network, no Graph: office-hours prefs never leave the browser.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePreferencesStore } from "@/store/preferences";
 
 export interface OfficeHoursState {
@@ -19,6 +19,8 @@ export interface OfficeHoursState {
   nextBoundary: number | null;
   /** Human label, e.g. "9:00 AM – 5:00 PM · Mon–Fri". */
   label: string;
+  /** Epoch ms of the clock tick this state was computed at. */
+  now: number;
 }
 
 const TICK_MS = 60_000;
@@ -64,6 +66,7 @@ function compute(
   start: string,
   end: string,
   days: number[],
+  nowMs: number,
 ): OfficeHoursState {
   const startMin = parseHM(start);
   const endMin = parseHM(end);
@@ -71,10 +74,10 @@ function compute(
 
   // Malformed or zero-width/inverted window → never "within"; no boundary.
   if (!enabled || startMin === null || endMin === null || startMin >= endMin) {
-    return { enabled, withinHours: false, nextBoundary: null, label };
+    return { enabled, withinHours: false, nextBoundary: null, label, now: nowMs };
   }
 
-  const now = new Date();
+  const now = new Date(nowMs);
   const today = now.getDay();
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const isWorkday = days.includes(today);
@@ -96,7 +99,7 @@ function compute(
     }
   }
 
-  return { enabled, withinHours, nextBoundary, label };
+  return { enabled, withinHours, nextBoundary, label, now: nowMs };
 }
 
 export function useOfficeHours(): OfficeHoursState {
@@ -105,16 +108,13 @@ export function useOfficeHours(): OfficeHoursState {
   const end = usePreferencesStore((s) => s.officeHoursEnd);
   const days = usePreferencesStore((s) => s.officeHoursDays);
 
-  const [state, setState] = useState<OfficeHoursState>(() =>
-    compute(enabled, start, end, days),
-  );
+  const [now, setNow] = useState(() => Date.now());
 
+  // Always ticking, so enabling office hours never computes against a stale clock.
   useEffect(() => {
-    setState(compute(enabled, start, end, days));
-    if (!enabled) return;
-    const id = setInterval(() => setState(compute(enabled, start, end, days)), TICK_MS);
+    const id = setInterval(() => setNow(Date.now()), TICK_MS);
     return () => clearInterval(id);
-  }, [enabled, start, end, days]);
+  }, []);
 
-  return state;
+  return useMemo(() => compute(enabled, start, end, days, now), [enabled, start, end, days, now]);
 }

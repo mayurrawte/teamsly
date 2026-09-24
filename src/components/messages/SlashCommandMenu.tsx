@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { SLASH_COMMANDS, type SlashCommand } from "@/lib/slash-commands";
 import type { KeyboardEvent } from "react";
@@ -24,32 +24,15 @@ interface MenuProps {
 }
 
 export function SlashCommandMenu({ filtered, selectedIdx, onHover, onPick, open }: MenuProps) {
-  const [entering, setEntering] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (open) {
-      setEntering(true);
-      timerRef.current = setTimeout(() => setEntering(false), 200);
-    } else {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      setEntering(false);
-    }
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [open]);
-
   if (!open || filtered.length === 0) return null;
 
+  // The listbox mounts fresh each time the menu opens, so the one-shot CSS
+  // entry animation plays on every open without toggling the class.
   return (
     <div
       role="listbox"
       aria-label="Slash command suggestions"
-      className={cn(
-        "absolute bottom-full left-0 z-[120] mb-1 w-80 overflow-hidden rounded-md border border-[var(--border)] bg-[var(--surface)] shadow-lg",
-        entering && "slash-menu-enter"
-      )}
+      className="slash-menu-enter absolute bottom-full left-0 z-[120] mb-1 w-80 overflow-hidden rounded-md border border-[var(--border)] bg-[var(--surface)] shadow-lg"
     >
       <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
         Commands
@@ -101,9 +84,11 @@ export function useSlashMenu({
   const [selectedIdx, setSelectedIdx] = useState(0);
   const filtered = filterCommands(query);
 
-  useEffect(() => {
+  const [prevQuery, setPrevQuery] = useState(query);
+  if (prevQuery !== query) {
+    setPrevQuery(query);
     setSelectedIdx(0);
-  }, [query]);
+  }
 
   function handleKey(e: KeyboardEvent): boolean {
     if (!open || filtered.length === 0) return false;
