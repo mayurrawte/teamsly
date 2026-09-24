@@ -263,9 +263,7 @@ function MeetingsPageInner() {
   const [error, setError] = useState(false);
   const [activeTab, setActiveTab] = useState<MeetingTab>("today");
 
-  const fetchMeetings = useCallback(async () => {
-    setLoading(true);
-    setError(false);
+  const loadMeetings = useCallback(async () => {
     try {
       const now = new Date();
       const end = addDays(now, 14);
@@ -281,12 +279,19 @@ function MeetingsPageInner() {
     }
   }, []);
 
+  const fetchMeetings = useCallback(() => {
+    setLoading(true);
+    setError(false);
+    void loadMeetings();
+  }, [loadMeetings]);
+
   // Initial fetch + 5-minute poll
   useEffect(() => {
-    fetchMeetings();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch; every setState happens after an await
+    loadMeetings();
     const intervalId = setInterval(fetchMeetings, 5 * 60 * 1000);
     return () => clearInterval(intervalId);
-  }, [fetchMeetings]);
+  }, [loadMeetings, fetchMeetings]);
 
   // Filter items to the active tab window
   const filtered = useMemo(() => {

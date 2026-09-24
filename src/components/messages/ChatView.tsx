@@ -261,10 +261,12 @@ export function ChatView({ chatId }: { chatId: string }) {
   const voiceRoomName = voiceRoomNameFor({ chatId });
 
   // Reset tab when chat changes
-  useEffect(() => {
+  const [tabChatId, setTabChatId] = useState(chatId);
+  if (tabChatId !== chatId) {
+    setTabChatId(chatId);
     setActiveTab("messages");
     setLocalMembers([]);
-  }, [chatId]);
+  }
 
   useEffect(() => {
     let cancelled = false;

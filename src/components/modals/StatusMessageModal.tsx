@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import TextareaAutosize from "react-textarea-autosize";
 import { X } from "lucide-react";
@@ -68,13 +68,17 @@ export function StatusMessageModal({ open, onOpenChange }: Props) {
   const [clearing, setClearing] = useState(false);
 
   // Re-initialise form when modal opens
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevExistingContent, setPrevExistingContent] = useState(existingContent);
+  if (prevOpen !== open || prevExistingContent !== existingContent) {
+    setPrevOpen(open);
+    setPrevExistingContent(existingContent);
     if (open) {
       setText(existingContent);
       setPreset("never");
       setCustom("");
     }
-  }, [open, existingContent]);
+  }
 
   async function handleSave() {
     const trimmed = text.trim();

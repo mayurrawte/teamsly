@@ -34,9 +34,14 @@ export function DemoChatView({ chatId }: { chatId: string }) {
     if (pendingAnchorMessageId) setPendingAnchorMessageId(null);
   }, [pendingAnchorMessageId, setPendingAnchorMessageId]);
 
+  const [tabChatId, setTabChatId] = useState(chatId);
+  if (tabChatId !== chatId) {
+    setTabChatId(chatId);
+    setActiveTab("messages");
+  }
+
   useEffect(() => {
     setMessages(contextId, mockChatMessages[chatId] ?? []);
-    setActiveTab("messages");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId]);
 

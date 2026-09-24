@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo } from "react";
 import { formatDistanceToNow, format, differenceInDays } from "date-fns";
 import { Search, ExternalLink, FileX, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getFileIcon } from "@/lib/utils/file-icon";
+import { FileIcon } from "@/lib/utils/file-icon";
 import { useFilePreviewStore } from "@/store/filePreview";
 
 // ---------------------------------------------------------------------------
@@ -112,7 +112,6 @@ function FilesSkeleton() {
 // ---------------------------------------------------------------------------
 
 function FileRow({ file }: { file: NormalisedFile }) {
-  const Icon = getFileIcon(file.mimeType, file.isFolder);
   const href = file.webUrl;
   const openPreview = useFilePreviewStore((s) => s.openPreview);
 
@@ -139,7 +138,7 @@ function FileRow({ file }: { file: NormalisedFile }) {
     >
       {/* Icon */}
       <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-[#2c2d30] text-[#ababad]">
-        <Icon size={18} />
+        <FileIcon mimeType={file.mimeType} isFolder={file.isFolder} size={18} />
       </span>
 
       {/* Name + meta */}
@@ -187,9 +186,7 @@ function FilesPageInner() {
   const [activeTab, setActiveTab] = useState<FileTab>("all");
   const [query, setQuery] = useState("");
 
-  async function fetchFiles() {
-    setLoading(true);
-    setError(false);
+  async function loadFiles() {
     try {
       const res = await fetch("/api/files/recent");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -202,8 +199,15 @@ function FilesPageInner() {
     }
   }
 
+  function fetchFiles() {
+    setLoading(true);
+    setError(false);
+    void loadFiles();
+  }
+
   useEffect(() => {
-    fetchFiles();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch; every setState happens after an await
+    loadFiles();
   }, []);
 
   const filtered = useMemo(() => {

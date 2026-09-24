@@ -1,3 +1,4 @@
+import { createElement } from "react";
 import {
   Archive,
   File,
@@ -92,4 +93,19 @@ export function getFileIcon(mimeType?: string, isFolder?: boolean, fileName?: st
   if (resolved.startsWith("video/")) return Video;
   if (resolved.startsWith("audio/")) return Music;
   return File;
+}
+
+/** Renders the icon for a file. A single static component, so callers never create one during render. */
+export function FileIcon({
+  mimeType,
+  isFolder,
+  fileName,
+  size,
+}: {
+  mimeType?: string;
+  isFolder?: boolean;
+  fileName?: string;
+  size?: number;
+}) {
+  return createElement(getFileIcon(mimeType, isFolder, fileName), { size });
 }

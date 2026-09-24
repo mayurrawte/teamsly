@@ -23,40 +23,50 @@ interface Props {
 export function GifPicker({ children, onSelect }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [gifs, setGifs] = useState<GifResult[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState<{ query: string; gifs: GifResult[] } | null>(null);
   const debouncedQuery = useDebounce(query, 400);
   const inputRef = useRef<HTMLInputElement>(null);
+  const gifs = results?.gifs ?? [];
+  const loading = open && results?.query !== debouncedQuery;
 
-  const fetchGifs = useCallback(async (q: string) => {
-    setLoading(true);
+  const fetchGifs = useCallback(async (q: string): Promise<GifResult[] | null> => {
     try {
       const res = await fetch(`/api/gifs/search?q=${encodeURIComponent(q)}&limit=20`);
-      if (!res.ok) return;
+      if (!res.ok) return null;
       const data = await res.json();
-      setGifs(data.results ?? []);
+      return data.results ?? [];
     } catch {
-      // ignore
-    } finally {
-      setLoading(false);
+      return null;
     }
   }, []);
 
   useEffect(() => {
-    if (open) fetchGifs(debouncedQuery);
+    if (!open) return;
+    let cancelled = false;
+    fetchGifs(debouncedQuery).then((next) => {
+      if (!cancelled) setResults((prev) => ({ query: debouncedQuery, gifs: next ?? prev?.gifs ?? [] }));
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [open, debouncedQuery, fetchGifs]);
 
   useEffect(() => {
-    if (open) {
-      const t = setTimeout(() => inputRef.current?.focus(), 50);
-      return () => clearTimeout(t);
-    }
-    setQuery("");
-    setGifs([]);
+    if (!open) return;
+    const t = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(t);
   }, [open]);
 
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (!next) {
+      setQuery("");
+      setResults(null);
+    }
+  };
+
   return (
-    <Popover.Root open={open} onOpenChange={setOpen}>
+    <Popover.Root open={open} onOpenChange={handleOpenChange}>
       <Popover.Trigger asChild>{children}</Popover.Trigger>
       <Popover.Portal>
         <Popover.Content

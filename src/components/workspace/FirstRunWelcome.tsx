@@ -1,26 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { usePreferencesStore } from "@/store/preferences";
 import { HomeTips } from "./HomeTips";
+
+const subscribeNoop = () => () => {};
 
 export function FirstRunWelcome() {
   const hasSeenWelcome = usePreferencesStore((s) => s.hasSeenWelcome);
   const setHasSeenWelcome = usePreferencesStore((s) => s.setHasSeenWelcome);
-  const [visible, setVisible] = useState(false);
 
   // Read the persisted flag only after mount so a previously-dismissed card
   // doesn't flash in before Zustand rehydrates from localStorage (mirrors BootNudge).
-  useEffect(() => {
-    if (!hasSeenWelcome) setVisible(true);
-  }, [hasSeenWelcome]);
+  const mounted = useSyncExternalStore(subscribeNoop, () => true, () => false);
 
   function dismiss() {
     setHasSeenWelcome(true);
-    setVisible(false);
   }
 
-  if (!visible) return null;
+  if (!mounted || hasSeenWelcome) return null;
 
   return (
     <div className="mb-6 flex-shrink-0 rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] p-4">

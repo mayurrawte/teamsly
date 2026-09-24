@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ArrowUpRight, Clock } from "lucide-react";
 import type { CatchUpWindow } from "@/store/catchUp";
 import type { ActionItem } from "@/lib/ai/conversation-gather";
-import { useRemindersStore } from "@/store/reminders";
+import { useRemindersStore, type Reminder } from "@/store/reminders";
 import { SkeletonCard, NotConfiguredCard, LimitReachedCard } from "./catchup-shared";
 import type { CatchUpMeta } from "./DigestView";
 
@@ -32,6 +32,16 @@ function hrefForItem(item: ActionItem): string {
       ? `/workspace/dm/${item.contextId}`
       : `/workspace/t/${item.contextId.replace(":", "/")}`;
   return item.messageId ? `${base}?anchor=${encodeURIComponent(item.messageId)}` : base;
+}
+
+function actionItemReminder(item: ActionItem, fireAt: number): Reminder {
+  return {
+    id: crypto.randomUUID(),
+    task: item.task,
+    sourceHref: hrefForItem(item),
+    fireAt,
+    createdAt: Date.now(),
+  };
 }
 
 /** Reminder time presets, recomputed at render. Past presets are dropped. */
@@ -92,47 +102,35 @@ export function ActionItemsView({
   onMeta: (meta: CatchUpMeta | null) => void;
   onNavigate: (href: string) => void;
 }) {
-  const [data, setData] = useState<ActionItemsResponse | null>(null);
-  const [loading, setLoading] = useState(false);
+  const requestKey = `${catchUpWindow}:${refreshNonce}`;
+  const [result, setResult] = useState<{ key: string; data: ActionItemsResponse } | null>(null);
+  const loading = result?.key !== requestKey;
+  const data = loading ? null : result.data;
   const addReminder = useRemindersStore((s) => s.add);
 
-  const fetchItems = useCallback(
-    async (win: CatchUpWindow) => {
-      setLoading(true);
-      onLoadingChange(true);
-      setData(null);
-      onMeta(null);
+  useEffect(() => {
+    let cancelled = false;
+    onLoadingChange(true);
+    onMeta(null);
+    (async () => {
+      let json: ActionItemsResponse;
       try {
         const d = new Date();
         const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-        const res = await fetch(`/api/ai/action-items?window=${win}&today=${today}`);
-        const json = (await res.json()) as ActionItemsResponse;
-        setData(json);
-        onMeta(json.status === "ok" ? { generatedAt: json.generatedAt, cached: json.cached } : null);
+        const res = await fetch(`/api/ai/action-items?window=${catchUpWindow}&today=${today}`);
+        json = (await res.json()) as ActionItemsResponse;
       } catch {
-        setData({ status: "error", cached: false, message: "Network error — please try again." });
-        onMeta(null);
-      } finally {
-        setLoading(false);
-        onLoadingChange(false);
+        json = { status: "error", cached: false, message: "Network error — please try again." };
       }
-    },
-    [onLoadingChange, onMeta]
-  );
-
-  useEffect(() => {
-    void fetchItems(catchUpWindow);
-  }, [catchUpWindow, refreshNonce, fetchItems]);
-
-  function handleRemind(item: ActionItem, fireAt: number) {
-    addReminder({
-      id: crypto.randomUUID(),
-      task: item.task,
-      sourceHref: hrefForItem(item),
-      fireAt,
-      createdAt: Date.now(),
-    });
-  }
+      if (cancelled) return;
+      setResult({ key: requestKey, data: json });
+      onMeta(json.status === "ok" ? { generatedAt: json.generatedAt, cached: json.cached } : null);
+      onLoadingChange(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [catchUpWindow, requestKey, onLoadingChange, onMeta]);
 
   if (loading) {
     return (
@@ -188,7 +186,7 @@ export function ActionItemsView({
                   key={`${group.key}-${idx}`}
                   item={item}
                   onJump={() => onNavigate(hrefForItem(item))}
-                  onRemind={(fireAt) => handleRemind(item, fireAt)}
+                  onRemind={(fireAt) => addReminder(actionItemReminder(item, fireAt))}
                 />
               ))}
             </ul>
@@ -288,8 +286,10 @@ function ActionItemRow({
 
 function CustomRemind({ onPick }: { onPick: (fireAt: number) => void }) {
   const [value, setValue] = useState("");
+  // Mounted when the menu opens; the click handler re-checks against the real clock.
+  const [openedAt] = useState(() => Date.now());
   const parsed = new Date(value).getTime();
-  const valid = !Number.isNaN(parsed) && parsed > Date.now();
+  const valid = !Number.isNaN(parsed) && parsed > openedAt;
   return (
     <div className="border-t border-[var(--border)] px-3 py-1.5">
       <label
@@ -310,7 +310,7 @@ function CustomRemind({ onPick }: { onPick: (fireAt: number) => void }) {
           type="button"
           disabled={!valid}
           onClick={() => {
-            if (valid) onPick(parsed);
+            if (valid && parsed > Date.now()) onPick(parsed);
           }}
           className="rounded bg-[var(--accent)] px-2 py-1 text-[11px] font-medium text-white transition-colors disabled:opacity-40"
         >

@@ -104,30 +104,12 @@ type UrlState =
   | { status: "error" };
 
 function useResolvedDownloadUrl(file: MSFilePreview | null): UrlState {
-  const [state, setState] = useState<UrlState>({ status: "idle" });
+  const [fetched, setFetched] = useState<{ file: MSFilePreview; state: UrlState } | null>(null);
 
   useEffect(() => {
-    if (!file) {
-      setState({ status: "idle" });
-      return;
-    }
-
-    // Caller already provided a pre-signed URL (uploads return this on the
-    // /me/drive responses). Use it directly.
-    if (file.downloadUrl) {
-      setState({ status: "ready", downloadUrl: file.downloadUrl });
-      return;
-    }
-
-    if (!file.itemId) {
-      // No itemId → no way to call Graph for the anonymous URL. The panel
-      // will rely on webUrl + Office Online's `src` parameter.
-      setState({ status: "idle" });
-      return;
-    }
+    if (!file || file.downloadUrl || !file.itemId) return;
 
     let cancelled = false;
-    setState({ status: "loading" });
 
     fetch(`/api/files/preview/${encodeURIComponent(file.itemId)}/url`)
       .then(async (res) => {
@@ -136,10 +118,10 @@ function useResolvedDownloadUrl(file: MSFilePreview | null): UrlState {
       })
       .then((data) => {
         if (cancelled) return;
-        setState({ status: "ready", downloadUrl: data.downloadUrl });
+        setFetched({ file, state: { status: "ready", downloadUrl: data.downloadUrl } });
       })
       .catch(() => {
-        if (!cancelled) setState({ status: "error" });
+        if (!cancelled) setFetched({ file, state: { status: "error" } });
       });
 
     return () => {
@@ -147,7 +129,17 @@ function useResolvedDownloadUrl(file: MSFilePreview | null): UrlState {
     };
   }, [file]);
 
-  return state;
+  if (!file) return { status: "idle" };
+
+  // Caller already provided a pre-signed URL (uploads return this on the
+  // /me/drive responses). Use it directly.
+  if (file.downloadUrl) return { status: "ready", downloadUrl: file.downloadUrl };
+
+  // No itemId → no way to call Graph for the anonymous URL. The panel
+  // will rely on webUrl + Office Online's `src` parameter.
+  if (!file.itemId) return { status: "idle" };
+
+  return fetched?.file === file ? fetched.state : { status: "loading" };
 }
 
 // ---------------------------------------------------------------------------
@@ -164,16 +156,12 @@ type TextState =
   | { status: "error" };
 
 function useTextBody(file: MSFilePreview | null, kind: PreviewKind): TextState {
-  const [state, setState] = useState<TextState>({ status: "idle" });
+  const [fetched, setFetched] = useState<{ file: MSFilePreview; state: TextState } | null>(null);
 
   useEffect(() => {
-    if (!file || kind !== "text" || !file.itemId) {
-      setState({ status: "idle" });
-      return;
-    }
+    if (!file || kind !== "text" || !file.itemId) return;
 
     let cancelled = false;
-    setState({ status: "loading" });
 
     fetch(`/api/files/preview/${encodeURIComponent(file.itemId)}/content`)
       .then(async (res) => {
@@ -189,10 +177,10 @@ function useTextBody(file: MSFilePreview | null, kind: PreviewKind): TextState {
       })
       .then((data) => {
         if (cancelled) return;
-        setState({ status: "ready", body: data.body, truncated: data.truncated });
+        setFetched({ file, state: { status: "ready", body: data.body, truncated: data.truncated } });
       })
       .catch(() => {
-        if (!cancelled) setState({ status: "error" });
+        if (!cancelled) setFetched({ file, state: { status: "error" } });
       });
 
     return () => {
@@ -200,7 +188,8 @@ function useTextBody(file: MSFilePreview | null, kind: PreviewKind): TextState {
     };
   }, [file, kind]);
 
-  return state;
+  if (!file || kind !== "text" || !file.itemId) return { status: "idle" };
+  return fetched?.file === file ? fetched.state : { status: "loading" };
 }
 
 // ---------------------------------------------------------------------------

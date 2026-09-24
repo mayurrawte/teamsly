@@ -95,26 +95,25 @@ export function SearchModal({
   // Org-directory people search (finds users the current user has never chatted
   // with). Runs only when the modal is open and the query is at least 2 chars,
   // and is cancelled if the query changes mid-flight.
-  const [people, setPeople] = useState<SearchPerson[]>([]);
+  const [fetchedPeople, setFetchedPeople] = useState<SearchPerson[] | null>(null);
   const trimmedQuery = debouncedQuery.trim();
+  const peopleSearchActive = open && trimmedQuery.length >= 2 && !!onSelectPerson;
+  const people = peopleSearchActive && fetchedPeople ? fetchedPeople : [];
   useEffect(() => {
-    if (!open || trimmedQuery.length < 2 || !onSelectPerson) {
-      setPeople([]);
-      return;
-    }
+    if (!peopleSearchActive) return;
     let cancelled = false;
     fetch(`/api/people?q=${encodeURIComponent(trimmedQuery)}`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data: SearchPerson[]) => {
-        if (!cancelled) setPeople(Array.isArray(data) ? data : []);
+        if (!cancelled) setFetchedPeople(Array.isArray(data) ? data : []);
       })
       .catch(() => {
-        if (!cancelled) setPeople([]);
+        if (!cancelled) setFetchedPeople([]);
       });
     return () => {
       cancelled = true;
     };
-  }, [open, trimmedQuery, onSelectPerson]);
+  }, [peopleSearchActive, trimmedQuery]);
 
   const normalizedQuery = debouncedQuery.trim().toLowerCase();
   const results = useMemo(() => {
